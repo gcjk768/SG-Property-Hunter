@@ -97,23 +97,52 @@ def cmd_analyse(args) -> int:
     return _analyse_one(args, settings, db, vault)
 
 
+class AnalyseInputError(Exception):
+    """The typed figures cannot make a card; the message says what is missing."""
+
+
 def _analyse_one(args, settings, db, vault) -> int:
+    try:
+        card, msg, rates, link = card_message(args, settings, db, vault)
+    except AnalyseInputError as exc:
+        print(exc)
+        return 2
+    if link:
+        print(f"[saved to the vault as {link}.md]")
+    if args.html:
+        print(msg)
+    else:
+        print(plain(msg))
+    print(f"\n[{len(msg)} characters; Telegram limit 4096]")
+    if rates.note:
+        print(f"[rates: {rates.note}]")
+    if args.detail:
+        print(detail(card))
+    return 0
+
+
+def card_message(args, settings, db, vault):
+    """Build, store and render one card from typed figures. Returns (card, html, rates, vault link)."""
     from .engine.card import build_card, card_row, rates_from_db
     from .models import Candidate, ComparablesSummary, Growth
     from .render import render_listing
     from .rules.loader import RuleTrace, Rules
 
     if args.listing and args.listing.startswith("http"):
-        print("Analysing a listing URL needs the evidence fetcher, which arrives in build step 5. "
-              "Type the figures instead (see propbot analyse --help).")
-        return 2
+        raise AnalyseInputError("Analysing a listing URL needs the evidence fetcher, which is not built yet. "
+                                "Type the figures instead (see propbot analyse --help).")
     pos = _parse_positional(args.listing) if args.listing else {}
     category = args.category or pos.get("category")
-    price = args.price or (float(pos["price"]) if "price" in pos else None)
+    try:
+        price = args.price or (float(pos["price"]) if "price" in pos else None)
+        size = args.size or (float(pos["size"]) if "size" in pos else None)
+    except ValueError as exc:
+        raise AnalyseInputError(f"price and size must be numbers: {exc}") from exc
     if not category or not price:
-        print("analyse needs at least --category and --price")
-        return 2
-    size = args.size or (float(pos["size"]) if "size" in pos else None)
+        raise AnalyseInputError("analyse needs at least a category and a price")
+    from .engine.categories import CATEGORIES
+    if category not in CATEGORIES:
+        raise AnalyseInputError(f"unknown category {category!r}; use one of {', '.join(CATEGORIES)}")
     if args.size_sqm:
         size = args.size_sqm * 10.7639
     rules = Rules.load(settings.rules_dir / "sg_property_rules.yaml")
@@ -158,18 +187,7 @@ def _analyse_one(args, settings, db, vault) -> int:
     if args.store:
         db.insert("cards", card_row(card, "analyse", None))
     link = vault.write_card(card, plain(msg), run_id="analyse") if vault.available() else None
-    if link:
-        print(f"[saved to the vault as {link}.md]")
-    if args.html:
-        print(msg)
-    else:
-        print(plain(msg))
-    print(f"\n[{len(msg)} characters; Telegram limit 4096]")
-    if rates.note:
-        print(f"[rates: {rates.note}]")
-    if args.detail:
-        print(detail(card))
-    return 0
+    return card, msg, rates, link
 
 
 def detail(card) -> str:
@@ -287,6 +305,40 @@ def cmd_status(args) -> int:
     return 0
 
 
+def _bot(args):
+    from .bot import Bot
+    from .claude import ClaudeRunner
+    from .ratelimit import RateLimiter
+    from .telegram import TelegramClient
+    settings, db = _settings(args, require_income=False)
+    vault = args._vault
+    limiter = RateLimiter(db, settings, run_id=f"serve-{datetime.now():%Y%m%d%H%M}")
+    tg = TelegramClient(settings.secrets.telegram_bot_token, settings, limiter, journal=vault.journal)
+    has_claude = settings.secrets.claude_code_oauth_token or settings.secrets.anthropic_api_key
+    claude = ClaudeRunner(settings, limiter, journal=vault.journal) if has_claude else None
+    return Bot(settings, db, tg, vault, limiter, claude, config_path=args.config), settings
+
+
+def cmd_serve(args) -> int:
+    bot, settings = _bot(args)
+    if not settings.secrets.telegram_bot_token:
+        print("TELEGRAM_BOT_TOKEN is not set in .env", file=sys.stderr)
+        return 2
+    bot.serve(settings.data_dir / "heartbeat")
+    return 0
+
+
+def cmd_pulse(args) -> int:
+    from .bot import plain as strip
+    bot, _ = _bot(args)
+    if args.post:
+        bot.username = bot.tg.get_me().get("username", "")
+    msgs = bot.pulse((bot.chat, bot.thread) if args.post else None, manual=True) or []
+    for m in msgs:
+        print(strip(m) + "\n")
+    return 0
+
+
 def cmd_later(step: int):
     def run(args) -> int:
         print(f"'{args.cmd}' arrives in build step {step}; the build is paused after step 3 for the maths check.")
@@ -354,7 +406,14 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--date")
     s.set_defaults(func=cmd_status)
 
-    for name, step in (("run", 5), ("serve", 6), ("discover", 5), ("backfill", 4), ("purge", 6)):
+    sv = sub.add_parser("serve", help="Telegram listener plus the hourly HDB pulse")
+    sv.set_defaults(func=cmd_serve)
+
+    pu = sub.add_parser("pulse", help="HDB resale pulse now: print it, or --post to the topic")
+    pu.add_argument("--post", action="store_true")
+    pu.set_defaults(func=cmd_pulse)
+
+    for name, step in (("run", 5), ("discover", 5), ("backfill", 4), ("purge", 6)):
         x = sub.add_parser(name)
         x.add_argument("rest", nargs="*")
         x.set_defaults(func=cmd_later(step))

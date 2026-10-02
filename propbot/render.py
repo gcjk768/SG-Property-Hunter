@@ -15,6 +15,9 @@ from .engine.card import Card
 from .engine.categories import info
 from .telegram import esc, esc_attr
 
+DIVIDER = "━━━━━━━━━━━━━━━━"
+# one fixed emoji per message type
+SECTION_TITLES = {"listing": "🧮", "pulse": "🏠", "ask": "💬", "status": "📊", "help": "❓", "error": "⚠️"}
 DISCLAIMER = "Model estimate, not financial advice. Rules as of {date}."
 _DASHES = "‐‑‒–—―−﹘﹣－"
 _ISO_DATE = re.compile(r"\b\d{4}-\d{2}(?:-\d{2})?\b")
@@ -136,20 +139,21 @@ def render_listing(card: Card, settings: Settings, *, rank: int = 1, of: int = 1
     opt = fin.option
     lines: list[str] = []
     area = clean(c.area) or "Singapore"
-    lines.append(f"{esc(cat_cfg.tag if cat_cfg else '#' + c.category_key)} {esc(cat_cfg.label if cat_cfg else c.category_key)}"
-                 f" · {rank} of {of} · {esc(area)}{esc(clean(c.repeat_note))}")
-    lines.append(f"<b>{esc(clean(c.name))}</b>")
+    rank_txt = f" · {rank} of {of}" if of > 1 else ""
+    lines.append(f"{SECTION_TITLES['listing']} <b>{esc(clean(c.name).upper())}</b> · "
+                 f"{esc(cat_cfg.label if cat_cfg else c.category_key)} · {esc(area)}{rank_txt}{esc(clean(c.repeat_note))}")
+    lines.append("")
     tenure = c.tenure if c.tenure != "unknown" else "tenure unknown"
     lease = ""
     if c.tenure not in ("freehold", "999 year") and c.remaining_lease is not None:
         lease = f", {c.remaining_lease:.0f} years left"
     size = f"{num(c.size_sqft)} sqft" if c.size_sqft else "size unknown"
     age = f"built {c.built_year}" if c.built_year else (f"completion {c.completion_year}" if c.completion_year else "")
-    lines.append(esc(join([clean(c.address), tenure + lease, size, age])))
+    lines.append("🏠 " + esc(join([clean(c.address), tenure + lease, size, age])))
     psf = f" ({num(c.psf)} psf)" if c.psf else ""
     src = join([clean(c.price_label), f"from {clean(c.price_source)}" if c.price_source else "",
                 f"on {c.price_date}" if c.price_date else ""], " ")
-    lines.append(esc(f"Price: {money(c.price)}{psf}, {src}"))
+    lines.append("💰 " + esc(f"Price: {money(c.price)}{psf}, {src}"))
     comps = c.comparables
     if comps and comps.median_psf and c.psf:
         prem = (c.psf / comps.median_psf - 1) * 100
@@ -161,11 +165,11 @@ def render_listing(card: Card, settings: Settings, *, rank: int = 1, of: int = 1
         lines.append("Market: unknown, no comparable sales loaded")
     if proj.rent0:
         gy = proj.rent0 * 12 / c.price * 100 if c.price else None
-        lines.append(esc(f"Rent: about S${num(proj.rent0)}/month ({pct(gy)} gross), {clean(proj.rent_label) or 'source unknown'}"))
+        lines.append("📈 " + esc(f"Rent: about S${num(proj.rent0)}/month ({pct(gy)} gross), {clean(proj.rent_label) or 'source unknown'}"))
     else:
         lines.append("Rent: unknown")
-    lines.append(esc(f"Eligibility: {_eligibility_line(card)}"))
-    lines.append(esc(f"Upfront: {money(fin.upfront_total)}"))
+    lines.append("✅ " + esc(f"Eligibility: {_eligibility_line(card)}"))
+    lines.append("💵 " + esc(f"Upfront: {money(fin.upfront_total)}"))
     lines.append(esc(f"Downpayment {money(fin.downpayment)} (cash at least {money(fin.min_cash)}, CPF up to "
                      f"{money(fin.cpf_used_downpayment)}, extra cash {money(fin.extra_cash)})"))
     fees = card.deal.fees
@@ -194,7 +198,7 @@ def render_listing(card: Card, settings: Settings, *, rank: int = 1, of: int = 1
     eff_ltv = opt.loan / c.price * 100 if c.price else None
     cap = "" if opt.binding == "LTV" else f", capped by {opt.binding}"
     rate_note = "" if card.rates.source != "assumed" or opt.lender == "HDB" else ", assumed"
-    lines.append(esc(f"Loan: {money(opt.loan)} ({pct(eff_ltv)} LTV, {_loan_type(card)}{cap}) over {opt.tenure_years} "
+    lines.append("🏦 " + esc(f"Loan: {money(opt.loan)} ({pct(eff_ltv)} LTV, {_loan_type(card)}{cap}) over {opt.tenure_years} "
                      f"years at {opt.rate_pct:.1f}%{rate_note}") + f" → {esc(money(opt.instalment))}/month")
     tdsr = f"TDSR {pct(opt.tdsr_pct)} (limit 55"
     tdsr += f", {pct(opt.tdsr_pct_alone)} without your co buyer)" if opt.tdsr_pct_alone is not None else ")"
@@ -213,7 +217,7 @@ def render_listing(card: Card, settings: Settings, *, rank: int = 1, of: int = 1
     else:
         why = "the whole flat cannot be rented out" if not card.deal.whole_rental_ever else "not modelled"
         lines.append(esc(f"Monthly if rented out: not allowed, {why}"))
-    lines.append("")
+    lines.append(DIVIDER)
     H = proj.hold_years
     X = proj.exit_year
     if proj.base:
@@ -284,9 +288,9 @@ def render_listing(card: Card, settings: Settings, *, rank: int = 1, of: int = 1
     cur = card.curated or {}
     if v.label == "Not eligible yet":
         note = clean(cur.get("eligibility_note")) or (clean(card.elig.what_would_change_it[0]) if card.elig.what_would_change_it else "")
-        lines.append(f"Verdict: <b>{esc(v.label)}</b>" + (esc(f", {note}") if note else ""))
+        lines.append(f"🎯 Verdict: <b>{esc(v.label)}</b>" + (esc(f", {note}") if note else ""))
     else:
-        lines.append(f"Verdict: <b>{esc(v.label)}</b> ({v.score:.1f}/5), best as {esc(v.best_intent_words)}")
+        lines.append(f"🎯 Verdict: <b>{esc(v.label)}</b> ({v.score:.1f}/5), best as {esc(v.best_intent_words)}")
         if v.override == "cash short":
             lines.append(esc(f"Needs {money(card.fin.cash_short)} more cash than you have."))
         if cur.get("verdict_why"):
@@ -305,9 +309,9 @@ def render_listing(card: Card, settings: Settings, *, rank: int = 1, of: int = 1
     for label, url in c.more_sources[:2]:
         links.append(f'<a href="{esc_attr(url)}">{esc(clean(label))}</a>')
     if links:
-        lines.append(" · ".join(links))
+        lines.append("  ·  ".join(links))
     found = f" Found {run_time} SGT" if run_time else ""
-    lines.append(esc(DISCLAIMER.format(date=card.rules_date)) + esc(found))
+    lines.append("<i>" + esc(DISCLAIMER.format(date=card.rules_date)) + esc(found) + "</i>")
     out = []
     for line in lines:
         if line == "" and (not out or out[-1] == ""):

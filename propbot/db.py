@@ -120,6 +120,15 @@ CREATE TABLE IF NOT EXISTS alerts_log (
   sent INTEGER);
 CREATE TABLE IF NOT EXISTS pending_rule_changes (
   rule_id TEXT PRIMARY KEY, detected_at TEXT, json TEXT, posted INTEGER DEFAULT 0);
+
+-- HDB resale pulse (data.gov.sg); key is the transaction itself, data.gov.sg _ids change on re-upload
+CREATE TABLE IF NOT EXISTS hdb_resale (
+  key TEXT PRIMARY KEY, month TEXT, town TEXT, flat_type TEXT, block TEXT, street TEXT, storey TEXT,
+  sqm REAL, model TEXT, lease_start INTEGER, remaining_lease REAL, price REAL, first_seen TEXT);
+CREATE INDEX IF NOT EXISTS hdb_resale_month ON hdb_resale(month);
+CREATE TABLE IF NOT EXISTS hdb_rent (
+  quarter TEXT, town TEXT, flat_type TEXT, median_rent REAL, PRIMARY KEY (quarter, town, flat_type));
+CREATE TABLE IF NOT EXISTS pulse_alerted (key TEXT PRIMARY KEY, alerted_at TEXT);
 """
 
 

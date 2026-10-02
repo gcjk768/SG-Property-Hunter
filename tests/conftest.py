@@ -1,4 +1,5 @@
 import random
+import shutil
 from pathlib import Path
 
 import pytest
@@ -17,9 +18,14 @@ def settings(tmp_path):
     s = apply_profile_overrides(s, {"gross_monthly_income": 10000, "cash_available": 300000,
                                     "cpf_oa_balance": 100000})
     # keep runtime files inside the test's temp folder
-    s = s.model_copy(update={"base_dir": tmp_path})
-    (tmp_path / "rules").symlink_to(ROOT / "rules")
-    (tmp_path / "prompts").symlink_to(ROOT / "prompts")
+    # the wrapper tests exercise the sonnet -> haiku fallback, whatever model config.yaml ships with
+    s = s.model_copy(update={"base_dir": tmp_path,
+                             "claude": s.claude.model_copy(update={"model": "sonnet", "fallback_model": "haiku"})})
+    for name in ("rules", "prompts"):
+        try:
+            (tmp_path / name).symlink_to(ROOT / name)
+        except OSError:                      # Windows without symlink rights
+            shutil.copytree(ROOT / name, tmp_path / name)
     return s
 
 

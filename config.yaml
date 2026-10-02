@@ -29,13 +29,23 @@ profile:                      # you fill this in; the bot never guesses it
 obsidian:                      # Obsidian vault on the NAS, mounted at /vault in the container
   enabled: true
   vault_path: /vault             # the vault root; propbot only creates and writes its own folder inside it
-  folder: propbot
+  folder: ""                     # empty: the mount is the app vault (/volume1/James/Obsidian/SG Property Hunter)
   read_profile: true             # Profile.md frontmatter overrides the profile above
-  log_web_requests: true         # one line per web fetch in Activity/<month> web.md
+  log_web_requests: true         # one line per web fetch in Activity/YYYY/MM/YYYY-MM-DD web.md
+
+pulse:                         # hourly HDB resale pulse from data.gov.sg (free, no key); posts only new notable deals
+  enabled: true
+  check_minute: 7                # minute past every hour
+  median_months: 12              # compare with the median of the same town, flat type and 10 year lease band
+  min_sales_for_median: 5
+  value_discount_pct: 15         # notable when the price per sqm is this far under that median
+  min_yield_pct: 8.0             # or when HDB median rent gives this gross yield
+  max_items: 8                   # deals per message
 
 telegram:
-  chat_id: "@your_channel_or_numeric_id"
-  owner_user_id: 0
+  chat_id: "-1002069000031"      # James Channel (forum group shared by the fleet)
+  thread_id: 4173                # "PropBot" topic; the bot ignores every other topic
+  owner_user_id: 388437106       # James; /prop commands also work in his private chat with the bot
   admin_chat_id: ""
   replace_previous: true
   notify_types: [rules_update]   # everything else posts silently
@@ -133,8 +143,8 @@ discovery:
 
 claude:
   binary: claude
-  model: sonnet
-  fallback_model: haiku
+  model: haiku                   # fleet policy 2026-10-03: non trading apps stay cheap
+  fallback_model: sonnet
   auth: oauth                    # oauth = CLAUDE_CODE_OAUTH_TOKEN, apikey = ANTHROPIC_API_KEY
   max_retries: 4
   discovery: {max_turns: 100, timeout_seconds: 1800, max_budget_usd: 3.00, calls_per_run: 2}  # categories split across two calls

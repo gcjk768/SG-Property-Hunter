@@ -42,7 +42,8 @@ def test_every_card_under_limits_no_none_no_dashes(settings):
         assert len(msg) < 4096
         assert "None" not in msg and "nan" not in msg.lower().split()
         assert not has_dash(msg), [line for line in msg.splitlines() if has_dash(line)]
-        assert msg.rstrip().endswith("SGT")
+        assert msg.rstrip().endswith("SGT</i>")
+        assert msg.startswith("🧮 <b>")
         assert "Model estimate, not financial advice. Rules as of 2026-10-02." in msg
 
 

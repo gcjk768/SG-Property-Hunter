@@ -21,6 +21,8 @@ def _pid_alive(pid: int) -> bool:
         return False
     except PermissionError:
         return True
+    except OSError:              # Windows raises WinError 87 for a pid that no longer exists
+        return False
     return True
 
 

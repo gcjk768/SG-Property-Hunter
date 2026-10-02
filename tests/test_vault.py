@@ -61,8 +61,7 @@ def test_card_note_keeps_my_notes_and_logs(vault, settings):
     vault.write_card(card, "card text, updated")
     text = vault.read(rel)
     assert "Viewing on Saturday." in text and "card text, updated" in text
-    month = vault.now().strftime("%Y-%m")
-    assert vault.read(f"Activity/{month}.md").count("`card`") == 2
+    assert vault.read(vault.activity_rel()).count("**card**") == 2
 
 
 def test_alerts_rules_daily_and_favourites(vault, db):
@@ -72,12 +71,22 @@ def test_alerts_rules_daily_and_favourites(vault, db):
     vault.write_daily("2026-10-02", [{"link": "Cards/2026-10-02/a", "name": "A", "verdict": "Marginal", "score": 2.5,
                                       "posted": True}])
     vault.favourite("Cards/2026-10-02/a", 42)
-    month = vault.now().strftime("%Y-%m")
-    log = vault.read(f"Activity/{month}.md")
-    for kind in ("`alert`", "`rules_changed`", "`favourite`"):
+    log = vault.read(vault.activity_rel())
+    for kind in ("**alert**", "**rules_changed**", "**favourite**"):
         assert kind in log
     assert "TDSR" in vault.read("Rules/Changes.md")
     assert "Total Debt Servicing Ratio" in vault.read("Rules/Rules.md")
     assert "[[Cards/2026-10-02/a" in vault.read("Daily/2026-10-02.md")
     vault.journal("fetch", "https://edgeprop.sg/a status 200", {"stream": "web"})
-    assert "edgeprop" in vault.read(f"Activity/{month} web.md")
+    assert "edgeprop" in vault.read(vault.activity_rel("web"))
+
+
+def test_app_vault_root_and_memory(tmp_path):
+    v = Vault(tmp_path, "")                          # NAS layout: the app vault is the root
+    v.ensure_templates()
+    assert (tmp_path / "Home.md").exists()
+    for i in range(50):
+        v.activity("pulse", f"event {i}")
+    mem = v.recent(max_chars=300)
+    assert mem.splitlines()[0].endswith("event 49") and len(mem) <= 300
+    assert v.report("HDB pulse", "body").startswith("Reports/")

@@ -1,10 +1,13 @@
 """Obsidian vault on the NAS: propbot reads its inputs from it and writes every action to it.
 
-Everything lives under <vault_path>/<folder> (default /vault/propbot inside the container):
+Everything lives under <vault_path>/<folder>. On the NAS the app vault
+/volume1/James/Obsidian/SG Property Hunter is mounted at /vault and folder is empty:
 
+  Home.md                    write once: MOC linking the latest notes
   Profile.md                 read: frontmatter overrides profile fields from config.yaml
   Watchlist.md               read: one listing per bullet, analysed by `propbot analyse --watchlist`
-  Activity/2026-10.md        write: one line per action (runs, cards, posts, deletes, rules, alerts)
+  Activity/2026/10/2026-10-02.md  write: one line per action (runs, cards, posts, deletes, rules, alerts)
+  Reports/2026/10/2026-10-02 HDB pulse.md  write: each pulse report
   Daily/2026-10-02.md        write: the day's index, linking every card
   Cards/2026-10-02/<slug>.md write: one note per item, frontmatter for Dataview, the card text
   Rules/Rules.md             write: current rule values with checked dates and links
@@ -21,7 +24,7 @@ import logging
 import os
 import re
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterable
 from zoneinfo import ZoneInfo
@@ -33,6 +36,24 @@ log = logging.getLogger("propbot.vault")
 MY_NOTES = "## My notes"
 _SLUG = re.compile(r"[^a-z0-9]+")
 _LOCK = threading.Lock()
+KIND_EMOJI = {"card": "🧮", "telegram_send": "📤", "telegram_delete": "🗑", "alert": "⚠️", "rules_changed": "📜",
+              "favourite": "⭐", "claude_call": "🤖", "claude_limit": "⛔", "pulse": "🏠", "command": "💬",
+              "watchlist": "👀", "fetch": "🌐", "error": "❌", "start": "🚀"}
+
+HOME_TEMPLATE = """---
+tags: [active]
+---
+# SG Property Hunter
+
+Singapore property research bot (propbot) in James Channel. It posts an hourly HDB resale pulse
+from data.gov.sg when new notable deals appear, and answers /propanalyse and /propask.
+
+- [[Profile]]: your income, cash and CPF; /propanalyse needs gross_monthly_income
+- [[Watchlist]]: properties to analyse
+- Activity/YYYY/MM: the movement log, one line per action
+- Reports/YYYY/MM: every pulse report
+- Cards: one note per analysed property
+"""
 
 PROFILE_TEMPLATE = """---
 # propbot reads these fields and uses them instead of the profile in config.yaml.
@@ -83,7 +104,8 @@ class Vault:
     def __init__(self, root: str | Path | None, folder: str = "propbot", tz: str = "Asia/Singapore",
                  enabled: bool = True):
         self.enabled = bool(enabled and root)
-        self.base = (Path(root) / folder).resolve() if root else None
+        self.root = Path(root).resolve() if root else None
+        self.base = (self.root / folder).resolve() if root else None
         self.tz = ZoneInfo(tz)
         self._warned = False
 
@@ -97,8 +119,8 @@ class Vault:
         if not self.enabled or self.base is None:
             return False
         try:
-            if not self.base.parent.is_dir():      # the vault root must already exist (the NAS mount)
-                raise OSError(f"vault root {self.base.parent} does not exist; is the NAS folder mounted?")
+            if not self.root.is_dir():      # the vault root must already exist (the NAS mount)
+                raise OSError(f"vault root {self.root} does not exist; is the NAS folder mounted?")
             self.base.mkdir(exist_ok=True)
             return os.access(self.base, os.W_OK)
         except OSError as exc:
@@ -154,6 +176,8 @@ class Vault:
     def ensure_templates(self) -> None:
         if not self.available():
             return
+        if self.read("Home.md") is None:
+            self.write("Home.md", HOME_TEMPLATE)
         if self.read("Profile.md") is None:
             self.write("Profile.md", PROFILE_TEMPLATE)
         if self.read("Watchlist.md") is None:
@@ -189,20 +213,49 @@ class Vault:
         return text[i:] if i != -1 else f"{MY_NOTES}\n\n"
 
     # ------------------------------------------------------------ write: every action
+    def activity_rel(self, stream: str = "", when: datetime | None = None) -> str:
+        now = when or self.now()
+        return f"Activity/{now:%Y/%m}/{now:%Y-%m-%d}" + (f" {stream}" if stream else "") + ".md"
+
     def activity(self, kind: str, text: str, link: str = "", stream: str = "", **data: Any) -> None:
-        """One line per action in Activity/<yyyy-mm>.md (busy streams such as web get their own file)."""
+        """One line per action in Activity/YYYY/MM/YYYY-MM-DD.md (busy streams such as web get their own file)."""
         now = self.now()
         extra = " ".join(f"{k}={v}" for k, v in data.items() if v not in (None, ""))
-        line = f"- {now:%Y-%m-%d %H:%M:%S} `{kind}` {text}"
-        if link:
-            line += f" [[{link}]]"
+        line = f"- {now:%H:%M} {KIND_EMOJI.get(kind, '•')} **{kind}** · {text}"
         if extra:
             line += f" ({extra})"
+        if link:
+            line += f" · [[{link}]]"
         try:
-            name = f"{now:%Y-%m}" + (f" {stream}" if stream else "")
-            self.append(f"Activity/{name}.md", line, header=f"# propbot activity {name}\n\n")
+            self.append(self.activity_rel(stream, now), line,
+                        header=f"---\ntags: [log]\nupdated: {now:%Y-%m-%d}\n---\n# Activity {now:%Y-%m-%d}\n\n")
         except OSError as exc:
             log.warning("vault activity write failed: %s", exc)
+
+    def recent(self, max_chars: int = 4000, days: int = 7) -> str:
+        """Memory for the LLM: the last days of activity, newest first, capped."""
+        out: list[str] = []
+        size = 0
+        now = self.now()
+        for d in range(days):
+            text = self.read(self.activity_rel(when=now - timedelta(days=d))) or ""
+            for line in reversed([x for x in text.splitlines() if x.startswith("- ")]):
+                if size + len(line) + 1 > max_chars:
+                    return "\n".join(out)
+                out.append(line)
+                size += len(line) + 1
+        return "\n".join(out)
+
+    def report(self, name: str, body: str) -> str | None:
+        """Write Reports/YYYY/MM/YYYY-MM-DD <name>.md (rewritten on the same day); returns the link."""
+        now = self.now()
+        rel = f"Reports/{now:%Y/%m}/{now:%Y-%m-%d} {name}.md"
+        try:
+            self.write(rel, frontmatter({"tags": ["report"], "updated": now.strftime("%Y-%m-%d %H:%M")}) + body)
+        except OSError as exc:
+            log.warning("vault report write failed: %s", exc)
+            return None
+        return rel[:-3]
 
     def write_card(self, card, message_plain: str, *, day: str | None = None, run_id: str = "",
                    rank: int | None = None, telegram_message_id: int | None = None) -> str | None:
