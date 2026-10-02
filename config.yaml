@@ -1,0 +1,163 @@
+# propbot configuration. Secrets go in .env, never here.
+# Every legal figure lives in rules/sg_property_rules.yaml, not in this file.
+
+profile:                      # you fill this in; the bot never guesses it
+  citizenship: SC             # SC, PR or foreigner
+  age: 29
+  first_timer: true           # never owned or received a housing subsidy
+  marital_status: single      # single, engaged, married
+  buying_with: none           # none, fiance, spouse, parents, sibling, joint_singles
+  co_buyer: {citizenship: "", age: 0, gross_monthly_income: 0, cpf_oa: 0}
+  gross_monthly_income: 0     # fixed income; variable income is entered separately
+  variable_monthly_income: 0  # commission or bonus averaged, banks haircut this by 30 percent
+  self_employed: false
+  monthly_debt_repayments: 0  # car loan, study loan, card instalments
+  cpf_oa_balance: 0
+  cash_available: 0
+  properties_owned: 0         # residential properties I own now, worldwide
+  properties_owned_outside_sg: 0  # of those, how many are outside Singapore (IRAS excludes them from the ABSD count)
+  housing_loans_outstanding: 0
+  owns_private_now: false
+  disposed_private_date: ""   # yyyy-mm-dd if I sold private property in the last 30 months
+  hdb_flat_mop_end: ""        # yyyy-mm-dd MOP end date of an HDB flat or EC I own now, empty if none
+  marginal_income_tax_rate_pct: 0  # for rental income tax; the bot looks it up from the IRAS bands if 0
+  intent: [rent_out, live_then_sell, flip]  # ranked, used by the verdict
+  hold_years: 10
+  benchmark_return_pct: 4.0   # what my money would earn elsewhere (for comparison, not a promise)
+  max_monthly_commitment_pct: 35  # my own comfort limit for instalment as a share of income, tighter than TDSR
+
+telegram:
+  chat_id: "@your_channel_or_numeric_id"
+  owner_user_id: 0
+  admin_chat_id: ""
+  replace_previous: true
+  notify_types: [rules_update]   # everything else posts silently
+
+run:
+  daily_target_messages: 100     # total item messages per day, all kinds together
+  outlooks_per_day: 10           # location outlooks within the 100
+  category_weights: {bto: 8, hdb_resale: 14, ec: 8, condo_resale: 16, condo_new_launch: 12, shophouse: 8, hdb_shop: 7, coffeeshop: 5, strata_commercial: 12}
+  repeat_days: 7                 # avoid reposting the same listing within this many days unless its price changed
+  candidates_per_category: 25
+  categories_refreshed_per_run: 9  # all enabled categories every day
+  cache_max_age_days: 7
+  prepare_cron: "0 6 * * *"
+  post_cron: "30 8 * * *"
+  timezone: Asia/Singapore
+  rules_check_cron: "0 5 * * 1"
+  rules_max_age_days: 10
+  max_run_minutes: 120
+  curation_batch_size: 25
+
+categories:                      # key, label, hashtag, enabled
+  bto:               {label: "BTO", tag: "#bto", enabled: true}
+  hdb_resale:        {label: "HDB resale", tag: "#hdbresale", enabled: true}
+  ec:                {label: "Executive condo", tag: "#ec", enabled: true}
+  condo_resale:      {label: "Resale condo", tag: "#condo", enabled: true}
+  condo_new_launch:  {label: "New launch condo", tag: "#newlaunch", enabled: true}
+  shophouse:         {label: "Shophouse", tag: "#shophouse", enabled: true}
+  hdb_shop:          {label: "HDB shop", tag: "#hdbshop", enabled: true}
+  coffeeshop:        {label: "Coffee shop", tag: "#coffeeshop", enabled: true}
+  strata_commercial: {label: "Strata office or retail", tag: "#strata", enabled: true}
+  landed:            {label: "Landed", tag: "#landed", enabled: false}
+  industrial:        {label: "Industrial B1 B2", tag: "#industrial", enabled: false}
+
+search:
+  budget_min_sgd: 300000
+  budget_max_sgd: 2500000        # candidates above my maximum upfront plus loan capacity are still shown as "out of reach" only when within 20 percent
+  areas: []                      # empty means all of Singapore; else planning areas or HDB towns
+  min_remaining_lease_years: 60
+  max_candidates_total: 250
+
+assumptions:
+  rent_growth_pct: 1.5
+  cost_inflation_pct: 2.0
+  vacancy_months_per_year: {residential: 1, commercial: 2}
+  base_cagr_cap_pct: 4.0         # base case price growth never exceeds this even if history did
+  bear_offset_pct: 3.0           # bear = base minus this, floored at minus 2
+  bull_offset_pct: 2.0
+  long_run_bank_rate_pct: 3.0    # after the first 2 years at today's rate
+  bank_spread_over_sora_pct: 0.8
+  sale_agent_fee_pct: 2.0
+  buy_agent_fee_pct: {hdb_resale: 1.0, default: 0.0}
+  legal_fee_sgd: 3000
+  valuation_fee_sgd: 500
+  renovation_sgd: {hdb_resale: 40000, condo_resale: 30000, bto: 30000, default: 0}
+  furnishing_for_rent_sgd: 10000
+  maintenance_monthly_sgd: {hdb: 80, ec: 300, condo: 350, shophouse: 400, strata_commercial: 500, coffeeshop: 800}
+  insurance_yearly_sgd: 300
+  count_rent_saved_when_living_in: true
+  lease_decay:                   # yearly value drag for leasehold, by remaining lease at the start of the year, on top of market growth
+    above_80_years: 0.0
+    70_to_80_years: 0.3
+    60_to_70_years: 0.7
+    50_to_60_years: 1.2
+    below_50_years: 2.0
+  benchmarks: {cpf_oa_pct: 2.5, tbill_pct: 2.0, balanced_portfolio_pct: 5.0}  # tbill refreshed from MAS when possible
+
+sources:
+  datagov:
+    enabled: true
+    datasets:                    # data.gov.sg dataset ids, found during the build
+      hdb_resale_prices: d_8b84c4ee58e3cfc0ece0d773c8ca6abc   # Resale flat prices based on registration date from Jan 2017 onwards
+      hdb_median_rent: d_23000a00c52996c55106084ed0339566     # Median rent by town and flat type
+      hdb_resale_price_index: d_f0c768860912d66940efdac9435dc046  # HDB Resale Price Index (1Q2009 = 100), quarterly
+  ura: {enabled: true}           # needs URA_ACCESS_KEY from the free registration
+  onemap: {enabled: true}        # needs ONEMAP_EMAIL and ONEMAP_PASSWORD from the free registration
+  listing_domains_allowed: [edgeprop.sg, propertyguru.com.sg, commercialguru.com.sg, stackedhomes.com, businesstimes.com.sg, straitstimes.com, channelnewsasia.com, hdb.gov.sg, ura.gov.sg, iras.gov.sg, mas.gov.sg, cpf.gov.sg, lta.gov.sg, knightfrank.com.sg, era.com.sg, propnex.com, huttons.com.sg, colliers.com, savills.com.sg]
+  never_fetch_domains: [99.co, srx.com.sg, facebook.com, instagram.com, carousell.sg, xiaohongshu.com, reddit.com]
+
+discovery:
+  queries_per_category: 3
+  query_templates:
+    bto: ["HDB BTO launch {month} {year} projects prices", "site:hdb.gov.sg BTO sales launch {year}", "BTO {year} Plus Prime Standard flats price range"]
+    hdb_resale: ["HDB resale {area} 4 room below {budget_max} {year}", "site:edgeprop.sg HDB resale {area} for sale", "HDB resale million dollar flats {month} {year}"]
+    ec: ["executive condominium launch {year} price", "EC resale {area} psf {year}"]
+    condo_resale: ["resale condo {area} for sale below {budget_max}", "site:edgeprop.sg condo for sale {area}", "condo resale {area} psf transactions {year}"]
+    condo_new_launch: ["new launch condo {month} {year} prices psf", "site:edgeprop.sg new launch {year}", "new condo launch {area} {year} units sold"]
+    shophouse: ["shophouse for sale Singapore {year}", "conservation shophouse transaction {month} {year}", "site:commercialguru.com.sg shophouse for sale"]
+    hdb_shop: ["HDB shop for sale {year}", "HDB retail unit sale {month} {year} price"]
+    coffeeshop: ["coffee shop for sale Singapore {year}", "HDB coffeeshop sold {year} price", "kopitiam for sale {area}"]
+    strata_commercial: ["strata office for sale Singapore {year}", "strata retail unit for sale {area}", "site:commercialguru.com.sg office for sale"]
+    landed: ["terrace house for sale {area} {year}", "landed transaction {area} {month} {year}"]
+    industrial: ["B1 industrial unit for sale {year}", "industrial strata sale {area}"]
+  prefer_days: 45
+
+claude:
+  binary: claude
+  model: sonnet
+  fallback_model: haiku
+  auth: oauth                    # oauth = CLAUDE_CODE_OAUTH_TOKEN, apikey = ANTHROPIC_API_KEY
+  max_retries: 4
+  discovery: {max_turns: 100, timeout_seconds: 1800, max_budget_usd: 3.00, calls_per_run: 2}  # categories split across two calls
+  curation: {max_turns: 4, timeout_seconds: 600, max_budget_usd: 1.00}
+  rules_check: {max_turns: 40, timeout_seconds: 900, max_budget_usd: 1.50}
+  no_tools: [Bash, Edit, Write, Read, Glob, Grep, WebFetch, WebSearch, Agent, NotebookEdit]
+
+limits:
+  web:
+    per_domain_min_gap_seconds: 6
+    per_domain_max_gap_seconds: 12
+    max_requests_per_run: 180
+    max_requests_per_day: 220
+    retries: 2
+    backoff_seconds: [30, 120]
+    domain_cooldown_hours: 24
+    page_cache_days: 7
+    respect_robots_txt: true
+    user_agent: "propbot/1.0 (personal property research, low volume)"
+  official_apis:
+    datagov_requests_per_day: 200
+    ura_requests_per_day: 100
+    onemap_requests_per_day: 300
+    min_gap_seconds: 1.0
+  telegram:
+    min_gap_seconds: 3.5
+    max_per_minute: 17
+    max_retries: 5
+    max_retry_after_seconds: 900
+    delete_batch_size: 100
+  claude:
+    max_calls_per_run: 10        # 2 discovery + 4 curation batches + retries
+    max_calls_per_day: 12
+    max_analyses_per_day: 10     # on demand /analyse from my private chat

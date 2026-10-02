@@ -1,0 +1,1 @@
+Run date: {{date}} (Asia/Singapore). Budget S${{budget_min}} to S${{budget_max}}. Areas: {{areas}}. Find up to {{max_candidates}} candidates per category for the categories in stdin, preferring pages from the last {{prefer_days}} days. Stdin holds the categories, queries, allowed and never fetch domains and the known items. Return the discovery object.

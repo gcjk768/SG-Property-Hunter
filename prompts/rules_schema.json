@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "properties": {
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rule_id": {"type": "string"},
+          "status": {"type": "string", "enum": ["unchanged", "changed", "unreadable"]},
+          "value": {},
+          "effective_from": {"type": ["string", "null"]},
+          "quote": {"type": ["string", "null"]},
+          "url": {"type": "string"}
+        },
+        "required": ["rule_id", "status", "value", "effective_from", "quote", "url"]
+      }
+    },
+    "run_note": {"type": "string"}
+  },
+  "required": ["rules", "run_note"]
+}
