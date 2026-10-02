@@ -371,6 +371,23 @@ def dot(*bits: object) -> str:
     return " · ".join(esc(b) for b in bits if b)
 
 
+OUTLOOK_RANGE = (-60.0, 150.0)   # an estimate outside this is treated as a model error and not shown
+
+
+def outlook_years(category: str) -> int:
+    """BTO is valued over 10 years, everything else over 5."""
+    return 10 if category == "bto" else 5
+
+
+def outlook_line(price: float, pct: float | None, years: int, reason: str = "") -> str:
+    """`🔮 🟢 5y est ▲12% · ~S$896,000 · reason`; empty when there is no usable estimate."""
+    if pct is None or not (OUTLOOK_RANGE[0] <= pct <= OUTLOOK_RANGE[1]):
+        return ""
+    mark, arrow = ("🟢", "▲") if pct > 0 else ("🔴", "▼") if pct < 0 else ("⚪", "")
+    value = f"~S${round(price * (1 + pct / 100), -3):,.0f}"
+    return f"🔮 {mark} " + dot(f"{years}y est {arrow}{abs(pct):.0f}%", value, (reason or "")[:120])
+
+
 def header(title: str, subtitle: str = "") -> str:
     """`emoji <b>TITLE</b> · subtitle`; the title's first word is its fixed emoji (REPORT_TITLES)."""
     emoji, _, name = title.partition(" ")

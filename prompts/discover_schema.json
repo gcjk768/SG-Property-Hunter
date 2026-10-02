@@ -26,9 +26,11 @@
           "site": {"type": "string"},
           "page_date": {"type": ["string", "null"]},
           "gist": {"type": "string"},
-          "from_snippet": {"type": "boolean"}
+          "from_snippet": {"type": "boolean"},
+          "outlook_pct": {"type": ["number", "null"]},
+          "outlook_reason": {"type": "string"}
         },
-        "required": ["category_key", "name", "address", "area", "price_sgd", "price_phrase", "price_label", "floor_area", "floor_area_unit", "tenure", "lease_start_year", "remaining_lease_years", "floor", "asking_rent_sgd", "completion_year", "url", "site", "page_date", "gist", "from_snippet"]
+        "required": ["category_key", "name", "address", "area", "price_sgd", "price_phrase", "price_label", "floor_area", "floor_area_unit", "tenure", "lease_start_year", "remaining_lease_years", "floor", "asking_rent_sgd", "completion_year", "url", "site", "page_date", "gist", "from_snippet", "outlook_pct", "outlook_reason"]
       }
     }
   },

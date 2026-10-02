@@ -18,7 +18,7 @@ from urllib.parse import quote_plus, urlsplit
 from .config import Settings
 from .db import DB
 from .pulse import SQFT_PER_SQM, months_back
-from .render import REPORT_TITLES, card, dot, note, section_messages
+from .render import REPORT_TITLES, card, dot, note, outlook_line, outlook_years, section_messages
 from .telegram import esc, esc_attr
 from .web import is_allowed_domain, is_never_fetch
 
@@ -52,6 +52,8 @@ class Listing:
     gist: str
     snippet_only: bool
     vs_median_pct: float | None = None   # positive = below the HDB median for the town and lease band
+    outlook_pct: float | None = None     # Claude's estimate of the value change over outlook_years(category)
+    outlook_reason: str = ""
 
 
 def listing_key(url: str) -> str:
@@ -62,17 +64,26 @@ def listing_key(url: str) -> str:
 def brief(settings: Settings, today: str, n: int) -> str:
     s = settings.search
     return (f"Run date: {today} (Asia/Singapore). Find {n + 3} real Singapore properties that are listed for sale "
-            f"right now, each with its own listing page, priced S${s.budget_min_sgd:,.0f} to S${s.budget_max_sgd:,.0f}. "
-            f"Favour what can be rented out soon or resold for a gain. Mix the categories in stdin. Return the "
+            f"right now, each with its own listing page, priced S${s.budget_min_sgd:,.0f} up to the category's "
+            f"budget_max_sgd in stdin. Favour what can be rented out soon or resold for a gain. Return at least one "
+            f"from every category in stdin when one is listed, shophouses, HDB shops and coffee shops included. Return the "
             f"discovery object. Include new launch condos. For resale homes, EC resale and commercial units the url "
             f"must be that unit's own listing page where a buyer contacts the agent (for example "
             f"edgeprop.sg/listing/..., propertyguru.com.sg/listing/..., commercialguru.com.sg/listing/...), never a "
             f"project, condo directory or article page. For new launch condos, BTO and new ECs use the project's "
-            f"official or listing page.")
+            f"official or listing page. For every candidate estimate outlook_pct, the percent change in its market "
+            f"value over the next 5 years (10 years for BTO), negative for depreciation (lease decay, oversupply), "
+            f"from recent transactions, lease left, location and supply; outlook_reason says why in at most 12 words.")
+
+
+def budget_max(settings: Settings, category: str) -> float:
+    c = settings.categories.get(category)
+    return (c and c.budget_max_sgd) or settings.search.budget_max_sgd
 
 
 def stdin_text(settings: Settings, db: DB) -> str:
-    cats = {k: settings.categories[k].label for k in settings.enabled_categories()}
+    cats = {k: {"label": settings.categories[k].label, "budget_max_sgd": budget_max(settings, k)}
+            for k in settings.enabled_categories()}
     known = [r["key"] for r in db.all("SELECT key FROM pulse_alerted WHERE key LIKE 'url:%' "
                                       "ORDER BY alerted_at DESC LIMIT 60")]
     return json.dumps({
@@ -105,7 +116,7 @@ def validate(cands: list[dict], settings: Settings, db: DB) -> tuple[list[Listin
             why = "no link"
         elif is_never_fetch(url, src.never_fetch_domains) or not is_allowed_domain(url, src.listing_domains_allowed):
             why = f"site not allowed: {urlsplit(url).netloc}"
-        elif not price or not (s.budget_min_sgd <= price <= s.budget_max_sgd):
+        elif not price or not (s.budget_min_sgd <= price <= budget_max(settings, c.get("category_key"))):
             why = f"price {price} outside budget"
         elif c.get("price_label") == "transacted":
             why = "a past sale, not a listing"
@@ -126,7 +137,8 @@ def validate(cands: list[dict], settings: Settings, db: DB) -> tuple[list[Listin
                            c.get("area") or "", float(price), c.get("price_label") or "asking", _sqft(c),
                            c.get("tenure") or "unknown", c.get("remaining_lease_years"), c.get("floor") or "",
                            c.get("asking_rent_sgd"), url, c.get("site") or urlsplit(url).netloc,
-                           c.get("gist") or "", bool(c.get("from_snippet"))))
+                           c.get("gist") or "", bool(c.get("from_snippet")),
+                           outlook_pct=c.get("outlook_pct"), outlook_reason=c.get("outlook_reason") or ""))
     return out, dropped
 
 
@@ -159,6 +171,7 @@ def listing_card(n: int, x: Listing, settings: Settings) -> str:
         lines.append(f"📉 {mark} {abs(x.vs_median_pct):.0f}% {word} recent {esc(x.area.title())} HDB sales {arrow}")
     if x.rent:
         lines.append("📈 " + dot(f"Asking rent S${x.rent:,.0f}/mo", f"{x.rent * 12 / x.price * 100:.1f}% gross"))
+    lines.append(outlook_line(x.price, x.outlook_pct, outlook_years(x.category), x.outlook_reason))
     if x.gist:
         lines.append("💡 " + esc(x.gist[:300]))
     maps = "https://www.google.com/maps/search/?api=1&query=" + quote_plus(f"{x.address or x.name} Singapore")
@@ -176,7 +189,8 @@ def messages(listings: list[Listing], run_note: str, dropped: int, settings: Set
         "⚪ <i>Nothing new for sale that passed the checks this time.</i>"]
     detail = (f"Found by Claude (haiku) web search, then checked here: allowed site, budget, lease, a unit listing "
               f"page for resale (new launches, BTO and ECs link the project), not posted before. Asking prices, "
-              f"not valuations. Not financial advice.")
+              f"not valuations. 🔮 is Claude's rough value estimate over 5 years (BTO 10), not a forecast. "
+              f"Not financial advice.")
     if run_note:
         detail += f" Search note: {run_note[:300]}"
     return section_messages(REPORT_TITLES["hunt"], datetime.now().strftime("%a %d %b %Y"), [summary, *cards],

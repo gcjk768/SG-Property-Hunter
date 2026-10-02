@@ -5,6 +5,8 @@ updated: 2026-10-03
 # Changelog
 
 ## 2026-10-03
+- feat: 🔮 value outlook on every card: hunt listings get Claude's estimated % change over 5 years (BTO 10) in the same hunt call; pulse deals get one batched no-tools claude -p haiku call (`prompts/outlook_*`), skipped quietly if Claude is unavailable
+- fix: shophouses, HDB shops, coffee shops and strata commercial never showed because the S$2.5M budget cut them; categories now take an optional `budget_max_sgd` (8M, 5M, 15M, 4M) and the hunt asks for at least one per category
 - feat: pulse and hunt use the SG car tracker bot layout (header · date, summary counts, numbered cards with the linked name, collapsed notes last)
 - feat: scheduled checks pause during the US regular session (trading desk hours, New York time so DST is right)
 - feat: hunt requires a unit listing page for resale (contact the agent); new launch, BTO and EC may link the project page

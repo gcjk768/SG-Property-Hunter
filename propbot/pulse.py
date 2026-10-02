@@ -7,6 +7,7 @@ and flat type gives at least min_yield_pct gross. Each transaction is posted onc
 """
 from __future__ import annotations
 
+import json
 import logging
 import re
 import statistics
@@ -19,7 +20,7 @@ import httpx
 from .config import Settings
 from .db import DB
 from .ratelimit import RateLimiter
-from .render import REPORT_TITLES, card, dot, note, section_messages
+from .render import REPORT_TITLES, card, dot, note, outlook_line, section_messages
 from .telegram import esc, esc_attr
 
 log = logging.getLogger("propbot.pulse")
@@ -49,6 +50,8 @@ class Deal:
     rent: float | None
     yield_pct: float | None
     new: bool = True
+    outlook_pct: float | None = None     # Claude's 5 year value change estimate
+    outlook_reason: str = ""
 
     @property
     def psf(self) -> float:
@@ -180,6 +183,23 @@ def mark_alerted(db: DB, deals: list[Deal]) -> None:
     db.executemany("INSERT OR IGNORE INTO pulse_alerted VALUES (?, ?)", [(d.key, stamp) for d in deals])
 
 
+def outlook(claude, settings: Settings, deals: list[Deal]) -> None:
+    """One no-tools claude -p call: a 5 year value change estimate per deal. Raises ClaudeUnavailable."""
+    if not deals:
+        return
+    rows = [{"i": i, "town": d.town, "flat_type": d.flat_type, "sqm": d.sqm, "storey": d.storey,
+             "lease_left": d.remaining_lease, "price": d.price, "vs_town_median_pct": round(-d.discount_pct, 1)}
+            for i, d in enumerate(deals)]
+    base = settings.prompts_dir
+    res = claude.call(label="outlook", brief="Estimate the 5 year value change for every flat in stdin.",
+                      stdin_text=json.dumps(rows), system_file=base / "outlook_system.md",
+                      schema=json.loads((base / "outlook_schema.json").read_text(encoding="utf-8")),
+                      disallowed_tools=settings.claude.no_tools, max_turns=2, timeout=300)
+    for e in (res.structured or {}).get("estimates") or []:
+        if isinstance(e.get("i"), int) and 0 <= e["i"] < len(deals):
+            deals[e["i"]].outlook_pct, deals[e["i"]].outlook_reason = e.get("pct"), e.get("reason") or ""
+
+
 # ------------------------------------------------------------ rendering
 def _money(x: float) -> str:
     return f"S${x:,.0f}"
@@ -214,6 +234,7 @@ def deal_card(n: int, d: Deal, cfg) -> str:
         "💰 " + dot(_money(d.price), f"S${d.psf:,.0f} psf", f"sold {_month_label(d.month)}"),
         f"📉 {esc(value)} · {esc(lease)}",
         rent or "",
+        outlook_line(d.price, d.outlook_pct, 5, d.outlook_reason),
         "🏠 " + dot(f"{d.sqm:.0f} sqm", f"floor {d.storey.lower()}") + f' · <a href="{esc_attr(maps)}">Map</a>',
     ], tag="NEW" if d.new else "", emoji="🏢", desc=addr)
 
@@ -236,6 +257,7 @@ def render(deals: list[Deal], ctx: dict, settings: Settings, *, title_note: str 
         f"{cfg.min_yield_pct:g}% gross or more. Budget S${settings.search.budget_min_sgd:,.0f} to "
         f"S${settings.search.budget_max_sgd:,.0f}, lease at least {settings.search.min_remaining_lease_years:g} years. "
         f"The name links to flats for sale in that block now. Renting out the whole flat needs the 5 year MOP "
-        f"first. Gross yield is before costs. Not financial advice.")
+        f"first. Gross yield is before costs. 🔮 is Claude's rough 5 year value estimate, not a forecast. "
+        f"Not financial advice.")
     sub = title_note or datetime.now().strftime("%a %d %b %Y")
     return section_messages(REPORT_TITLES["pulse"], sub, [summary, *cards, links], method)
