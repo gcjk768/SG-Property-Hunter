@@ -83,3 +83,32 @@ def test_quiet_during_us_session(settings, db, limiter):
     bot.claude = FakeClaude()
     bot.tick(datetime(2026, 10, 5, 22, 40, tzinfo=sgt))
     assert bot.tg.sent == [] and bot.claude.calls == 0
+
+
+def test_outlook_line_marks_and_sanity_range():
+    from propbot.render import outlook_line, outlook_years
+    assert outlook_line(800_000, 12, 5, "MRT 2028") == "🔮 🟢 5y est ▲12% · ~S$896,000 · MRT 2028"
+    assert outlook_line(500_000, -8, 5).startswith("🔮 🔴 5y est ▼8% · ~S$460,000")
+    assert outlook_line(500_000, None, 5) == "" and outlook_line(500_000, 900, 5) == ""
+    assert outlook_years("bto") == 10 and outlook_years("hdb_resale") == 5
+
+
+def test_commercial_category_budget_and_outlook_on_card(settings, db, limiter):
+    bot = make_bot(settings, db, limiter, HISTORY)
+    bot.s.categories["shophouse"].budget_max_sgd = 8_000_000
+    shop = cand("Shophouse", "https://www.commercialguru.com.sg/listing/9", price=4_500_000, category_key="shophouse",
+                outlook_pct=-5, outlook_reason="Lease decay")
+    condo = cand("Dear Condo", "https://www.edgeprop.sg/listing/10", price=4_500_000)
+    keep, dropped = hunt.validate([shop, condo], bot.s, db)
+    assert [x.name for x in keep] == ["Shophouse"] and "outside budget" in dropped[0]
+    assert "🔮 🔴 5y est ▼5% · ~S$4,275,000 · Lease decay" in hunt.listing_card(1, keep[0], bot.s)
+
+
+def test_pulse_outlook_maps_estimates_by_index(settings):
+    from propbot import pulse
+    deals = [pulse.Deal("k", "2026-09", "BISHAN", "4 ROOM", "1", "ST", "07 TO 09", 90, 70, 600_000, 7000, 5, None, None)
+             for _ in range(2)]
+    fake = SimpleNamespace(call=lambda **kw: SimpleNamespace(structured={"estimates": [
+        {"i": 1, "pct": 7, "reason": "Mature town"}, {"i": 5, "pct": 1, "reason": "bad index"}]}))
+    pulse.outlook(fake, settings, deals)
+    assert deals[0].outlook_pct is None and (deals[1].outlook_pct, deals[1].outlook_reason) == (7, "Mature town")

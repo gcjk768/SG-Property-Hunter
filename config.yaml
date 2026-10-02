@@ -79,10 +79,10 @@ categories:                      # key, label, hashtag, enabled
   ec:                {label: "Executive condo", tag: "#ec", enabled: true}
   condo_resale:      {label: "Resale condo", tag: "#condo", enabled: true}
   condo_new_launch:  {label: "New launch condo", tag: "#newlaunch", enabled: true}
-  shophouse:         {label: "Shophouse", tag: "#shophouse", enabled: true}
-  hdb_shop:          {label: "HDB shop", tag: "#hdbshop", enabled: true}
-  coffeeshop:        {label: "Coffee shop", tag: "#coffeeshop", enabled: true}
-  strata_commercial: {label: "Strata office or retail", tag: "#strata", enabled: true}
+  shophouse:         {label: "Shophouse", tag: "#shophouse", enabled: true, budget_max_sgd: 8000000}
+  hdb_shop:          {label: "HDB shop", tag: "#hdbshop", enabled: true, budget_max_sgd: 5000000}
+  coffeeshop:        {label: "Coffee shop", tag: "#coffeeshop", enabled: true, budget_max_sgd: 15000000}
+  strata_commercial: {label: "Strata office or retail", tag: "#strata", enabled: true, budget_max_sgd: 4000000}
   landed:            {label: "Landed", tag: "#landed", enabled: false}
   industrial:        {label: "Industrial B1 B2", tag: "#industrial", enabled: false}
 

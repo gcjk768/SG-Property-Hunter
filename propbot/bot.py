@@ -133,6 +133,11 @@ class Bot:
                 if not deals:
                     self.vault.activity("pulse", f"checked, {added} new sales, nothing notable")
                     return None
+            if self.claude is not None:
+                try:
+                    pulse.outlook(self.claude, self.s, deals[:self.s.pulse.max_items] if self.s.pulse.max_items > 0 else deals)
+                except ClaudeUnavailable as exc:
+                    log.warning("pulse outlook skipped: %s", exc.reason)
             msgs = pulse.render(deals, ctx, self.s)
             if where is None:              # dry run: print only, keep the deals new
                 return msgs

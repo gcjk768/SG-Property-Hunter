@@ -109,6 +109,7 @@ class CategoryCfg(_Strict):
     label: str
     tag: str
     enabled: bool = True
+    budget_max_sgd: float | None = None   # overrides search.budget_max_sgd (commercial units cost more)
 
 
 class SearchCfg(_Strict):

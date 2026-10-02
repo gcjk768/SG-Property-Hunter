@@ -1,0 +1,1 @@
+{"type": "object", "properties": {"estimates": {"type": "array", "items": {"type": "object", "properties": {"i": {"type": "integer"}, "pct": {"type": "number"}, "reason": {"type": "string"}}, "required": ["i", "pct", "reason"]}}}, "required": ["estimates"]}
