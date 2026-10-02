@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-from . import pulse
+from . import hunt, pulse
 from .claude import ClaudeUnavailable
 from .config import ConfigError, Settings
 from .db import DB
@@ -28,7 +28,7 @@ from .telegram import TelegramClient, esc
 
 log = logging.getLogger("propbot.bot")
 
-COMMANDS = ("proppulse", "propanalyse", "propask", "propstatus", "prophelp")
+COMMANDS = ("proppulse", "prophunt", "propanalyse", "propask", "propstatus", "prophelp")
 BUTTON_COMMANDS = {"proppulse", "propstatus", "prophelp"}
 BUTTONS = [("🔄 Run again", "proppulse"), ("📊 Status", "propstatus")]
 ASK_TOOLS = ["WebSearch", "WebFetch"]
@@ -139,6 +139,41 @@ class Bot:
     def cmd_pulse(self, arg, where) -> None:
         self.pulse(where, manual=True)
 
+    # ------------------------------------------------------------ listing hunt
+    def hunt(self, where, *, manual: bool, now: datetime | None = None) -> int:
+        """One Claude web search; posts a header plus one card per new listing. Returns cards posted."""
+        if self.claude is None:
+            if manual:
+                self.send(where, f"{hunt.TITLE} <b>LISTING HUNT</b> · Claude is not set up")
+            return 0
+        now = now or datetime.now(self.tz)
+        self.limiter.set_run(f"hunt-{now:%Y%m%d%H%M}")
+        if manual:
+            self.tg.typing(where[0], where[1])
+        try:
+            listings, dropped, note = hunt.run(self.claude, self.s, self.db, now.date(), self.s.hunt.per_run)
+        except ClaudeUnavailable as exc:
+            self.vault.activity("error", f"listing hunt: Claude unavailable: {exc.reason}")
+            if manual:
+                self.send(where, f"{hunt.TITLE} <b>LISTING HUNT</b> · Claude unavailable\n\n<i>{esc(exc.reason)}</i>")
+            return 0
+        self.vault.activity("hunt", f"{len(listings)} new listings, {len(dropped)} dropped"
+                            + (f" ({'; '.join(dropped)[:300]})" if dropped else ""))
+        if not listings:
+            if manual:
+                self.send(where, hunt.header([], note, len(dropped)), buttons=[("📊 Status", "propstatus")])
+            return 0
+        msgs = [hunt.header(listings, note, len(dropped))] + [hunt.card(x, self.s) for x in listings]
+        self.send(where, msgs, buttons=[("🏠 HDB pulse", "proppulse"), ("📊 Status", "propstatus")])
+        hunt.mark_posted(self.db, listings)
+        for x in listings:
+            self.vault.activity("hunt", f"posted {x.name}, S${x.price:,.0f}, {x.url}")
+        self.vault.report("Listing hunt", "\n\n".join(plain(m) for m in msgs) + "\n")
+        return len(listings)
+
+    def cmd_hunt(self, arg, where) -> None:
+        self.hunt(where, manual=True)
+
     # ------------------------------------------------------------ analyse
     def cmd_analyse(self, arg, where) -> None:
         from .cli import AnalyseInputError, _settings, build_parser, card_message
@@ -184,6 +219,7 @@ class Bot:
             self.send(where, f"{t} <b>ASK</b> · Claude is not set up\n\n<i>CLAUDE_CODE_OAUTH_TOKEN is missing.</i>")
             return
         self.tg.typing(where[0], where[1])
+        self.limiter.set_run(f"ask-{datetime.now():%Y%m%d%H%M%S}")
         cfg, base = self.s.claude, self.s.prompts_dir
         memory = self.vault.recent(4000) or "nothing yet"
         stdin = f"Today is {datetime.now(self.tz):%Y-%m-%d %H:%M} SGT.\n\nWhat you already did and found (newest first):\n{memory}\n"
@@ -222,11 +258,12 @@ class Bot:
         self.send(where, "\n".join([
             f"{SECTION_TITLES['help']} <b>HELP</b> · SG Property Hunter", "",
             "🏠 <b>/proppulse</b> · notable HDB resale deals now",
+            "🏘 <b>/prophunt</b> · real listings for sale now (Claude web search)",
             "🧮 <b>/propanalyse</b> · full card for one property",
             "<code>/propanalyse hdb_resale, Tampines, 600000, 1001, 99 year, 68, 3200</code>",
             "💬 <b>/propask</b> · ask anything about SG property",
             "📊 <b>/propstatus</b> · data, schedule and budgets", "",
-            f"<i>Posts by itself every hour at :{self.s.pulse.check_minute:02d} only when new notable deals appear.</i>",
+            f"<i>Posts by itself every hour at :{self.s.pulse.check_minute:02d} only when new notable deals appear; hunts new listings at :{self.s.hunt.check_minute:02d}.</i>",
         ]))
 
     # ------------------------------------------------------------ loops
@@ -236,6 +273,9 @@ class Bot:
         if self.s.pulse.enabled and now.minute >= self.s.pulse.check_minute and self.db.meta_get("pulse_slot") != slot:
             self.db.meta_set("pulse_slot", slot)
             self.pulse((self.chat, self.thread), manual=False, now=now)
+        if self.s.hunt.enabled and now.minute >= self.s.hunt.check_minute and self.db.meta_get("hunt_slot") != slot:
+            self.db.meta_set("hunt_slot", slot)
+            self.hunt((self.chat, self.thread), manual=False, now=now)
 
     def _scheduler(self) -> None:
         while True:

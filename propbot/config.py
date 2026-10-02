@@ -248,6 +248,13 @@ class PulseCfg(_Strict):
     max_items: int = 8
 
 
+class HuntCfg(_Strict):
+    """Hourly listing hunt: claude -p web search for real listings, one card each, new ones only."""
+    enabled: bool = True
+    check_minute: int = 37
+    per_run: int = 5
+
+
 class ObsidianCfg(_Strict):
     enabled: bool = False
     vault_path: str = "/vault"
@@ -285,6 +292,7 @@ class Settings(_Strict):
     limits: LimitsCfg = Field(default_factory=LimitsCfg)
     obsidian: ObsidianCfg = Field(default_factory=ObsidianCfg)
     pulse: PulseCfg = Field(default_factory=PulseCfg)
+    hunt: HuntCfg = Field(default_factory=HuntCfg)
 
     # filled by load_settings, not part of config.yaml
     base_dir: Path = Field(default=Path("."), exclude=True)
@@ -319,7 +327,7 @@ _FLOORS: list[tuple[str, Any, str]] = [
     ("limits.web.respect_robots_txt", lambda v: v is True, "must be true"),
     ("limits.telegram.min_gap_seconds", lambda v: v >= 1.0, "must be at least 1.0"),
     ("limits.telegram.max_per_minute", lambda v: v <= 20, "must be at most 20"),
-    ("limits.claude.max_calls_per_day", lambda v: v <= 12, "must be at most 12"),
+    ("limits.claude.max_calls_per_day", lambda v: v <= 48, "must be at most 48"),  # hourly haiku hunt plus asks
     ("limits.claude.max_analyses_per_day", lambda v: v <= 30, "must be at most 30"),
     ("assumptions.base_cagr_cap_pct", lambda v: v <= 6, "must be at most 6"),
 ]

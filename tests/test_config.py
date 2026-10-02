@@ -18,7 +18,8 @@ def test_defaults_match_spec():
     assert s.limits.web.max_requests_per_day == 220
     assert s.limits.telegram.min_gap_seconds == 3.5
     assert s.limits.telegram.max_per_minute == 17
-    assert s.limits.claude.max_calls_per_day == 12
+    assert s.limits.claude.max_calls_per_day == 40
+    assert s.claude.model == "haiku" and s.hunt.enabled
     assert s.assumptions.base_cagr_cap_pct == 4.0
     assert s.profile.citizenship == "SC" and s.profile.age == 29
     assert s.enabled_categories() == ["bto", "hdb_resale", "ec", "condo_resale", "condo_new_launch",
@@ -42,7 +43,7 @@ def test_refuses_without_income_with_clear_message():
     ("limits.web.respect_robots_txt", False),
     ("limits.telegram.min_gap_seconds", 0.5),
     ("limits.telegram.max_per_minute", 21),
-    ("limits.claude.max_calls_per_day", 13),
+    ("limits.claude.max_calls_per_day", 49),
     ("limits.claude.max_analyses_per_day", 31),
     ("assumptions.base_cagr_cap_pct", 6.5),
 ])
