@@ -4,7 +4,7 @@ These are the four `propbot analyse` cards the brief asked for, computed with no
 
 ## What these cards assume
 
-- **Profile.** Everything comes from `config.yaml`: Singapore citizen, 29, single, first timer, buying alone, ranked intents rent out, live then sell, flip, 10 year hold, 4% benchmark, 35% own limit.
+- **Profile.** Everything comes from `config.yaml`: Singapore citizen, 29, single, first timer, buying alone, ranked intents rent out, then flip, 10 year hold, 4% benchmark, 35% own limit.
 - **Placeholders.** Three profile fields are 0 in your config, so the script fills them for this run only: income 10,000 a month, cash 300,000, CPF OA 100,000. The bot refuses to start with income 0, so put your real figures in before trusting any verdict.
 - **Rates.** No SORA is stored yet (data arrives in step 4), so today's bank rate is assumed at your long run rate of 3.0%, and every card says so. The HDB loan rate is the CPF OA rate of 2.5% plus 0.1%, both from the rules file.
 - **Inputs.** Prices, sizes, leases, rents and growth rates are typed in example inputs, not market data. No comparables are loaded, so every card shows Market unknown and loses half a point for thin evidence.
@@ -14,6 +14,7 @@ These are the four `propbot analyse` cards the brief asked for, computed with no
 Inputs: price 600,000; 93 sqm; 99 year lease, 68 years left; built 1995; market rent 3,200 a month; growth 3.0% a year (typed in).
 
 ```
+2026-10-02 15:45:09,417 propbot.vault WARNING Obsidian vault not available at /vault/propbot: vault root /vault does not exist; is the NAS folder mounted?
 #hdbresale HDB resale · 1 of 1 · Tampines
 Example 4 room resale flat
 Tampines Street 81 · 99 year, 68 years left · 1,001 sqft · built 1995
@@ -52,7 +53,7 @@ Biggest drop: none in the base case · Best year: 1 (+2.3%) · Lease decay over 
 Signals: lease 58 years at exit
 Flags: thin evidence
 Verdict: Not eligible yet, eligible from age 35, in about 6 years (2032), or now if you buy with a fiance, a spouse or your parents
-Model estimate, not financial advice. Rules as of 2026-10-02. Found 2026-10-02 14:09 SGT
+Model estimate, not financial advice. Rules as of 2026-10-02. Found 2026-10-02 23:45 SGT
 
 [2429 characters; Telegram limit 4096]
 ```
@@ -76,6 +77,7 @@ Model estimate, not financial advice. Rules as of 2026-10-02. Found 2026-10-02 1
 Inputs: price 1,500,000; 1,076 sqft; 99 year lease, 88 years left; built 2018; market rent 4,500; growth 2.5% (typed in).
 
 ```
+2026-10-02 15:45:09,782 propbot.vault WARNING Obsidian vault not available at /vault/propbot: vault root /vault does not exist; is the NAS folder mounted?
 #condo Resale condo · 1 of 1 · Punggol
 Example OCR condo, 3 bedroom
 Punggol Walk · 99 year, 88 years left · 1,076 sqft · built 2018
@@ -113,11 +115,11 @@ Yr    Value    Change  Equity    If sold
 Biggest drop: none in the base case · Best year: 1 (+2.5%) · Lease decay over 10 years: S$11,363, 0.3% a year
 Signals: lease 78 years at exit
 Flags: thin evidence, out of reach
-Verdict: Not affordable (1.5/5), best as live then sell
+Verdict: Not affordable (1.5/5), best as rent out
 Needs S$63,100 more cash than you have.
-Model estimate, not financial advice. Rules as of 2026-10-02. Found 2026-10-02 14:09 SGT
+Model estimate, not financial advice. Rules as of 2026-10-02. Found 2026-10-02 23:45 SGT
 
-[2198 characters; Telegram limit 4096]
+[2192 characters; Telegram limit 4096]
 ```
 
 **Check by hand**
@@ -137,6 +139,7 @@ Model estimate, not financial advice. Rules as of 2026-10-02. Found 2026-10-02 1
 Inputs: price 4,000,000; 1,800 sqft; freehold; commercial zoning; seller not GST registered; market rent 12,000; growth 3.0% (typed in).
 
 ```
+2026-10-02 15:45:10,167 propbot.vault WARNING Obsidian vault not available at /vault/propbot: vault root /vault does not exist; is the NAS folder mounted?
 #shophouse Shophouse · 1 of 1 · Tanjong Pagar
 Example conservation shophouse
 Duxton Road · freehold · 1,800 sqft
@@ -176,7 +179,7 @@ Biggest drop: none in the base case · Best year: every year about +3.0% · Leas
 Signals: none loaded yet
 Flags: thin evidence
 Verdict: Not affordable (2.5/5), best as rent out
-Model estimate, not financial advice. Rules as of 2026-10-02. Found 2026-10-02 14:09 SGT
+Model estimate, not financial advice. Rules as of 2026-10-02. Found 2026-10-02 23:45 SGT
 
 [2142 characters; Telegram limit 4096]
 ```
@@ -195,6 +198,7 @@ Model estimate, not financial advice. Rules as of 2026-10-02. Found 2026-10-02 1
 Inputs: price 500,000; 93 sqm; Plus project; completion 2030; market rent 3,600 (used for rent saved only); growth 3.0% (typed in).
 
 ```
+2026-10-02 15:45:10,621 propbot.vault WARNING Obsidian vault not available at /vault/propbot: vault root /vault does not exist; is the NAS folder mounted?
 #bto BTO · 1 of 1 · Toa Payoh
 Example BTO 4 room, Plus project
 99 year, 99 years left · 1,001 sqft · completion 2030
@@ -238,7 +242,7 @@ Biggest drop: none in the base case · Best year: every year about +3.0% · Leas
 Signals: lease 89 years at exit
 Flags: thin evidence
 Verdict: Not eligible yet, eligible from age 35, in about 6 years (2032), or now if you buy with a fiance, a spouse or your parents
-Model estimate, not financial advice. Rules as of 2026-10-02. Found 2026-10-02 14:09 SGT
+Model estimate, not financial advice. Rules as of 2026-10-02. Found 2026-10-02 23:45 SGT
 
 [2818 characters; Telegram limit 4096]
 ```
