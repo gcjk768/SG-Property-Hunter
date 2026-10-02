@@ -17,7 +17,8 @@ from urllib.parse import quote_plus, urlsplit
 
 from .config import Settings
 from .db import DB
-from .pulse import DIVIDER, SQFT_PER_SQM, months_back
+from .pulse import SQFT_PER_SQM, months_back
+from .render import REPORT_TITLES, card, dot, note, section_messages
 from .telegram import esc, esc_attr
 from .web import is_allowed_domain, is_never_fetch
 
@@ -145,38 +146,41 @@ def hdb_context(listings: list[Listing], db: DB, today) -> None:
             x.vs_median_pct = (1 - (x.price / x.sqft) / med_psf) * 100
 
 
-def card(x: Listing, settings: Settings) -> str:
+def listing_card(n: int, x: Listing, settings: Settings) -> str:
     label = settings.categories[x.category].label if x.category in settings.categories else x.category
-    psf = f" · S${x.price / x.sqft:,.0f} psf" if x.sqft else ""
-    lease = f"{x.lease_left:.0f}y lease left" if x.lease_left else ""
-    facts = " · ".join(p for p in [f"{x.sqft:,.0f} sqft" if x.sqft else "size unknown", x.tenure, lease,
-                                   f"floor {x.floor}" if x.floor else ""] if p)
-    lines = [f"{TITLE} <b>{esc(x.name.upper())}</b> · {esc(label)} · {esc(x.area.title() or 'Singapore')}", "",
-             f"💰 S${x.price:,.0f} {esc(x.price_label)}{psf}", f"🏠 {esc(facts)}"]
+    lines = [
+        "💰 " + dot(f"S${x.price:,.0f} {x.price_label}", f"S${x.price / x.sqft:,.0f} psf" if x.sqft else None,
+                   f"{x.sqft:,.0f} sqft" if x.sqft else "size unknown"),
+        "🏠 " + dot(x.tenure, f"{x.lease_left:.0f}y lease left" if x.lease_left else None,
+                   f"floor {x.floor}" if x.floor else None, x.area.title() or None),
+    ]
     if x.vs_median_pct is not None:
-        mark = "🟢" if x.vs_median_pct >= 0 else "🔴"
-        word = "below" if x.vs_median_pct >= 0 else "above"
-        arrow = "▼" if x.vs_median_pct >= 0 else "▲"
-        lines.append(f"📊 {mark} <i>{abs(x.vs_median_pct):.0f}% {word} recent {esc(x.area.title())} HDB sales {arrow}</i>")
+        mark, word, arrow = ("🟢", "below", "▼") if x.vs_median_pct >= 0 else ("🔴", "above", "▲")
+        lines.append(f"📉 {mark} {abs(x.vs_median_pct):.0f}% {word} recent {esc(x.area.title())} HDB sales {arrow}")
     if x.rent:
-        lines.append(f"📈 Asking rent S${x.rent:,.0f}/mo · {x.rent * 12 / x.price * 100:.1f}% gross")
+        lines.append("📈 " + dot(f"Asking rent S${x.rent:,.0f}/mo", f"{x.rent * 12 / x.price * 100:.1f}% gross"))
     if x.gist:
-        lines.append(f"💡 {esc(x.gist[:300])}")
+        lines.append("💡 " + esc(x.gist[:300]))
     maps = "https://www.google.com/maps/search/?api=1&query=" + quote_plus(f"{x.address or x.name} Singapore")
     buy = "Project page, book a showflat" if x.category in PROJECT_PAGE_OK else "Listing, contact the agent"
     lines.append(f'🔗 <a href="{esc_attr(x.url)}">{esc(buy)}</a> ({esc(x.site)})  ·  <a href="{esc_attr(maps)}">Map</a>')
     if x.snippet_only:
         lines.append("<i>From a search result, the page wasn't opened: check the listing.</i>")
-    return "\n".join(lines)
+    return card(n, x.name, x.url, lines, tag="NEW", emoji=TITLE, desc=label)
 
 
-def header(listings: list[Listing], note: str, dropped: int) -> str:
-    sub = f"{len(listings)} new for sale" if listings else "nothing new"
-    text = f"{TITLE} <b>LISTING HUNT</b> · {esc(sub)}"
-    detail = f"Found by Claude (haiku) web search, checked for site, budget and repeats; {dropped} dropped."
-    if note:
-        detail += f" Note: {note[:300]}"
-    return f"{text}\n\n<blockquote expandable>{esc(detail)} Asking prices, not valuations. Not financial advice.</blockquote>\n{DIVIDER}"
+def messages(listings: list[Listing], run_note: str, dropped: int, settings: Settings) -> list[str]:
+    """Car-tracker layout: header, summary, numbered linked cards, collapsed notes last."""
+    summary = "\n".join([f"🆕 New for sale: <b>{len(listings)}</b>", f"🚫 Dropped by checks: <b>{dropped}</b>"])
+    cards = [listing_card(n, x, settings) for n, x in enumerate(listings, 1)] or [
+        "⚪ <i>Nothing new for sale that passed the checks this time.</i>"]
+    detail = (f"Found by Claude (haiku) web search, then checked here: allowed site, budget, lease, a unit listing "
+              f"page for resale (new launches, BTO and ECs link the project), not posted before. Asking prices, "
+              f"not valuations. Not financial advice.")
+    if run_note:
+        detail += f" Search note: {run_note[:300]}"
+    return section_messages(REPORT_TITLES["hunt"], datetime.now().strftime("%a %d %b %Y"), [summary, *cards],
+                            note(esc(detail)))
 
 
 def run(claude, settings: Settings, db: DB, today, n: int) -> tuple[list[Listing], list[str], str]:

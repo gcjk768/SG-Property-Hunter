@@ -49,12 +49,13 @@ def test_hourly_hunt_posts_header_and_cards_once(settings, db, limiter):
     bot = make_bot(settings, db, limiter, HISTORY)
     bot.claude = FakeClaude()
     bot.tick(datetime(2026, 10, 3, 9, 40))                  # pulse :07 and hunt :37 both due
-    hunt_msgs = [s for s in bot.tg.sent if "LISTING HUNT" in s[2] or s[2].startswith("🏘")]
-    assert hunt_msgs[0][2].startswith("🏘 <b>LISTING HUNT</b> · 2 new")
-    assert [m[2].split("\n")[0] for m in hunt_msgs[1:]] == ["🏘 <b>GOOD ONE</b> · Resale condo · Bishan",
-                                                         "🏘 <b>SNIPPET</b> · Resale condo · Bishan"]
-    assert "check the listing" in hunt_msgs[2][2] and hunt_msgs[-1][3] and not hunt_msgs[1][3]
+    hunt_msgs = [s for s in bot.tg.sent if "PROPERTY FOR SALE" in s[2]]
     assert all((c, t) == (CHAT, TOPIC) for c, t, *_ in hunt_msgs)
+    assert len(hunt_msgs) == 1 and "New for sale: <b>2</b>" in hunt_msgs[0][2]
+    text = hunt_msgs[0][2]
+    assert '🏘 <b>1. <a href="https://www.edgeprop.sg/listing/1?ref=x">Good One</a></b> · Resale condo 🆕 <i>NEW</i>' in text
+    assert "<b>2. <a" in text
+    assert "check the listing" in text and hunt_msgs[-1][3]
     n = len(bot.tg.sent)
     bot.tick(datetime(2026, 10, 3, 10, 40))                 # next hour: same listings, nothing new
     assert bot.claude.calls == 2 and len(bot.tg.sent) == n
@@ -67,7 +68,7 @@ def test_resale_needs_unit_listing_but_new_launch_may_use_project_page(settings,
         cand("New One", "https://www.edgeprop.sg/new-launch/new-one", category_key="condo_new_launch"),
     ], bot.s, db)
     assert [x.name for x in keep] == ["New One"] and "not a unit listing" in dropped[0]
-    assert "book a showflat" in hunt.card(keep[0], bot.s)
+    assert "book a showflat" in hunt.listing_card(1, keep[0], bot.s)
 
 
 def test_quiet_during_us_session(settings, db, limiter):

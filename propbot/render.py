@@ -358,3 +358,48 @@ def check_generated_text(text: str, allowed: Iterable[str]) -> list[str]:
     if re.search(r"\bwill\b", text, re.I):
         problems.append("uses 'will' (a promise)")
     return problems
+
+
+# ------------------------------------------------------------ report sections (same layout as the SG car tracker bot)
+REPORT_TITLES = {"pulse": "🏠 HDB resale deals", "hunt": "🏘 Property for sale"}
+TAG_EMOJI = {"NEW": "🆕", "DROP": "🟢"}
+MSG_BUDGET = 3800
+
+
+def dot(*bits: object) -> str:
+    """Escape and join the non empty bits with a middle dot: one short card line."""
+    return " · ".join(esc(b) for b in bits if b)
+
+
+def header(title: str, subtitle: str = "") -> str:
+    """`emoji <b>TITLE</b> · subtitle`; the title's first word is its fixed emoji (REPORT_TITLES)."""
+    emoji, _, name = title.partition(" ")
+    return f"{emoji} <b>{esc(name.upper())}</b>" + (f" · {esc(subtitle)}" if subtitle else "")
+
+
+def card(n: int, title: str, url: str, lines: Iterable[str], tag: str = "", emoji: str = "", desc: str = "") -> str:
+    """`emoji <b>n. linked name</b> · description TAG`, then short detail lines each led by an emoji."""
+    head = (f"{emoji} " if emoji else "") + f'<b>{n}. <a href="{esc_attr(url)}">{esc(title)}</a></b>'
+    if desc:
+        head += f" · {esc(desc)}"
+    if tag:
+        mark = TAG_EMOJI.get(tag.split()[0], "")
+        head += f" {mark} <i>{esc(tag)}</i>" if mark else f" <i>{esc(tag)}</i>"
+    return "\n".join([head] + [x for x in lines if x])
+
+
+def note(text: str) -> str:
+    return f"<blockquote expandable>{text}</blockquote>" if text else ""
+
+
+def section_messages(title: str, subtitle: str, parts: list[str], notes: str = "") -> list[str]:
+    """Header, blank line, parts; split only between parts; collapsed notes last."""
+    msgs, cur = [], header(title, subtitle)
+    for p in parts + ([notes] if notes else []):
+        if len(cur) + len(p) + 2 > MSG_BUDGET:
+            msgs.append(cur)
+            cur = p
+        else:
+            cur += "\n\n" + p
+    msgs.append(cur)
+    return msgs

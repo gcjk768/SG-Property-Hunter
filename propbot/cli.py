@@ -349,8 +349,8 @@ def cmd_hunt(args) -> int:
         print(f"posted {bot.hunt((bot.chat, bot.thread), manual=True, limit=args.limit)} listings")
         return 0
     listings, dropped, note = hunt.run(bot.claude, settings, bot.db, _today(args, settings), settings.hunt.per_run)
-    for x in listings:
-        print(plain(hunt.card(x, settings)) + "\n")
+    for m in hunt.messages(listings, note, len(dropped), settings):
+        print(plain(m) + "\n")
     print("dropped:", dropped)
     print("note:", note)
     return 0

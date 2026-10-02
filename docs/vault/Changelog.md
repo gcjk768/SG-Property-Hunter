@@ -5,6 +5,7 @@ updated: 2026-10-03
 # Changelog
 
 ## 2026-10-03
+- feat: pulse and hunt use the SG car tracker bot layout (header · date, summary counts, numbered cards with the linked name, collapsed notes last)
 - feat: scheduled checks pause during the US regular session (trading desk hours, New York time so DST is right)
 - feat: hunt requires a unit listing page for resale (contact the agent); new launch, BTO and EC may link the project page
 - feat: pulse lists every notable deal (no top 8 cap) and every deal links to listings in its block
