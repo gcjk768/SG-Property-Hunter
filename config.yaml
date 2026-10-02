@@ -26,6 +26,13 @@ profile:                      # you fill this in; the bot never guesses it
   benchmark_return_pct: 4.0   # what my money would earn elsewhere (for comparison, not a promise)
   max_monthly_commitment_pct: 35  # my own comfort limit for instalment as a share of income, tighter than TDSR
 
+obsidian:                      # Obsidian vault on the NAS, mounted at /vault in the container
+  enabled: true
+  vault_path: /vault             # the vault root; propbot only creates and writes its own folder inside it
+  folder: propbot
+  read_profile: true             # Profile.md frontmatter overrides the profile above
+  log_web_requests: true         # one line per web fetch in Activity/<month> web.md
+
 telegram:
   chat_id: "@your_channel_or_numeric_id"
   owner_user_id: 0

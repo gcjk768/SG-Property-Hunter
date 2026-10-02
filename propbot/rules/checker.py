@@ -144,7 +144,7 @@ def stale_unreadable(rules: Rules, rule_ids: list[str], today: date, max_age_day
 
 def run_rules_check(settings: Settings, db: DB, runner: ClaudeRunner, today: date,
                     alert: Callable[[str, str, str], object] | None = None,
-                    rules_path: Path | None = None) -> CheckOutcome:
+                    rules_path: Path | None = None, vault=None) -> CheckOutcome:
     alert = alert or (lambda kind, key, text: None)
     path = rules_path or settings.rules_dir / "sg_property_rules.yaml"
     rules = Rules.load(path)
@@ -160,6 +160,8 @@ def run_rules_check(settings: Settings, db: DB, runner: ClaudeRunner, today: dat
                              max_budget_usd=cfg.max_budget_usd)
     except ClaudeUnavailable as exc:
         out = CheckOutcome(error=f"{exc.reason} {exc.reset}".strip())
+        if vault is not None:
+            vault.activity("rules_check", f"could not run: {out.error}")
         alert("rules_page_unreadable", "claude", f"Rules check could not run: {out.error}")
         return out
     data = result.structured or {}
@@ -180,6 +182,12 @@ def run_rules_check(settings: Settings, db: DB, runner: ClaudeRunner, today: dat
               f"Quote: {item['quote'][:300]} {item['url']}")
     for item in out.rejected:
         alert("rules_page_unreadable", item["rule_id"], f"Rules check result rejected for {item['rule_id']}: {item['reason']}")
+    if vault is not None:
+        for ch in out.changed:
+            vault.rule_change(ch)
+        vault.write_rules(rules)
+        vault.activity("rules_check", f"confirmed {len(out.confirmed)}, changed {len(out.changed)}, unreadable "
+                       f"{len(out.unreadable)}, rejected {len(out.rejected)}", "Rules/Rules")
     stale = stale_unreadable(rules, out.unreadable, today, settings.run.rules_max_age_days)
     if stale:
         alert("rules_page_unreadable", "stale",

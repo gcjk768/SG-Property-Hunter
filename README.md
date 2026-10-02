@@ -33,6 +33,34 @@ propbot analyse --help                  # type in your own figures
 `config.yaml`, or pass `--set gross_monthly_income=6500` (and the same for `cash_available` and
 `cpf_oa_balance`) for a one off run.
 
+## Obsidian vault on the NAS
+
+propbot reads its inputs from your Obsidian vault and writes every action to it. Mount the vault
+folder into the container at `/vault`; propbot only creates and writes `/vault/propbot`. If the
+mount is missing, propbot carries on, notes it in its log, and never creates a stand in folder.
+
+```yaml
+# docker-compose.yml, under the propbot service (step 6 adds the full file)
+volumes:
+  - /volume1/Obsidian/MyVault:/vault      # your vault path on the UGREEN NAS
+```
+
+What propbot reads:
+
+- **Profile.md.** Frontmatter fields override the profile in `config.yaml`, so you can edit your income, cash or CPF from Obsidian on your phone. Commands you type with `/set` or `--set` still win over it.
+- **Watchlist.md.** One property per bullet, in the `/analyse` order. `propbot analyse --watchlist` turns each one into a card note.
+
+What propbot writes:
+
+- **Activity/yyyy-mm.md.** One line per action: cards, Telegram sends and deletes, rules checks, Claude calls, alerts and favourites. Web fetches go to a separate `yyyy-mm web.md`.
+- **Cards/yyyy-mm-dd/.** One note per item, with frontmatter (price, verdict, score, IRR, upfront and more) that Dataview can query. Anything you write under `## My notes` survives when the card is rewritten.
+- **Daily/yyyy-mm-dd.md.** The day's index, linking every card (filled by the daily run from step 5).
+- **Rules/Rules.md and Rules/Changes.md.** Current rule values and every change found by the weekly check.
+- **Favourites.md.** Posts you saved from the private chat (step 6).
+
+propbot never deletes a note and never writes outside its folder. The SQLite database stays the
+record the bot runs on; the vault is the copy you read and edit. Set `obsidian.enabled: false` to turn it off.
+
 ## How the rules file was checked
 
 The build sandbox could not open iras.gov.sg, mas.gov.sg, hdb.gov.sg, cpf.gov.sg or ura.gov.sg directly.
