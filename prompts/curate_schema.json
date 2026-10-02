@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "properties": {
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "card_id": {"type": "string"},
+          "verdict_why": {"type": "string", "maxLength": 500},
+          "risks": {"type": "array", "items": {"type": "string", "maxLength": 140}, "maxItems": 3},
+          "what_would_make_it_work": {"type": "string", "maxLength": 200},
+          "best_intent_note": {"type": "string", "maxLength": 200},
+          "what_it_means": {"type": "string", "maxLength": 400},
+          "eligibility_note": {"type": "string", "maxLength": 200},
+          "mop_note": {"type": "string", "maxLength": 200}
+        },
+        "required": ["card_id", "verdict_why", "risks", "what_would_make_it_work", "best_intent_note", "what_it_means", "eligibility_note", "mop_note"]
+      }
+    },
+    "run_note": {"type": "string"}
+  },
+  "required": ["cards", "run_note"]
+}

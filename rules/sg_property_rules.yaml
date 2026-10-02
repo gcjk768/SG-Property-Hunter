@@ -1,0 +1,705 @@
+# Singapore property rules used by propbot. Every legal figure the engine uses lives here.
+#
+# Each rule has: title, value, unit, applies_to, effective_from, url, checked_at, quote,
+# check_method and verified.
+#
+# check_method:
+#   official_page          the value was read on the official page by the weekly rules check
+#   official_search_index  confirmed on 2026-10-02 from the official site's own search results
+#                          (direct page fetches were blocked in the build sandbox). The quote is
+#                          the text the search index returned for that page; the first rules
+#                          check on the NAS replaces it with the page's exact sentence.
+#   planning_figure        not a legal limit; a figure propbot uses for planning, labelled as such
+#                          in every message. The rules check skips these.
+# verified: false means the figure could not be confirmed on an official page. The engine
+#   does not use an unverified figure in any calculation; it prints "unknown" or "pending
+#   confirmation" instead, and the rules check tries again every week.
+# history: older values kept when a value changes (newest first).
+
+meta:
+  file_version: 1
+  description: Singapore property rules for propbot
+  official_domains: [iras.gov.sg, mas.gov.sg, hdb.gov.sg, cpf.gov.sg, ura.gov.sg]
+  last_full_check: "2026-10-02"
+  last_full_check_method: official_search_index
+
+rules:
+  # ------------------------------------------------------------ stamp duties (IRAS)
+  bsd_residential:
+    title: Buyer's Stamp Duty, residential
+    value:
+      bands:
+        - {width: 180000, rate_pct: 1}
+        - {width: 180000, rate_pct: 2}
+        - {width: 640000, rate_pct: 3}
+        - {width: 500000, rate_pct: 4}
+        - {width: 1500000, rate_pct: 5}
+        - {width: null, rate_pct: 6}
+    unit: percent of price or market value, whichever is higher, by band; width is the band size in S$ and null means the remainder
+    applies_to: [residential]
+    effective_from: "2023-02-15"
+    url: "https://www.iras.gov.sg/taxes/stamp-duty/for-property/buying-or-acquiring-property/buyer's-stamp-duty-(bsd)"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "First $180,000: 1%; Next $180,000: 2%; Next $640,000: 3%; Next $500,000: 4%; Next $1,500,000: 5%; Remaining amount: 6%. From 15 Feb 2023, the top marginal rate for residential properties is 6%."
+    history: []
+
+  bsd_non_residential:
+    title: Buyer's Stamp Duty, non residential
+    value:
+      bands:
+        - {width: 180000, rate_pct: 1}
+        - {width: 180000, rate_pct: 2}
+        - {width: 640000, rate_pct: 3}
+        - {width: 500000, rate_pct: 4}
+        - {width: null, rate_pct: 5}
+    unit: percent of price or market value, whichever is higher, by band
+    applies_to: [non_residential]
+    effective_from: "2023-02-15"
+    url: "https://www.iras.gov.sg/taxes/stamp-duty/for-property/buying-or-acquiring-property/buyer's-stamp-duty-(bsd)"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "Next $500,000: 4%; Next $1,500,000: 5%; Remaining amount: 5%. A new marginal BSD rate of 5% will apply to the portion of the property value in excess of $1.5 million."
+    history: []
+
+  absd_rates:
+    title: Additional Buyer's Stamp Duty rates
+    value:
+      SC: [0, 20, 30]
+      PR: [5, 30, 35]
+      foreigner: [60]
+      entity: [65]
+      trustee: [65]
+      housing_developer: [40]
+    unit: percent of price or market value, whichever is higher; list position is the property count after this purchase (first, second, third and later), the last figure repeats; developers pay 35 remittable plus 5 non remittable
+    applies_to: [residential, residential_part_of_mixed_use]
+    effective_from: "2023-04-27"
+    url: "https://www.iras.gov.sg/taxes/stamp-duty/for-property/buying-or-acquiring-property/additional-buyer's-stamp-duty-(absd)"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "ABSD rates on or after 27 April 2023: Singapore Citizens buying first residential property: Not applicable; second: 20%; third and subsequent: 30%. Singapore Permanent Residents: 5%, 30%, 35%. Foreigners buying any residential property: 60%. Entities buying any residential property: 65%. Housing Developers are subject to an ABSD rate of 35% and an additional non-remittable ABSD rate of 5% upon stamping, for an aggregate ABSD rate of 40%."
+    history: []
+
+  absd_property_count:
+    title: Which properties count for ABSD
+    value:
+      counts_singapore_residential_only: true
+      excludes_overseas: true
+      joint_purchase_uses_highest_profile: true
+    unit: rule
+    applies_to: [residential]
+    effective_from: "2023-04-27"
+    url: "https://www.iras.gov.sg/taxes/stamp-duty/for-property/buying-or-acquiring-property/additional-buyer's-stamp-duty-(absd)"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "All residential properties located outside Singapore are to be excluded from the ABSD property count."
+    note: "Your profile counts property worldwide; propbot subtracts properties_owned_outside_sg before it applies the ABSD rate."
+    history: []
+
+  absd_married_couple_remission:
+    title: ABSD remission for married couples
+    value:
+      first_home_sold_within_months: 6
+    unit: months
+    applies_to: [residential]
+    effective_from: "2023-04-27"
+    url: "https://www.iras.gov.sg/taxes/stamp-duty/for-property/appeals-refunds-reliefs-and-remissions/common-stamp-duty-remissions-and-reliefs-for-property/remission-of-absd-for-a-married-couple"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "The first residential property must be sold within 6 months after the date of purchase of the second property for completed property, or the issue date of the TOP or CSC, whichever is earlier, if the second property is uncompleted."
+    history: []
+
+  mixed_use_apportionment:
+    title: Residential rates on the residential part of mixed use property
+    value:
+      residential_rates_on_residential_part: true
+      commercial_and_residential_zoned_default_residential_share_pct: 60
+    unit: percent of gross floor area
+    applies_to: [shophouse, mixed_use]
+    effective_from: "2023-02-15"
+    url: "https://www.iras.gov.sg/taxes/stamp-duty/for-property/buying-or-acquiring-property/definition-of-residential-property"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "ABSD rates, BSD rates and SSD rates for residential properties will apply on the residential component. For land zoned Commercial and Residential, 60% of the gross floor area is treated as residential and 40% as non-residential."
+    history: []
+
+  ssd_residential:
+    title: Seller's Stamp Duty, residential
+    value:
+      basis: higher_of_price_or_market_value
+      regimes:
+        - {acquired_from: "2025-07-04", acquired_to: null, rates_by_year_pct: [16, 12, 8, 4]}
+        - {acquired_from: "2017-03-11", acquired_to: "2025-07-03", rates_by_year_pct: [12, 8, 4]}
+    unit: percent; the first figure applies when sold within 1 year, the second within 2 years, and so on
+    applies_to: [residential]
+    effective_from: "2025-07-04"
+    url: "https://www.iras.gov.sg/taxes/stamp-duty/for-property/selling-or-disposing-property/seller's-stamp-duty-(ssd)-for-residential-property"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "For residential properties acquired on or after 4 July 2025: up to 1 year 16%; more than 1 year and up to 2 years 12%; more than 2 years and up to 3 years 8%; more than 3 years and up to 4 years 4%; more than 4 years no SSD payable. SSD is computed by applying the requisite SSD rate on the higher of the selling price or the market value of the residential property as at the date of sale or disposal."
+    history: []
+
+  ssd_industrial:
+    title: Seller's Stamp Duty, industrial
+    value:
+      basis: higher_of_price_or_market_value
+      regimes:
+        - {acquired_from: "2013-01-12", acquired_to: null, rates_by_year_pct: [15, 10, 5]}
+    unit: percent by year held
+    applies_to: [industrial]
+    effective_from: "2013-01-12"
+    url: "https://www.iras.gov.sg/taxes/stamp-duty/for-property/selling-or-disposing-property/seller's-stamp-duty-(ssd)-for-industrial-property"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "SSD is payable on all industrial properties and industrial lands that are acquired on or after 12 Jan 2013 and disposed of within the holding period: 15% within 1 year, 10% within 2 years, 5% within 3 years."
+    history: []
+
+  ssd_scope:
+    title: Property types that carry Seller's Stamp Duty
+    value:
+      applies_to_types: [residential, industrial]
+      not_listed: [commercial, office, retail, shophouse_commercial_part, coffeeshop, hdb_shop]
+    unit: rule
+    applies_to: [all]
+    effective_from: "2013-01-12"
+    url: "https://www.iras.gov.sg/taxes/stamp-duty/for-property/selling-or-disposing-property/seller's-stamp-duty-(ssd)-for-industrial-property"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "SSD is payable on all residential properties and residential lands that are acquired on or after 20 Feb 2010 and disposed of within the holding period. SSD is payable on all industrial properties and industrial lands that are acquired on or after 12 Jan 2013 and disposed of within the holding period."
+    note: "IRAS publishes SSD only for residential and industrial property, so propbot applies no SSD to commercial units and to the commercial part of a shophouse."
+    history: []
+
+  gst_rate:
+    title: GST rate
+    value: {rate_pct: 9}
+    unit: percent
+    applies_to: [non_residential_sale_by_gst_registered_seller]
+    effective_from: "2024-01-01"
+    url: "https://www.iras.gov.sg/taxes/goods-services-tax-(gst)/gst-rate-change/gst-rate-change-for-consumers1"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "The GST rate was increased from 7% to 8% with effect from 1 January 2023, and from 8% to 9% with effect from 1 January 2024."
+    history: []
+
+  gst_property:
+    title: GST on property sales
+    value:
+      non_residential_sale_by_registered_seller: standard_rated
+      residential_sale_unfurnished: exempt
+      mixed_use: gst_on_non_residential_part_only
+    unit: rule
+    applies_to: [commercial, shophouse, coffeeshop, hdb_shop, strata_commercial, industrial]
+    effective_from: "2024-01-01"
+    url: "https://www.iras.gov.sg/media/docs/default-source/e-tax/property-owner-guide-(6th-edition).pdf"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "If you are registered for GST, you have to charge GST when you sell or let out a non-residential property. The sale and lease of an unfurnished residential property is exempt from GST."
+    history: []
+
+  # ------------------------------------------------------------ loans (MAS, HDB)
+  mas_ltv:
+    title: Bank housing loan LTV and minimum cash downpayment
+    value:
+      individual:
+        "0": {ltv_pct: 75, reduced_ltv_pct: 55, min_cash_pct: 5, reduced_min_cash_pct: 10}
+        "1": {ltv_pct: 45, reduced_ltv_pct: 25, min_cash_pct: 25, reduced_min_cash_pct: 25}
+        "2": {ltv_pct: 35, reduced_ltv_pct: 15, min_cash_pct: 25, reduced_min_cash_pct: 25}
+      non_individual_ltv_pct: 15
+      reduced_when:
+        tenure_over_years: {hdb_flat: 25, other: 30}
+        beyond_age: 65
+    unit: percent of price or valuation, whichever is lower; key is the number of outstanding housing loans (2 means 2 or more)
+    applies_to: [residential_bank_loan]
+    effective_from: "2018-07-06"
+    url: "https://www.mas.gov.sg/regulation/explainers/new-housing-loans/loan-tenure-and-loan-to-value-limits"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "No outstanding housing loans: LTV limit 75% or 55%, minimum cash downpayment 5% or 10%. 1 outstanding housing loan: 45% or 25%, minimum cash downpayment 25%. 2 or more outstanding housing loans: 35% or 15%, minimum cash downpayment 25%. The lower LTV limit applies if the loan tenure exceeds 30 years (or 25 years for HDB flats), or the loan period extends beyond the borrower's age of 65 years."
+    note: "The URL in the original brief (loan-to-value-limits-and-minimum-cash-downpayment) is no longer served; MAS now serves this page."
+    history: []
+
+  mas_max_tenure:
+    title: Maximum bank loan tenure
+    value: {hdb_flat_years: 30, other_years: 35}
+    unit: years
+    applies_to: [residential_bank_loan]
+    effective_from: "2018-07-06"
+    url: "https://www.mas.gov.sg/regulation/explainers/new-housing-loans/loan-tenure-and-loan-to-value-limits"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "The maximum loan tenure is capped at 30 years for HDB flats and 35 years for non-HDB properties."
+    history: []
+
+  mas_tdsr:
+    title: Total Debt Servicing Ratio
+    value:
+      limit_pct: 55
+      stress_floor_pct: {residential: 4.0, non_residential: 5.0}
+      variable_income_haircut_pct: 30
+    unit: percent of gross monthly income
+    applies_to: [property_loans_to_individuals]
+    effective_from: "2022-09-30"
+    url: "https://www.mas.gov.sg/regulation/explainers/tdsr-for-property-loans/calculating-tdsr"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "The TDSR threshold is 55%. The medium-term interest rate used to compute TDSR is the higher of 4% or the thereafter rate for residential property loans, and the higher of a 5% floor or the thereafter interest rate for non-residential property loans. FIs are required to apply a minimum haircut of 30% to variable income."
+    history: []
+
+  mas_msr:
+    title: Mortgage Servicing Ratio
+    value:
+      limit_pct: 30
+      applies_to_types: [hdb_flat, ec_within_mop]
+    unit: percent of gross monthly income
+    applies_to: [hdb_flat, ec]
+    effective_from: "2013-01-12"
+    url: "https://www.mas.gov.sg/regulation/explainers/new-housing-loans/msr-and-tdsr-rules"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "The MSR is capped at 30% of a borrower's gross monthly income. It applies only to housing loans for the purchase of an HDB flat, or an executive condominium where the minimum occupation period of the executive condominium has not expired."
+    history: []
+
+  hdb_loan:
+    title: HDB housing loan
+    value:
+      ltv_pct: 75
+      rate_spread_over_cpf_oa_pct: 0.1
+      max_tenure_years: 25
+      tenure_age_cap: 65
+      tenure_lease_buffer_years: 20
+      msr_pct: 30
+      assessment_floor_pct: 3.0
+    unit: mixed (percent, years)
+    applies_to: [bto, hdb_resale]
+    effective_from: "2024-08-20"
+    url: "https://www.hdb.gov.sg/hdb-pulse/news/2024/measures-to-cool-the-hdb-resale-market-and-provide-more-support-for-first-time-home-buyers"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "With effect from 20 August 2024, 12:00am, the Loan-to-Value (LTV) limit for housing loans provided by HDB will be lowered from 80% to 75%. The HDB concessionary interest rate is pegged at 0.1% above the CPF Ordinary Account interest rate. The loan tenure is the shortest of 25 years, the period up to age 65, or the remaining lease minus 20 years. HDB assesses loan eligibility using an interest rate floor of 3% or the HDB loan rate, whichever is higher (for HLE applications from 30 September 2022)."
+    history:
+      - {value: {ltv_pct: 80}, effective_from: "2022-09-30", replaced_at: "2024-08-20"}
+
+  commercial_loan_planning:
+    title: Commercial property loan, planning figures
+    value: {ltv_pct: 70, max_tenure_years: 30, cpf_allowed: false}
+    unit: percent and years
+    applies_to: [shophouse, hdb_shop, coffeeshop, strata_commercial, industrial]
+    effective_from: null
+    url: "https://www.mas.gov.sg/regulation/explainers/tdsr-for-property-loans/calculating-tdsr"
+    checked_at: "2026-10-02"
+    check_method: planning_figure
+    verified: true
+    quote: "Planning figure, not a legal limit. MAS sets no LTV limit for commercial property; banks lend about 70 to 80 percent at their discretion, and TDSR still applies to individuals."
+    history: []
+
+  bank_lease_tenure_planning:
+    title: Bank loan tenure against remaining lease, planning figure
+    value: {lease_buffer_years: 20}
+    unit: years
+    applies_to: [residential_bank_loan, commercial]
+    effective_from: null
+    url: "https://www.hdb.gov.sg/hdb-pulse/news/2024/measures-to-cool-the-hdb-resale-market-and-provide-more-support-for-first-time-home-buyers"
+    checked_at: "2026-10-02"
+    check_method: planning_figure
+    verified: true
+    quote: "Planning figure, not a legal limit. propbot caps a bank loan tenure at the remaining lease minus 20 years, the same buffer HDB applies to its own loans; banks set their own lease policies."
+    history: []
+
+  # ------------------------------------------------------------ CPF
+  cpf_oa_rate:
+    title: CPF Ordinary Account interest rate
+    value: {rate_pct: 2.5}
+    unit: percent a year
+    applies_to: [cpf_accrued_interest, hdb_loan_rate]
+    effective_from: "2026-07-01"
+    url: "https://www.cpf.gov.sg/member/infohub/news/news-releases/cpf-interest-rates-from-1-july-to-30-september-2026"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "The Ordinary Account (OA) interest rate will remain unchanged at the floor rate of 2.5% per annum from 1 July to 30 September 2026."
+    history: []
+
+  cpf_housing_usage:
+    title: Using CPF OA for a home
+    value:
+      lease_cover_age: 95
+      min_remaining_lease_years: 20
+      prorate_formula: "(remaining_lease - 20) / (95 - youngest_buyer_age - 20)"
+      withdrawal_limit_pct_of_valuation_limit: 120
+      refund_on_sale: principal_plus_accrued_interest_at_oa_rate
+      allowed_for: [hdb_flat, ec, private_residential, landed]
+      not_allowed_for: [commercial, shophouse_commercial_part, industrial]
+    unit: rule
+    applies_to: [residential]
+    effective_from: "2019-05-10"
+    url: "https://www.cpf.gov.sg/service/article/how-much-cpf-savings-can-i-use-to-buy-a-property-if-its-lease-does-not-cover-the-youngest-buyer-to-age-95"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "If the remaining lease of the property does not cover the younger co-owner until age 95, you can still use your CPF savings at a pro-rated amount, provided that the property has a remaining lease of at least 20 years. For example, if two 25-year-old buyers purchase a flat with 65 years of remaining lease for $550,000, they can use up to $495,000 (90% of the purchase price) of their CPF, because the lease will only last until they are 90 years old."
+    note: "The formula reproduces CPF's own example: (65 minus 20) divided by (95 minus 25 minus 20) is 90 percent. Withdrawal Limit is 120% of the Valuation Limit; using CPF beyond the Valuation Limit needs the Basic Retirement Sum set aside, which propbot does not assume."
+    history: []
+
+  # ------------------------------------------------------------ HDB eligibility
+  hdb_singles:
+    title: Singles buying HDB flats
+    value:
+      min_age: 35
+      bto_flat_types: ["2-room Flexi"]
+      bto_classifications: [standard, plus, prime]
+      resale: any_flat_type
+      schemes: [single_singapore_citizen, joint_singles]
+      citizenship: SC
+    unit: rule
+    applies_to: [bto, hdb_resale]
+    effective_from: "2024-10-01"
+    url: "https://www.hdb.gov.sg/-/media/hdb-pulse/news/2024/oct-bto-launch/Annex-C.pdf"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "Eligible first-timer singles can now apply for new 2-room Flexi flats across Standard, Plus and Prime projects in all locations. Singles must be at least 35 years old and buy under the Single Singapore Citizen Scheme or the Joint Singles Scheme."
+    history: []
+
+  hdb_family_nucleus:
+    title: Family nucleus for HDB flats
+    value:
+      min_age: 21
+      nucleus_with: [fiance, spouse, parents]
+      citizenship: at_least_one_sc_and_one_sc_or_pr
+    unit: rule
+    applies_to: [bto, hdb_resale, ec]
+    effective_from: "2026-02-01"
+    url: "https://services-homes.hdb.gov.sg/sales/files/general_conditions_for_purchase.pdf"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "Each family nucleus must comprise at least two Singapore Citizens or one Singapore Citizen and one Singapore Permanent Resident, with Applicant 1 being a Singapore Citizen. All applicants must be at least 21 years old. The family nucleus comprises the applicant and spouse and children, or the applicant (single) and both parents and siblings. The family nucleus concept is applicable to fiance or fiancee applicants."
+    history: []
+
+  hdb_income_ceiling:
+    title: Monthly household income ceilings
+    value:
+      bto_family: 14000
+      bto_singles: 7000
+      extended_family: 21000
+      ec: 16000
+      hdb_loan_family: 14000
+      hdb_loan_singles: 7000
+    unit: S$ a month, household
+    applies_to: [bto, ec, hdb_loan, plus_prime_resale]
+    effective_from: "2023-08-01"
+    url: "https://www.hdb.gov.sg/cs/infoweb/residential/buying-a-flat/understanding-your-eligibility-and-housing-loan-options/flat-and-grant-eligibility/couples-and-families"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "The income ceiling is $14,000 for families, $7,000 for singles buying a 2-room Flexi flat, $21,000 for extended families, and $16,000 for executive condominiums."
+    pending_change:
+      verified: false
+      value: {bto_family: 16000, bto_singles: 8000, extended_family: 21000}
+      effective_from: "2026-08-24"
+      url: "https://www.hdb.gov.sg/hdb-pulse/news/2026/increase-in-income-ceilings-and-greater-support-for-families-with-children"
+      quote: "At the National Day Rally 2026, Prime Minister Lawrence Wong announced a range of measures to keep public housing and Executive Condominiums (ECs) affordable and accessible for Singaporeans and to provide greater support for families with children."
+      note: "The raised ceilings (16,000 and 8,000) come from the brief and could not be confirmed on hdb.gov.sg. Until the rules check confirms them, propbot marks income between the old and new ceilings as conditional instead of not eligible."
+    history: []
+
+  ehg:
+    title: Enhanced CPF Housing Grant
+    value:
+      family_max: 120000
+      family_income_ceiling: 9000
+      singles_max: 60000
+      singles_income_ceiling: 4500
+      tiers: null
+    unit: S$
+    applies_to: [bto, hdb_resale]
+    effective_from: "2024-08-18"
+    url: "https://www.hdb.gov.sg/-/media/doc/EAPG-CSC/EHG-amount-Couples-and-Families-Aug-2024.ashx"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "Eligible first-timer households earning not more than $9,000 per month can apply for the EHG amount of up to $120,000. Eligible first-timer singles earning not more than $4,500 per month can receive up to $60,000."
+    note: "The tier table by income band was not confirmed, so propbot shows the EHG as 'up to' and does not count it in the projections until the tiers are filled in from the official table."
+    history: []
+
+  cpf_housing_grant_resale:
+    title: CPF Housing Grant for resale flats
+    value:
+      family: {up_to_4_room: 80000, five_room_or_larger: 50000}
+      singles: {up_to_4_room: 40000, five_room_or_larger: 25000}
+    unit: S$
+    applies_to: [hdb_resale]
+    effective_from: "2023-02-14"
+    url: "https://www.hdb.gov.sg/budget-statement-2023"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "First-Timers who submit their resale applications to HDB on or after 14 February 2023, 3:30pm, were eligible for these increased CPF Housing Grants: $80,000 for 2 to 4 room flats and $50,000 for 5 room or larger flats for families; $40,000 and $25,000 for singles."
+    history: []
+
+  proximity_housing_grant:
+    title: Proximity Housing Grant
+    value:
+      family_live_with: 30000
+      family_live_near: 20000
+      singles_live_with: 15000
+      singles_live_near: 10000
+    unit: S$
+    applies_to: [hdb_resale]
+    effective_from: "2023-02-14"
+    url: "https://www.hdb.gov.sg/cs/infoweb/residential/buying-a-flat/understanding-your-eligibility-and-housing-loan-options/flat-and-grant-eligibility/couples-and-families/proximity-housing-grant-families"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "The PHG is given to eligible households regardless of whether they had enjoyed housing subsidies before and their household income: $30,000 to live with parents or child, $20,000 to live within 4km; singles $15,000 to live with parents and $10,000 to live near."
+    history: []
+
+  flat_classification:
+    title: Standard, Plus and Prime flats
+    value:
+      standard: {mop_years: 5, whole_flat_rental_after_mop: true, subsidy_recovery: false}
+      plus: {mop_years: 10, whole_flat_rental_after_mop: false, subsidy_recovery: true}
+      prime: {mop_years: 10, whole_flat_rental_after_mop: false, subsidy_recovery: true}
+      subsidy_recovery_basis: higher_of_resale_price_or_valuation
+      subsidy_recovery_pct_per_project: true
+      plh_reference_subsidy_recovery_pct: 6
+    unit: years and rules
+    applies_to: [bto, hdb_resale]
+    effective_from: "2024-10-01"
+    url: "https://www.hdb.gov.sg/buying-a-flat/bto-sbf-and-open-booking-of-flats/finding-a-new-flat/standard-plus-and-prime-housing-framework"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "Plus and Prime flats have a 10-year MOP, owners cannot rent out the whole flat even after the MOP, and a subsidy recovery of a fixed percentage of the resale price or valuation, whichever is higher, is set per project on the first resale. Standard flats have a 5-year MOP. Earlier Prime Location Public Housing projects had a subsidy recovery of 6%."
+    note: "Plus and Prime percentages are set per project. propbot uses the project's figure when the HDB launch page gives it, and otherwise the earlier PLH figure of 6 percent, labelled as an assumption."
+    history: []
+
+  plus_prime_resale_buyers:
+    title: Who may buy a resale Plus or Prime flat
+    value:
+      citizenship: at_least_one_sc_and_one_sc_or_pr
+      family_nucleus: true
+      income_ceiling: bto
+      no_private_property: true
+      private_wait_out_months: 30
+    unit: rule
+    applies_to: [hdb_resale]
+    effective_from: "2024-10-01"
+    url: "https://www.hdb.gov.sg/hdb-pulse/news/2024/oct-bto-launch"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "The eligibility conditions to buy a resale Plus or Prime flat are the same as the prevailing BTO eligibility conditions."
+    history: []
+
+  hdb_mop:
+    title: Minimum Occupation Period
+    value:
+      hdb_resale_years: 5
+      bto_standard_years: 5
+      bto_plus_years: 10
+      bto_prime_years: 10
+      ec_years: 5
+      restrictions: [sell, rent_whole_flat, buy_private_residential]
+      counted_from: key_collection
+    unit: years
+    applies_to: [bto, hdb_resale, ec]
+    effective_from: "2024-10-01"
+    url: "https://www.hdb.gov.sg/business-partners/estate-agents-and-salespersons/letters-to-keos/fulfilling-the-minimum-occupation-period-to-acquire-private-residential-property"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "Flat owners, spouses and essential occupiers have to fulfil a 5-year minimum occupation period (MOP) before they can acquire a private residential property. Plus and Prime flats have a 10-year MOP."
+    history: []
+
+  private_owner_wait_out:
+    title: Wait out after selling private property
+    value:
+      resale_non_subsidised: {months: 15, applies_only_with_hdb_loan: true, exempt_from_age: 55}
+      subsidised_flats: {months: 30, applies_to_types: [bto, ec, plus_prime_resale]}
+    unit: months after disposal
+    applies_to: [bto, hdb_resale, ec]
+    effective_from: "2026-07-27"
+    url: "https://www.hdb.gov.sg/hdb-pulse/news/2026/removal-of-the-15-month-wait-out-period-for-private-residential-property-owners"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "With immediate effect, private residential property owners (PPOs) and ex-PPOs who purchase a non-subsidised HDB resale flat without an HDB housing loan will no longer be subject to a 15-month wait-out period."
+    note: "The brief said the 15 month wait applies to every private owner under 55. HDB removed it in 2026 for buyers who do not take an HDB loan; the exact start date (27 Jul 2026) comes from a search summary and should be confirmed by the rules check."
+    history:
+      - {value: {resale_non_subsidised: {months: 15, applies_only_with_hdb_loan: false, exempt_from_age: 55}}, effective_from: "2022-09-30", replaced_at: "2026-07-27"}
+
+  ec_rules:
+    title: Executive condominium rules
+    value:
+      mop_years: 5
+      privatised_after_years: 10
+      loan: bank_only
+      singles_new_ec: false
+      private_wait_out_months: 30
+    unit: rule
+    applies_to: [ec]
+    effective_from: "2023-08-01"
+    url: "https://www.hdb.gov.sg/buying-a-flat/executive-condominiums/conditions-after-buying-an-ec"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "All owners and occupiers listed in the flat application must occupy the flat for a minimum period of 5 years before you may sell it on the open market. Buyers take a housing loan from a bank or financial institution."
+    note: "Privatisation after 10 years was not in the search text; it does not change any calculation in propbot."
+    history: []
+
+  bto_payment:
+    title: BTO payment schedule
+    value:
+      option_fee: {two_room: 500, three_room: 1000, four_room_or_larger: 2000}
+      downpayment_at_agreement_for_lease_pct: {hdb_loan: 10, bank_loan: 20}
+      staggered_downpayment_at_agreement_for_lease_pct: {hdb_loan: 5, bank_loan: 10}
+      balance_at: key_collection
+    unit: S$ and percent of price
+    applies_to: [bto]
+    effective_from: "2024-08-20"
+    url: "https://www.hdb.gov.sg/-/media/hdb-pulse/news/2024/oct-bto-launch/Annex-C.pdf"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "Buyers who are taking a housing loan from HDB or FI must pay 10% or 20% of the flat price respectively as the downpayment when they sign the Agreement for Lease. Under the Staggered Downpayment Scheme the downpayment at the Agreement for Lease is halved and the balance is paid at key collection. The option fee is $500 for 2-room Flexi, $1,000 for 3-room and $2,000 for 4-room and larger flats."
+    history: []
+
+  new_launch_payment:
+    title: Progressive payments for an uncompleted private home
+    value:
+      booking_fee_pct: 5
+      within_8_weeks_total_pct: 20
+      foundation_pct: 10
+      later_stages: progressive_to_completion
+    unit: percent of price
+    applies_to: [condo_new_launch, ec]
+    effective_from: "2022-01-01"
+    url: "https://sso.agc.gov.sg/SL/HDCLA1965-R1?ProvIds=Sc1-"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "Upon signing the Agreement or within 8 weeks immediately after the date of the Option, 20% of the Purchase Price (inclusive of the Booking Fee) is due. The Booking Fee is 5% of the Purchase Price. Within 14 days after notice that the foundation work has been completed, 10% of the Purchase Price is due."
+    history: []
+
+  # ------------------------------------------------------------ commercial and others
+  hdb_commercial:
+    title: HDB shops and coffee shops
+    value:
+      sale_needs_hdb_approval: true
+      approved_trade_within_months: 2
+      rental_coffeeshops_tendered_not_sold: true
+      budget_meals_mandatory_from_2026_01_10: false
+      opt_in_rental_discount_pct: 5
+    unit: rule
+    applies_to: [hdb_shop, coffeeshop]
+    effective_from: "2026-01-10"
+    url: "https://www.hdb.gov.sg/hdb-pulse/news/2026/enhanced-support-for-hdb-coffee-shops"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "From 10 January 2026, tenderers are no longer required to propose budget meals as part of PQM tender proposal. Coffee shops that opt in to offer budget meals receive a 5% rental discount. All trades must be HDB-approved; on sale, transferees must operate an HDB-approved trade within 2 months."
+    history: []
+
+  landed_eligibility:
+    title: Who may buy landed homes
+    value:
+      SC: allowed
+      PR: needs_ldau_approval
+      foreigner: needs_ldau_approval
+    unit: rule
+    applies_to: [landed]
+    effective_from: "1973-01-01"
+    url: "https://www.sla.gov.sg/regulatory/foreign-ownership-of-property/"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "A foreign person who wishes to purchase a landed residential property in Singapore is required to seek approval under the Residential Property Act."
+    note: "A foreign person is anyone who is not a Singapore citizen, a Singapore company, a limited liability partnership or a society, so permanent residents need approval too. sla.gov.sg is outside the weekly check's domains; check this one by hand once a year."
+    history: []
+
+  # ------------------------------------------------------------ taxes (IRAS)
+  property_tax:
+    title: Property tax rates
+    value:
+      owner_occupied_residential:
+        - {width: 12000, rate_pct: 0}
+        - {width: 28000, rate_pct: 4}
+        - {width: 10000, rate_pct: 6}
+        - {width: 25000, rate_pct: 10}
+        - {width: 10000, rate_pct: 14}
+        - {width: 15000, rate_pct: 20}
+        - {width: 40000, rate_pct: 26}
+        - {width: null, rate_pct: 32}
+      non_owner_occupied_residential:
+        - {width: 30000, rate_pct: 12}
+        - {width: 15000, rate_pct: 20}
+        - {width: 15000, rate_pct: 28}
+        - {width: null, rate_pct: 36}
+      non_residential_pct: 10
+    unit: percent of annual value, by band
+    applies_to: [all]
+    effective_from: "2025-01-01"
+    url: "https://www.iras.gov.sg/taxes/property-tax/property-owners/property-tax-rates"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "Owner-occupier tax rates: 0% on the first $12,000 of Annual Value, 4% on the next $28,000, 6% on the next $10,000, 10% on the next $25,000, 14% on the next $10,000, 20% on the next $15,000, 26% on the next $40,000 and 32% above $140,000. Non-owner-occupier residential rates: 12% on the first $30,000, 20% on the next $15,000, 28% on the next $15,000 and 36% above $60,000. Non-residential properties are taxed at a single flat rate of 10% of the Annual Value."
+    note: "IRAS sets the annual value from market rent. propbot estimates it as 12 months of the comparable median rent and labels it as an estimate. One off rebates (2026) are not modelled."
+    history: []
+
+  rental_income_tax:
+    title: Tax on rental income
+    value: {deemed_expense_pct: 15, mortgage_interest_deductible: true}
+    unit: percent of gross rent
+    applies_to: [residential_rental]
+    effective_from: "2016-01-01"
+    url: "https://www.iras.gov.sg/media/docs/default-source/e-tax/e-tax-guide_iit_simplification_of_claim_of_rental_expenses_for_individuals.pdf"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "With effect from Year of Assessment 2016, an individual may claim an amount of deemed expenses equal to 15% of the gross rental income, and may still claim a deduction for the actual amount of interest expense incurred."
+    history: []
+
+  income_tax_resident:
+    title: Resident individual income tax rates
+    value:
+      bands:
+        - {width: 20000, rate_pct: 0}
+        - {width: 10000, rate_pct: 2}
+        - {width: 10000, rate_pct: 3.5}
+        - {width: 40000, rate_pct: 7}
+        - {width: 40000, rate_pct: 11.5}
+        - {width: 40000, rate_pct: 15}
+        - {width: 40000, rate_pct: 18}
+        - {width: 40000, rate_pct: 19}
+        - {width: 40000, rate_pct: 19.5}
+        - {width: 40000, rate_pct: 20}
+        - {width: 180000, rate_pct: 22}
+        - {width: 500000, rate_pct: 23}
+        - {width: null, rate_pct: 24}
+    unit: percent of chargeable income, by band
+    applies_to: [rental_income]
+    effective_from: "2024-01-01"
+    url: "https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-residency-and-tax-rates/individual-income-tax-rates"
+    checked_at: "2026-10-02"
+    check_method: official_search_index
+    verified: true
+    quote: "From YA 2024: first $20,000 0%; next $10,000 2%; next $10,000 3.5%; next $40,000 7%; next $40,000 11.5%; next $40,000 15%; next $40,000 18%; next $40,000 19%; next $40,000 19.5%; next $40,000 20%; next $180,000 22%; next $500,000 23%; above $1,000,000 24%."
+    note: "propbot looks up your marginal rate from your yearly employment income without reliefs, so it slightly overstates the tax on rent."
+    history: []

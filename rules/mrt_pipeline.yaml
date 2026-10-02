@@ -1,0 +1,83 @@
+# Upcoming MRT lines and stations (not open as of 2026-10-02), from LTA pages found through
+# lta.gov.sg search results on 2026-10-02. Opening years are as LTA states them.
+# lat and lon are filled by OneMap during backfill; they are never typed in by hand.
+# status: upcoming, or due (LTA's target window has started; check whether it has opened).
+# Stations whose names LTA has not published are listed as line level entries with a count.
+
+meta:
+  checked_at: "2026-10-02"
+  check_method: official_search_index
+  signal_radius_m: 800
+
+sources:
+  CRL: https://www.lta.gov.sg/content/ltagov/en/upcoming_projects/rail_expansion/cross_island_line.html
+  RAIL26: https://www.lta.gov.sg/content/ltagov/en/newsroom/2026/3/news-releases/next-phase-of-rail-development.html
+  CRL2: https://www.lta.gov.sg/content/ltagov/en/newsroom/2022/9/news-releases/cross-island-line-phase-2.html
+  CPE: https://www.lta.gov.sg/content/ltagov/en/newsroom/2023/10/news-releases/construction_works_on_the_CRL-PE_commences.html
+  JRL: https://www.lta.gov.sg/content/ltagov/en/upcoming_projects/rail_expansion/jurong_region_line.html
+  JRL_C19: https://www.lta.gov.sg/content/ltagov/en/newsroom/2019/9/2/lta-awards-civil-contracts-to-construct-five-stations-for-the-jurong-region-line.html
+  JRL_C20: https://www.lta.gov.sg/content/ltagov/en/newsroom/2020/3/news-releases/lta-awards-civil-contract-to-construct-three-stations-for-the-ju.html
+  JRL_C21: https://www.lta.gov.sg/content/ltagov/en/newsroom/2021/4/news-releases/Two_civil_contracts_to_construct_4_stations_for_JRL.html
+  TEL: https://www.lta.gov.sg/content/ltagov/en/upcoming_projects/rail_expansion/thomson_east_coast_line.html
+  TEL5N: https://www.lta.gov.sg/content/ltagov/en/newsroom/2025/1/news-releases/three_new_stations_to_connect.html
+  DTLE: https://www.lta.gov.sg/content/ltagov/en/upcoming_projects/rail_expansion/downtown_line_2_and_3_extensions.html
+  DTL2E: https://www.lta.gov.sg/content/ltagov/en/newsroom/2026/3/news-releases/lta-awards-final-civil-contract-for-the-downtown-line-2-extensio.html
+  NS3A: https://www.lta.gov.sg/content/ltagov/en/newsroom/2025/12/news-releases/lta_awards_civil_contract_ns3a_station.html
+  T5: https://www.lta.gov.sg/content/ltagov/en/newsroom/2025/7/news-releases/TELe_and_CRL_changi_airport_to_city_centre.html
+
+stations:
+  # Cross Island Line phase 1, 12 stations, 2030
+  - {name: Aviation Park, line: Cross Island Line, stage: Phase 1, opening_year: 2030, status: upcoming, source: CRL, lat: null, lon: null}
+  - {name: Loyang, line: Cross Island Line, stage: Phase 1, opening_year: 2030, status: upcoming, source: CRL, lat: null, lon: null}
+  - {name: Pasir Ris East, line: Cross Island Line, stage: Phase 1, opening_year: 2030, status: upcoming, source: CRL, lat: null, lon: null}
+  - {name: Pasir Ris, line: Cross Island Line, stage: Phase 1, opening_year: 2030, status: upcoming, interchange: East West Line, source: CRL, lat: null, lon: null}
+  - {name: Tampines North, line: Cross Island Line, stage: Phase 1, opening_year: 2030, status: upcoming, source: CRL, lat: null, lon: null}
+  - {name: Defu, line: Cross Island Line, stage: Phase 1, opening_year: 2030, status: upcoming, source: CRL, lat: null, lon: null}
+  - {name: Hougang, line: Cross Island Line, stage: Phase 1, opening_year: 2030, status: upcoming, interchange: North East Line, source: RAIL26, lat: null, lon: null}
+  - {name: Serangoon North, line: Cross Island Line, stage: Phase 1, opening_year: 2030, status: upcoming, source: CRL, lat: null, lon: null}
+  - {name: Tavistock, line: Cross Island Line, stage: Phase 1, opening_year: 2030, status: upcoming, source: CRL, lat: null, lon: null}
+  - {name: Ang Mo Kio, line: Cross Island Line, stage: Phase 1, opening_year: 2030, status: upcoming, interchange: North South Line, source: RAIL26, lat: null, lon: null}
+  - {name: Teck Ghee, line: Cross Island Line, stage: Phase 1, opening_year: 2030, status: upcoming, source: CRL, lat: null, lon: null}
+  - {name: Bright Hill, line: Cross Island Line, stage: Phase 1, opening_year: 2030, status: upcoming, interchange: Thomson East Coast Line, source: RAIL26, lat: null, lon: null}
+  # Cross Island Line phase 2, 6 stations, 2032
+  - {name: Turf City, line: Cross Island Line, stage: Phase 2, opening_year: 2032, status: upcoming, source: CRL2, lat: null, lon: null}
+  - {name: King Albert Park, line: Cross Island Line, stage: Phase 2, opening_year: 2032, status: upcoming, interchange: Downtown Line, source: CRL2, lat: null, lon: null}
+  - {name: Maju, line: Cross Island Line, stage: Phase 2, opening_year: 2032, status: upcoming, source: CRL2, lat: null, lon: null}
+  - {name: Clementi, line: Cross Island Line, stage: Phase 2, opening_year: 2032, status: upcoming, interchange: East West Line, source: CRL2, lat: null, lon: null}
+  - {name: West Coast, line: Cross Island Line, stage: Phase 2, opening_year: 2032, status: upcoming, source: CRL2, lat: null, lon: null}
+  - {name: Jurong Lake District, line: Cross Island Line, stage: Phase 2, opening_year: 2032, status: upcoming, source: CRL2, lat: null, lon: null}
+  # Cross Island Line Punggol extension, 2032
+  - {name: Punggol, line: Cross Island Line, stage: Punggol extension, opening_year: 2032, status: upcoming, interchange: North East Line, source: CPE, lat: null, lon: null}
+  - {name: Riviera, line: Cross Island Line, stage: Punggol extension, opening_year: 2032, status: upcoming, source: CPE, lat: null, lon: null}
+  - {name: Elias, line: Cross Island Line, stage: Punggol extension, opening_year: 2032, status: upcoming, source: CPE, lat: null, lon: null}
+  # Jurong Region Line stage 1 (Choa Chu Kang to Boon Lay and Tawas), mid 2028 per the March 2026 update
+  - {name: Choa Chu Kang, line: Jurong Region Line, stage: Stage 1, opening_year: 2028, status: upcoming, source: RAIL26, lat: null, lon: null}
+  - {name: Choa Chu Kang West, line: Jurong Region Line, stage: Stage 1, opening_year: 2028, status: upcoming, source: JRL_C19, lat: null, lon: null}
+  - {name: Tengah, line: Jurong Region Line, stage: Stage 1, opening_year: 2028, status: upcoming, source: JRL_C19, lat: null, lon: null}
+  - {name: Hong Kah, line: Jurong Region Line, stage: Stage 1, opening_year: 2028, status: upcoming, source: JRL_C19, lat: null, lon: null}
+  - {name: Corporation, line: Jurong Region Line, stage: Stage 1, opening_year: 2028, status: upcoming, source: JRL_C19, lat: null, lon: null}
+  - {name: Boon Lay, line: Jurong Region Line, stage: Stage 1, opening_year: 2028, status: upcoming, interchange: East West Line, source: JRL, lat: null, lon: null}
+  - {name: Gek Poh, line: Jurong Region Line, stage: Stage 1, opening_year: 2028, status: upcoming, source: JRL_C21, lat: null, lon: null}
+  - {name: Tawas, line: Jurong Region Line, stage: Stage 1, opening_year: 2028, status: upcoming, source: JRL, lat: null, lon: null}
+  # Jurong Region Line stage 2 (JRL East, Tengah to Pandan Reservoir), 2028 on the JRL page
+  - {name: Tengah Plantation, line: Jurong Region Line, stage: Stage 2, opening_year: 2028, status: upcoming, source: JRL_C20, lat: null, lon: null}
+  - {name: Tengah Park, line: Jurong Region Line, stage: Stage 2, opening_year: 2028, status: upcoming, source: JRL_C20, lat: null, lon: null}
+  - {name: Bukit Batok West, line: Jurong Region Line, stage: Stage 2, opening_year: 2028, status: upcoming, source: JRL_C20, lat: null, lon: null}
+  - {name: Toh Guan, line: Jurong Region Line, stage: Stage 2, opening_year: 2028, status: upcoming, source: JRL, lat: null, lon: null}
+  - {name: Jurong East, line: Jurong Region Line, stage: Stage 2, opening_year: 2028, status: upcoming, interchange: North South and East West Lines, source: JRL, lat: null, lon: null}
+  - {name: Jurong Town Hall, line: Jurong Region Line, stage: Stage 2, opening_year: 2028, status: upcoming, source: JRL, lat: null, lon: null}
+  - {name: Pandan Reservoir, line: Jurong Region Line, stage: Stage 2, opening_year: 2028, status: upcoming, source: JRL, lat: null, lon: null}
+  # Thomson East Coast Line stage 5 and Downtown Line extension: LTA targeted the second half of 2026
+  - {name: Bedok South, line: Thomson East Coast Line, stage: Stage 5, opening_year: 2026, status: due, source: TEL, lat: null, lon: null}
+  - {name: Sungei Bedok, line: Thomson East Coast Line, stage: Stage 5, opening_year: 2026, status: due, interchange: Downtown Line, source: TEL5N, lat: null, lon: null}
+  - {name: Xilin, line: Downtown Line, stage: Downtown Line 3 extension, opening_year: 2026, status: due, source: DTLE, lat: null, lon: null}
+  # Infill stations
+  - {name: Brickland, line: North South Line, stage: Infill NS3A, opening_year: 2034, status: upcoming, source: NS3A, lat: null, lon: null}
+
+line_level:   # LTA has not published every station name for these
+  - {line: Jurong Region Line, stage: Stage 1, opening_year: 2028, unnamed_stations: 2, note: "JS6 and JS7", source: JRL}
+  - {line: Jurong Region Line, stage: Stage 3, opening_year: 2029, unnamed_stations: 7, note: "towards NTU and Jurong Pier; working names only", source: JRL}
+  - {line: Jurong Region Line, stage: JS2A infill, opening_year: 2035, unnamed_stations: 1, note: "mid 2030s, between JS2 and JS3", source: RAIL26}
+  - {line: Downtown Line, stage: Downtown Line 2 extension, opening_year: 2035, unnamed_stations: 2, note: "Sungei Kadut area", source: DTL2E}
+  - {line: Cross Island Line, stage: Phase 3, opening_year: null, unnamed_stations: null, note: "late 2030s", source: RAIL26}
+  - {line: Thomson East Coast Line and Cross Island Line, stage: Changi Terminal 5, opening_year: null, unnamed_stations: 1, note: "with Terminal 5, mid 2030s", source: T5}
