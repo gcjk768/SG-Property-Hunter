@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import html
 import random
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -105,7 +106,8 @@ class TelegramClient:
 
     # ------------------------------------------------------------ messages
     def send_message(self, chat_id: str | int, text: str, *, silent: bool = True,
-                     link_url: str | None = None, reply_to: int | None = None) -> int:
+                     link_url: str | None = None, reply_to: int | None = None,
+                     thread_id: int | None = None, buttons: list[tuple[str, str]] | None = None) -> int:
         if len(text) > MAX_LEN:
             raise ValueError(f"message is {len(text)} characters; the limit is {MAX_LEN}")
         payload: dict[str, Any] = {"chat_id": chat_id, "text": text, "parse_mode": "HTML",
@@ -117,7 +119,19 @@ class TelegramClient:
             payload["link_preview_options"] = {"is_disabled": True}
         if reply_to:
             payload["reply_parameters"] = {"message_id": reply_to, "allow_sending_without_reply": True}
-        result = self.call("sendMessage", payload)
+        if thread_id:
+            payload["message_thread_id"] = thread_id
+        if buttons:   # one row of (label, callback_data)
+            payload["reply_markup"] = {"inline_keyboard": [[{"text": t, "callback_data": d} for t, d in buttons]]}
+        try:
+            result = self.call("sendMessage", payload)
+        except TelegramError as exc:
+            if exc.code != 400 or "parse entities" not in exc.description:
+                raise
+            # Telegram rejected the HTML: resend as plain text so the message is never lost
+            payload.pop("parse_mode")
+            payload["text"] = html.unescape(re.sub(r"<[^>]+>", "", text))
+            result = self.call("sendMessage", payload)
         mid = int(result["message_id"])
         first = text.split("\n", 1)[0][:120]
         self.journal("telegram_send", f"sent message {mid} to {chat_id}: {first}", {"silent": silent})
@@ -170,7 +184,22 @@ class TelegramClient:
         return self.call("getMe", paced=False)
 
     def get_updates(self, offset: int | None, timeout: int = 30) -> list[dict]:
-        payload: dict[str, Any] = {"timeout": timeout, "allowed_updates": ["message"]}
+        payload: dict[str, Any] = {"timeout": timeout, "allowed_updates": ["message", "callback_query"]}
         if offset is not None:
             payload["offset"] = offset
         return self.call("getUpdates", payload, paced=False) or []
+
+    def answer_callback(self, callback_id: str, text: str = "") -> None:
+        try:
+            self.call("answerCallbackQuery", {"callback_query_id": callback_id, "text": text}, paced=False)
+        except TelegramError:
+            pass   # an expired callback must not break the listener
+
+    def typing(self, chat_id: str | int, thread_id: int | None = None) -> None:
+        payload: dict[str, Any] = {"chat_id": chat_id, "action": "typing"}
+        if thread_id:
+            payload["message_thread_id"] = thread_id
+        try:
+            self.call("sendChatAction", payload, paced=False)
+        except TelegramError:
+            pass

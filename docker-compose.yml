@@ -1,0 +1,27 @@
+services:
+  propbot:
+    build: .
+    # Dockge Update/Start rebuilds from the code on disk instead of reusing the old image.
+    pull_policy: build
+    container_name: sg-property-hunter
+    # The NAS user (the owner, uid 1000) so data/ and the vault stay editable from the host.
+    user: "1000:10"
+    environment:
+      TZ: Asia/Singapore
+    restart: unless-stopped
+    init: true
+    volumes:
+      - .:/app
+      # Obsidian vault: movement log, reports, Profile.md and memory (propbot/vault.py)
+      - "/volume1/<USER>/Obsidian/SG Property Hunter:/vault"
+    healthcheck:
+      # the listener touches data/heartbeat every long poll (30 s)
+      test: ["CMD", "python", "-c", "import os,sys,time; sys.exit(time.time() - os.path.getmtime('/app/data/heartbeat') > 300)"]
+      interval: 2m
+      timeout: 10s
+      start_period: 2m
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"

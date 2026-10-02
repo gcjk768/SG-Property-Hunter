@@ -78,6 +78,7 @@ class Profile(_Strict):
 # ---------------------------------------------------------------- sections
 class TelegramCfg(_Strict):
     chat_id: str = "@your_channel_or_numeric_id"
+    thread_id: int = 0            # forum topic in a shared group; 0 = no topic
     owner_user_id: int = 0
     admin_chat_id: str = ""
     replace_previous: bool = True
@@ -189,6 +190,8 @@ class ClaudeCfg(_Strict):
         max_turns=4, timeout_seconds=600, max_budget_usd=1.0))
     rules_check: ClaudeCallCfg = Field(default_factory=lambda: ClaudeCallCfg(
         max_turns=40, timeout_seconds=900, max_budget_usd=1.5))
+    ask: ClaudeCallCfg = Field(default_factory=lambda: ClaudeCallCfg(
+        max_turns=8, timeout_seconds=300, max_budget_usd=0.5))
     no_tools: list[str] = Field(default_factory=lambda: [
         "Bash", "Edit", "Write", "Read", "Glob", "Grep", "WebFetch", "WebSearch", "Agent", "NotebookEdit"])
 
@@ -234,6 +237,17 @@ class LimitsCfg(_Strict):
     claude: ClaudeLimits = Field(default_factory=ClaudeLimits)
 
 
+class PulseCfg(_Strict):
+    """Hourly HDB resale pulse from data.gov.sg: posts only new, notable deals."""
+    enabled: bool = True
+    check_minute: int = 7           # minute past every hour
+    median_months: int = 12         # town and flat type median over this many months
+    min_sales_for_median: int = 5
+    value_discount_pct: float = 15  # notable when this far below the median price per sqm
+    min_yield_pct: float = 8.0      # or when the estimated gross yield reaches this
+    max_items: int = 8
+
+
 class ObsidianCfg(_Strict):
     enabled: bool = False
     vault_path: str = "/vault"
@@ -270,6 +284,7 @@ class Settings(_Strict):
     claude: ClaudeCfg = Field(default_factory=ClaudeCfg)
     limits: LimitsCfg = Field(default_factory=LimitsCfg)
     obsidian: ObsidianCfg = Field(default_factory=ObsidianCfg)
+    pulse: PulseCfg = Field(default_factory=PulseCfg)
 
     # filled by load_settings, not part of config.yaml
     base_dir: Path = Field(default=Path("."), exclude=True)
