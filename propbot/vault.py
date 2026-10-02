@@ -37,7 +37,7 @@ MY_NOTES = "## My notes"
 _SLUG = re.compile(r"[^a-z0-9]+")
 _LOCK = threading.Lock()
 KIND_EMOJI = {"card": "🧮", "telegram_send": "📤", "telegram_delete": "🗑", "alert": "⚠️", "rules_changed": "📜",
-              "favourite": "⭐", "claude_call": "🤖", "claude_limit": "⛔", "pulse": "🏠", "command": "💬",
+              "favourite": "⭐", "claude_call": "🤖", "claude_limit": "⛔", "pulse": "🏠", "hunt": "🏘", "command": "💬",
               "watchlist": "👀", "fetch": "🌐", "error": "❌", "start": "🚀"}
 
 HOME_TEMPLATE = """---

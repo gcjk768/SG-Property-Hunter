@@ -42,6 +42,11 @@ pulse:                         # hourly HDB resale pulse from data.gov.sg (free,
   min_yield_pct: 8.0             # or when HDB median rent gives this gross yield
   max_items: 8                   # deals per message
 
+hunt:                          # hourly listing hunt: claude -p haiku web search, one card per new listing
+  enabled: true
+  check_minute: 37               # minute past every hour (the pulse runs at :07)
+  per_run: 5                     # new listings posted per hunt at most
+
 telegram:
   chat_id: "-1002069000031"      # James Channel (forum group shared by the fleet)
   thread_id: 4173                # "PropBot" topic; the bot ignores every other topic
@@ -147,7 +152,7 @@ claude:
   fallback_model: sonnet
   auth: oauth                    # oauth = CLAUDE_CODE_OAUTH_TOKEN, apikey = ANTHROPIC_API_KEY
   max_retries: 4
-  discovery: {max_turns: 100, timeout_seconds: 1800, max_budget_usd: 3.00, calls_per_run: 2}  # categories split across two calls
+  discovery: {max_turns: 30, timeout_seconds: 900, max_budget_usd: 1.00, calls_per_run: 1}  # the hourly listing hunt
   curation: {max_turns: 4, timeout_seconds: 600, max_budget_usd: 1.00}
   rules_check: {max_turns: 40, timeout_seconds: 900, max_budget_usd: 1.50}
   no_tools: [Bash, Edit, Write, Read, Glob, Grep, WebFetch, WebSearch, Agent, NotebookEdit]
@@ -177,5 +182,5 @@ limits:
     delete_batch_size: 100
   claude:
     max_calls_per_run: 10        # 2 discovery + 4 curation batches + retries
-    max_calls_per_day: 12
+    max_calls_per_day: 40        # 24 hourly hunts on haiku plus /propask
     max_analyses_per_day: 10     # on demand /analyse from my private chat

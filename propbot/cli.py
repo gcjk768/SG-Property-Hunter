@@ -339,6 +339,23 @@ def cmd_pulse(args) -> int:
     return 0
 
 
+def cmd_hunt(args) -> int:
+    from . import hunt
+    bot, settings = _bot(args)
+    if bot.claude is None:
+        print("No Claude token in .env", file=sys.stderr)
+        return 2
+    if args.post:
+        print(f"posted {bot.hunt((bot.chat, bot.thread), manual=True)} listings")
+        return 0
+    listings, dropped, note = hunt.run(bot.claude, settings, bot.db, _today(args, settings), settings.hunt.per_run)
+    for x in listings:
+        print(plain(hunt.card(x, settings)) + "\n")
+    print("dropped:", dropped)
+    print("note:", note)
+    return 0
+
+
 def cmd_later(step: int):
     def run(args) -> int:
         print(f"'{args.cmd}' arrives in build step {step}; the build is paused after step 3 for the maths check.")
@@ -412,6 +429,10 @@ def build_parser() -> argparse.ArgumentParser:
     pu = sub.add_parser("pulse", help="HDB resale pulse now: print it, or --post to the topic")
     pu.add_argument("--post", action="store_true")
     pu.set_defaults(func=cmd_pulse)
+
+    hu = sub.add_parser("hunt", help="listing hunt now (one Claude call); --post sends it to the topic")
+    hu.add_argument("--post", action="store_true")
+    hu.set_defaults(func=cmd_hunt)
 
     for name, step in (("run", 5), ("discover", 5), ("backfill", 4), ("purge", 6)):
         x = sub.add_parser(name)

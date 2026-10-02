@@ -32,10 +32,10 @@ def test_midnight_rollover_singapore(limiter, clock, db):
     from datetime import datetime, timezone
     clock.t = datetime(2026, 10, 1, 15, 59, 30, tzinfo=timezone.utc).timestamp()
     limiter.acquire("claude")
-    assert limiter.remaining("claude")["day"] == 11
+    assert limiter.remaining("claude")["day"] == limiter.specs["claude"].per_day - 1
     clock.advance(60)                        # now 2 Oct in Singapore
     assert limiter.day() == "2026-10-02"
-    assert limiter.remaining("claude")["day"] == 12
+    assert limiter.remaining("claude")["day"] == limiter.specs["claude"].per_day
 
 
 def test_claude_caps(limiter):
