@@ -5,6 +5,7 @@ updated: 2026-10-03
 # Changelog
 
 ## 2026-10-03
+- feat: pulse lists every notable deal (no top 8 cap) and every deal links to listings in its block
 - feat: hourly listing hunt (propbot/hunt.py): claude -p haiku web search for real listings for sale, checked for allowed site, budget, lease and repeats, one card per listing; /prophunt; runs at :37 every hour like the rest of the fleet
 - chore: Claude daily cap 12 to 40 (floor 48) for the hourly haiku hunt; all claude -p calls on haiku
 - feat: Telegram bot @jameskoh_sgproperty_bot with `propbot serve` (listener plus hourly scheduler), topic filter and button whitelist

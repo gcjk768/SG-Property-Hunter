@@ -191,6 +191,12 @@ def _month_label(m: str) -> str:
         return m or "no data"
 
 
+def listings_url(d: Deal) -> str:
+    """Flats for sale in the same block: a PropertyGuru search link for the reader (the bot never fetches it)."""
+    return ("https://www.propertyguru.com.sg/property-for-sale?market=residential&listing_type=sale&freetext="
+            + quote_plus(f"{d.block} {d.street.title()}"))
+
+
 def deal_block(d: Deal, cfg) -> str:
     addr = f"Blk {d.block} {d.street.title()}"
     maps = "https://www.google.com/maps/search/?api=1&query=" + quote_plus(f"{addr} Singapore")
@@ -207,15 +213,16 @@ def deal_block(d: Deal, cfg) -> str:
         f"💰 {_money(d.price)} · S${d.psf:,.0f} psf · {value}",
         f"🏠 {d.sqm:.0f} sqm · floor {esc(d.storey.lower())} · {lease}",
         rent,
-        f'📍 <a href="{esc_attr(maps)}">{esc(addr)}</a>',
+        f'📍 <a href="{esc_attr(maps)}">{esc(addr)}</a>  ·  <a href="{esc_attr(listings_url(d))}">Listings</a>',
     ])
 
 
 def render(deals: list[Deal], ctx: dict, settings: Settings, *, title_note: str = "") -> list[str]:
     """Messages (each under 4096 chars), split between blocks only."""
     cfg = settings.pulse
-    shown = deals[:cfg.max_items]
-    sub = title_note or (f"{ctx['new']} new notable · top {len(shown)}" if ctx["new"] else "no new notable deals")
+    shown = deals[:cfg.max_items] if cfg.max_items > 0 else deals     # 0 = list them all
+    more = f" · top {len(shown)}" if len(shown) < len(deals) else ""
+    sub = title_note or (f"{len(deals)} notable, {ctx['new']} new{more}" if deals else "no new notable deals")
     head = f"🏠 <b>HDB RESALE PULSE</b> · {esc(sub)}"
     blocks = [deal_block(d, cfg) for d in shown] or [
         f"⚪ <i>Nothing beats the bar right now: {cfg.value_discount_pct:g}% under the town median or "
