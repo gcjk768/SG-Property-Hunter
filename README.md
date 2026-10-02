@@ -6,6 +6,56 @@ scenarios, and posts one item per Telegram message with a deterministic verdict.
 
 All money maths is done in code from `rules/sg_property_rules.yaml`. Claude only writes the words.
 
+## How it fits together
+
+The diagram was made with draw.io. [Open it in the draw.io editor](https://app.diagrams.net/?pv=0&grid=0#create=%7B%22type%22%3A%22mermaid%22%2C%22compressed%22%3Atrue%2C%22data%22%3A%22jVVtj5swDP41lbYPRRynTvva46XH1LdR2vt4ChC47FKCArTrv5%2BdhFL1CppEi2Mnjx37sZlOpxN7nooyZ8XkeQ7yxLHh4eQi2gY1jk35J%2BinamfOxTn9ILIBfexdt9dtUkhSfYC4nu8ms5eJ4%2BwXke%2BvjcZxQfBE%2BkklmCaz%2Fqh%2Bdu6r7%2Blzu%2FSDZi2Hjcp7JWlFJAXJ%2FgEa29ZYlagxBvsn6J6NTsKpGt4AkH7CeyVK3DIzxx64vYk7XG%2F3sQk9LKu2qR%2Be0I8bLPROnTnrQo4c1KTM4N%2Bi5WnkbLRf%2BsaPCTioi%2FdKiorK5vKudAZwEGMTBKEbzpcaZpPnLGUEI8hIQ3TeULIKcbLqQmdnH821sOrq8eq9aMHdBlrYlHRFqhHHb%2F6L9rkVnDVYlZw2kG9TLCkS0dRW87fReEmbFRQziYtUCJ6JczmWWC%2FcudqBy0mboYOM1ak4UXnRLs40wcJRIlMsWy4k0pXVDSuLx8gUqjJYdn%2B9CNe%2BdhmwkpQpVUcKVtIubBWGKPllJHB%2FGRpK%2BJwVLGGQnrH97mYXm4sCk%2BsrebK2YXQsQ0G4vo0Wbq3zsowPOt7Y20Wm0J2g6juIuI02vzTkEy4vkFrVd%2BIPTRsGPaTwE6VWRSU17crLx1h68CPT0wcqM5Y2qkcTyVJsS%2Fg1Av5m%2F1k0dx%2FdMSNtJekDPAuZ1WOFivy15xuMCPCp7GgrsNY28PmIF8cRZR9pXZOCPgTysAe%2B4aj6vVRNgLl4g250nO9fdx%2Fm%2B2VsDmySmmWM4Fg6kZY3akdgxABnAPTPPcxtKmJDsphyChTGeGEclyXl%2BiZPKq94E0UpNQfuszH3Vh2H5tmRlRrDDHsCg%2FfL6FuZBtlKdiKq6%2FsDEDcpCb90nMBxRk375%2BQkWgnR3AB2mHriOzZ8Vp79rvM7I87X3qR6qzPp8TlgvM7F3q7Y3dmVk96G06wzoTyAqha9TbVuv8SGvHPXL1ULdDhqcYMDhO5Xhp3Xa%2Bplb48XwzbvZdim6XcNQa2UFddQUZEzTq1jZlhMYJrjNFUaZygj98XTRbmhy8A57zbHmodfIrN0ZARmz0nNUJuLAps0x15QHwKgqZ5MKkJr2oH9Aw%3D%3D%22%2C%22effect%22%3A%22pop%22%7D) to change it; its
+source is in [docs/architecture.mmd](docs/architecture.mmd).
+
+```mermaid
+flowchart TD
+  subgraph NAS["UGREEN NAS, Docker"]
+    SCHED["Scheduler: prepare 06:00, post 08:30, rules check Mon 05:00"]
+    subgraph INPUTS["Inputs"]
+      CFG["config.yaml and .env"]
+      RULES["rules/sg_property_rules.yaml"]
+      OFFICIAL["Official data: data.gov.sg, URA, MAS, HDB, CPF, OneMap"]
+      WEB["Polite fetcher: robots.txt, budgets, cooldowns"]
+      DISC["Claude discovery: web search for listings"]
+    end
+    subgraph ENGINE["Finance engine, code only"]
+      ELIG["Eligibility"]
+      COST["Costs and duties"]
+      FIN["Financing: LTV, TDSR, MSR, CPF"]
+      PROJ["10 year projection: bear, base, bull"]
+      VERD["Verdict rubric 0 to 5"]
+    end
+    CUR["Claude curation: words only"]
+    RENDER["Renderer: one item per message"]
+    DB[("SQLite, WAL")]
+    VAULT[("Obsidian vault /vault/propbot")]
+  end
+  TG["Telegram channel: 100 items a day"]
+  ADMIN["Admin chat: alerts"]
+  ME["Private chat: /analyse, /set, favourites"]
+
+  SCHED --> DISC
+  CFG --> ELIG
+  RULES --> ELIG
+  OFFICIAL --> PROJ
+  DISC --> WEB
+  WEB --> ELIG
+  ELIG --> COST --> FIN --> PROJ --> VERD
+  VERD --> CUR --> RENDER
+  RENDER --> TG
+  RENDER --> DB
+  RENDER --> VAULT
+  VAULT -- "Profile.md, Watchlist.md" --> ELIG
+  SCHED --> RULES
+  ME --> ELIG
+  DB --> ADMIN
+  VAULT -. "activity log of every action" .- ADMIN
+```
+
 ## Build status
 
 | Step | What | Status |
