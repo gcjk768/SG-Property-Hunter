@@ -1,0 +1,42 @@
+flowchart TD
+  subgraph NAS["UGREEN NAS, Docker"]
+    SCHED["Scheduler: prepare 06:00, post 08:30, rules check Mon 05:00"]
+    subgraph INPUTS["Inputs"]
+      CFG["config.yaml and .env"]
+      RULES["rules/sg_property_rules.yaml"]
+      OFFICIAL["Official data: data.gov.sg, URA, MAS, HDB, CPF, OneMap"]
+      WEB["Polite fetcher: robots.txt, budgets, cooldowns"]
+      DISC["Claude discovery: web search for listings"]
+    end
+    subgraph ENGINE["Finance engine, code only"]
+      ELIG["Eligibility"]
+      COST["Costs and duties"]
+      FIN["Financing: LTV, TDSR, MSR, CPF"]
+      PROJ["10 year projection: bear, base, bull"]
+      VERD["Verdict rubric 0 to 5"]
+    end
+    CUR["Claude curation: words only"]
+    RENDER["Renderer: one item per message"]
+    DB[("SQLite, WAL")]
+    VAULT[("Obsidian vault /vault/propbot")]
+  end
+  TG["Telegram channel: 100 items a day"]
+  ADMIN["Admin chat: alerts"]
+  ME["Private chat: /analyse, /set, favourites"]
+
+  SCHED --> DISC
+  CFG --> ELIG
+  RULES --> ELIG
+  OFFICIAL --> PROJ
+  DISC --> WEB
+  WEB --> ELIG
+  ELIG --> COST --> FIN --> PROJ --> VERD
+  VERD --> CUR --> RENDER
+  RENDER --> TG
+  RENDER --> DB
+  RENDER --> VAULT
+  VAULT -- "Profile.md, Watchlist.md" --> ELIG
+  SCHED --> RULES
+  ME --> ELIG
+  DB --> ADMIN
+  VAULT -. "activity log of every action" .- ADMIN
