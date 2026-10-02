@@ -1,0 +1,199 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<defs>
+<filter id="sh" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0F172A" flood-opacity="0.10"/></filter>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F8FAFC"/><stop offset="1" stop-color="#EEF2F7"/></linearGradient>
+<linearGradient id="eng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EEF2FF"/><stop offset="1" stop-color="#E0E7FF"/></linearGradient>
+<marker id="a003B57" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#003B57"/></marker>
+<marker id="a0F766E" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0F766E"/></marker>
+<marker id="a26A5E4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#26A5E4"/></marker>
+<marker id="a4338CA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4338CA"/></marker>
+<marker id="a4F46E5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4F46E5"/></marker>
+<marker id="a64748B" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748B"/></marker>
+<marker id="a7C3AED" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7C3AED"/></marker>
+<marker id="aB45309" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B45309"/></marker>
+<marker id="aB91C1C" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B91C1C"/></marker>
+<marker id="aD97757" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+<marker id="aDC2626" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#DC2626"/></marker>
+</defs>
+<rect width="1600" height="1000" fill="url(#bg)"/>
+<text x="40" y="50" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="30" font-weight="800" fill="#0F172A" text-anchor="start">propbot</text>
+<text x="178" y="50" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="30" font-weight="300" fill="#475569" text-anchor="start">how a day runs</text>
+<text x="40" y="78" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#64748B" text-anchor="start">From official data to one Telegram message per item. All money maths is code; Claude only finds listings and writes the words.</text>
+<rect x="30" y="100" width="1250" height="840" rx="22" fill="#FFFFFF" fill-opacity="0.55" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="7 6"/>
+<g transform="translate(52,114) scale(1.0833333333333333)" fill="#2496ED"><path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/></g>
+<text x="88" y="134" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#334155" text-anchor="start">UGREEN NAS · Docker container</text>
+<rect x="350" y="118" width="590" height="44" rx="22" fill="#0F172A" filter="url(#sh)"/>
+<g transform="translate(366,129) scale(0.9166666666666666)" fill="none" stroke="#FDE68A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
+  <path d="M12 6v6l4 2" />
+</g>
+<text x="398" y="146" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#F8FAFC" text-anchor="start">Scheduler   06:00 prepare  ·  08:30 post  ·  Monday 05:00 rules check</text>
+<text x="62" y="192" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#94A3B8" text-anchor="start">INPUTS</text>
+<text x="1322" y="270" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#94A3B8" text-anchor="start">WHAT YOU SEE</text>
+<text x="642" y="790" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#94A3B8" text-anchor="start"></text>
+<rect x="610" y="190" width="340" height="570" rx="20" fill="url(#eng)" stroke="#6366F1" stroke-width="2" filter="url(#sh)"/>
+<rect x="628" y="206" width="44" height="44" rx="12" fill="#FFFFFF"/>
+<g transform="translate(638,216) scale(1.0)" fill="#3776AB"><path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.18l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.22-.41-.09-.41.09zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08z"/></g>
+<text x="686" y="227" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="19" font-weight="800" fill="#312E81" text-anchor="start">Finance engine</text>
+<text x="686" y="247" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#4338CA" text-anchor="start">Code only. No AI does the maths.</text>
+<rect x="632" y="282" width="296" height="72" rx="14" fill="#FFFFFF" stroke="#C7D2FE" stroke-width="1.2"/>
+<circle cx="662" cy="318.0" r="15" fill="#4F46E5"/>
+<text x="662" y="323.0" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="690" y="313" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1E1B4B" text-anchor="start">Eligibility</text>
+<text x="690" y="334" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">What the law lets you buy</text>
+<path d="M662,354 L662,372" stroke="#818CF8" stroke-width="2" marker-end="url(#a4F46E5)"/>
+<rect x="632" y="372" width="296" height="72" rx="14" fill="#FFFFFF" stroke="#C7D2FE" stroke-width="1.2"/>
+<circle cx="662" cy="408.0" r="15" fill="#4F46E5"/>
+<text x="662" y="413.0" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="690" y="403" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1E1B4B" text-anchor="start">Costs and duties</text>
+<text x="690" y="424" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">BSD, ABSD, SSD, fees, taxes</text>
+<path d="M662,444 L662,462" stroke="#818CF8" stroke-width="2" marker-end="url(#a4F46E5)"/>
+<rect x="632" y="462" width="296" height="72" rx="14" fill="#FFFFFF" stroke="#C7D2FE" stroke-width="1.2"/>
+<circle cx="662" cy="498.0" r="15" fill="#4F46E5"/>
+<text x="662" y="503.0" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="690" y="493" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1E1B4B" text-anchor="start">Financing</text>
+<text x="690" y="514" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">LTV, TDSR, MSR, CPF, instalment</text>
+<path d="M662,534 L662,552" stroke="#818CF8" stroke-width="2" marker-end="url(#a4F46E5)"/>
+<rect x="632" y="552" width="296" height="72" rx="14" fill="#FFFFFF" stroke="#C7D2FE" stroke-width="1.2"/>
+<circle cx="662" cy="588.0" r="15" fill="#4F46E5"/>
+<text x="662" y="593.0" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="690" y="583" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1E1B4B" text-anchor="start">10 year projection</text>
+<text x="690" y="604" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">Bear, base, bull, IRR, break even</text>
+<path d="M662,624 L662,642" stroke="#818CF8" stroke-width="2" marker-end="url(#a4F46E5)"/>
+<rect x="632" y="642" width="296" height="72" rx="14" fill="#FFFFFF" stroke="#C7D2FE" stroke-width="1.2"/>
+<circle cx="662" cy="678.0" r="15" fill="#4F46E5"/>
+<text x="662" y="683.0" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="800" fill="#FFFFFF" text-anchor="middle">5</text>
+<text x="690" y="673" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1E1B4B" text-anchor="start">Verdict</text>
+<text x="690" y="694" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">Score 0 to 5, fixed by rules</text>
+<path d="M310,260 L610,260" fill="none" stroke="#B91C1C" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#aB91C1C)"/>
+<path d="M310,392 L350,392" fill="none" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#a0F766E)"/>
+<path d="M570,392 L610,392" fill="none" stroke="#D97757" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#aD97757)"/>
+<path d="M310,524 L610,524" fill="none" stroke="#B45309" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#aB45309)"/>
+<path d="M310,656 L610,656" fill="none" stroke="#7C3AED" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#a7C3AED)"/>
+<path d="M950,352 L985,352" fill="none" stroke="#4F46E5" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#a4F46E5)"/>
+<path d="M1112,414 L1112,470" fill="none" stroke="#D97757" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#aD97757)"/>
+<path d="M1240,510 L1280,510 L1280,352 L1320,352" fill="none" stroke="#26A5E4" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#a26A5E4)"/>
+<path d="M1240,540 L1320,540" fill="none" stroke="#DC2626" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#aDC2626)"/>
+<path d="M1320,695 L1290,695 L1290,776 L880,776 L880,760" fill="none" stroke="#4338CA" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#a4338CA)"/>
+<path d="M700,760 L700,800" fill="none" stroke="#003B57" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#a003B57)"/>
+<path d="M1200,580 L1200,800" fill="none" stroke="#7C3AED" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#a7C3AED)"/>
+<path d="M548,162 L548,330" fill="none" stroke="#64748B" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="6 5" marker-end="url(#a64748B)"/>
+<rect x="60" y="205" width="250" height="110" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" filter="url(#sh)"/>
+<rect x="60" y="221" width="5" height="78" rx="2.5" fill="#B91C1C"/>
+<rect x="78" y="221" width="42" height="42" rx="11" fill="#B91C1C" fill-opacity="0.10"/>
+<g transform="translate(87,230) scale(1.0)" fill="none" stroke="#B91C1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 18v-7" />
+  <path d="M11.119 2.205a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949z" />
+  <path d="M14 18v-7" />
+  <path d="M18 18v-7" />
+  <path d="M3 22h18" />
+  <path d="M6 18v-7" />
+</g>
+<text x="132" y="239" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A" text-anchor="start">Official data</text>
+<text x="78" y="285" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">data.gov.sg, URA, MAS,</text>
+<text x="78" y="303" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">HDB, CPF and OneMap</text>
+<rect x="60" y="337" width="250" height="110" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" filter="url(#sh)"/>
+<rect x="60" y="353" width="5" height="78" rx="2.5" fill="#0F766E"/>
+<rect x="78" y="353" width="42" height="42" rx="11" fill="#0F766E" fill-opacity="0.10"/>
+<g transform="translate(87,362) scale(1.0)" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
+  <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+  <path d="M2 12h20" />
+</g>
+<text x="132" y="371" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A" text-anchor="start">Listing sites and news</text>
+<text x="78" y="417" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">Polite fetcher: robots.txt,</text>
+<text x="78" y="435" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">slow gaps, daily budgets</text>
+<rect x="60" y="469" width="250" height="110" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" filter="url(#sh)"/>
+<rect x="60" y="485" width="5" height="78" rx="2.5" fill="#B45309"/>
+<rect x="78" y="485" width="42" height="42" rx="11" fill="#B45309" fill-opacity="0.10"/>
+<g transform="translate(87,494) scale(1.0)" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18" />
+  <path d="m19 8 3 8a5 5 0 0 1-6 0zV7" />
+  <path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1" />
+  <path d="m5 8 3 8a5 5 0 0 1-6 0zV7" />
+  <path d="M7 21h10" />
+</g>
+<text x="132" y="503" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A" text-anchor="start">Rules file</text>
+<text x="78" y="549" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">Every legal figure with its</text>
+<text x="78" y="567" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">official source, checked weekly</text>
+<rect x="60" y="601" width="250" height="110" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" filter="url(#sh)"/>
+<rect x="60" y="617" width="5" height="78" rx="2.5" fill="#7C3AED"/>
+<rect x="78" y="617" width="42" height="42" rx="11" fill="#7C3AED" fill-opacity="0.10"/>
+<g transform="translate(87,626) scale(1.0)" fill="#7C3AED"><path d="M19.355 18.538a68.967 68.959 0 0 0 1.858-2.954.81.81 0 0 0-.062-.9c-.516-.685-1.504-2.075-2.042-3.362-.553-1.321-.636-3.375-.64-4.377a1.707 1.707 0 0 0-.358-1.05l-3.198-4.064a3.744 3.744 0 0 1-.076.543c-.106.503-.307 1.004-.536 1.5-.134.29-.29.6-.446.914l-.31.626c-.516 1.068-.997 2.227-1.132 3.59-.124 1.26.046 2.73.815 4.481.128.011.257.025.386.044a6.363 6.363 0 0 1 3.326 1.505c.916.79 1.744 1.922 2.415 3.5zM8.199 22.569c.073.012.146.02.22.02.78.024 2.095.092 3.16.29.87.16 2.593.64 4.01 1.055 1.083.316 2.198-.548 2.355-1.664.114-.814.33-1.735.725-2.58l-.01.005c-.67-1.87-1.522-3.078-2.416-3.849a5.295 5.295 0 0 0-2.778-1.257c-1.54-.216-2.952.19-3.84.45.532 2.218.368 4.829-1.425 7.531zM5.533 9.938c-.023.1-.056.197-.098.29L2.82 16.059a1.602 1.602 0 0 0 .313 1.772l4.116 4.24c2.103-3.101 1.796-6.02.836-8.3-.728-1.73-1.832-3.081-2.55-3.831zM9.32 14.01c.615-.183 1.606-.465 2.745-.534-.683-1.725-.848-3.233-.716-4.577.154-1.552.7-2.847 1.235-3.95.113-.235.223-.454.328-.664.149-.297.288-.577.419-.86.217-.47.379-.885.46-1.27.08-.38.08-.72-.014-1.043-.095-.325-.297-.675-.68-1.06a1.6 1.6 0 0 0-1.475.36l-4.95 4.452a1.602 1.602 0 0 0-.513.952l-.427 2.83c.672.59 2.328 2.316 3.335 4.711.09.21.175.43.253.653z"/></g>
+<text x="132" y="635" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A" text-anchor="start">Your vault notes</text>
+<text x="78" y="681" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">Profile.md and Watchlist.md</text>
+<text x="78" y="699" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">read at the start of a run</text>
+<rect x="350" y="330" width="220" height="124" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" filter="url(#sh)"/>
+<rect x="350" y="346" width="5" height="92" rx="2.5" fill="#D97757"/>
+<rect x="368" y="346" width="42" height="42" rx="11" fill="#D97757" fill-opacity="0.10"/>
+<g transform="translate(377,355) scale(1.0)" fill="#D97757"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></g>
+<text x="422" y="364" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A" text-anchor="start">Claude discovery</text>
+<text x="368" y="410" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">Web search finds listings</text>
+<text x="368" y="428" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">and launches, 2 calls a day</text>
+<rect x="985" y="290" width="255" height="124" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" filter="url(#sh)"/>
+<rect x="985" y="306" width="5" height="92" rx="2.5" fill="#D97757"/>
+<rect x="1003" y="306" width="42" height="42" rx="11" fill="#D97757" fill-opacity="0.10"/>
+<g transform="translate(1012,315) scale(1.0)" fill="#D97757"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></g>
+<text x="1057" y="324" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A" text-anchor="start">Claude writes the words</text>
+<text x="1003" y="370" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">Explains the verdict.</text>
+<text x="1003" y="388" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">It cannot change a number.</text>
+<rect x="985" y="470" width="255" height="110" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" filter="url(#sh)"/>
+<rect x="985" y="486" width="5" height="78" rx="2.5" fill="#0369A1"/>
+<rect x="1003" y="486" width="42" height="42" rx="11" fill="#0369A1" fill-opacity="0.10"/>
+<g transform="translate(1012,495) scale(1.0)" fill="none" stroke="#0369A1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" />
+  <path d="M7 11h10" />
+  <path d="M7 15h6" />
+  <path d="M7 7h8" />
+</g>
+<text x="1057" y="504" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A" text-anchor="start">Renderer</text>
+<text x="1003" y="550" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">One item per message,</text>
+<text x="1003" y="568" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">under 4,096 characters</text>
+<rect x="640" y="800" width="280" height="104" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" filter="url(#sh)"/>
+<rect x="640" y="816" width="5" height="72" rx="2.5" fill="#003B57"/>
+<rect x="658" y="816" width="42" height="42" rx="11" fill="#003B57" fill-opacity="0.10"/>
+<g transform="translate(667,825) scale(1.0)" fill="#003B57"><path d="M21.678.521c-1.032-.92-2.28-.55-3.513.544a8.71 8.71 0 0 0-.547.535c-2.109 2.237-4.066 6.38-4.674 9.544.237.48.422 1.093.544 1.561a13.044 13.044 0 0 1 .164.703s-.019-.071-.096-.296l-.05-.146a1.689 1.689 0 0 0-.033-.08c-.138-.32-.518-.995-.686-1.289-.143.423-.27.818-.376 1.176.484.884.778 2.4.778 2.4s-.025-.099-.147-.442c-.107-.303-.644-1.244-.772-1.464-.217.804-.304 1.346-.226 1.478.152.256.296.698.422 1.186.286 1.1.485 2.44.485 2.44l.017.224a22.41 22.41 0 0 0 .056 2.748c.095 1.146.273 2.13.5 2.657l.155-.084c-.334-1.038-.47-2.399-.41-3.967.09-2.398.642-5.29 1.661-8.304 1.723-4.55 4.113-8.201 6.3-9.945-1.993 1.8-4.692 7.63-5.5 9.788-.904 2.416-1.545 4.684-1.931 6.857.666-2.037 2.821-2.912 2.821-2.912s1.057-1.304 2.292-3.166c-.74.169-1.955.458-2.362.629-.6.251-.762.337-.762.337s1.945-1.184 3.613-1.72C21.695 7.9 24.195 2.767 21.678.521m-18.573.543A1.842 1.842 0 0 0 1.27 2.9v16.608a1.84 1.84 0 0 0 1.835 1.834h9.418a22.953 22.953 0 0 1-.052-2.707c-.006-.062-.011-.141-.016-.2a27.01 27.01 0 0 0-.473-2.378c-.121-.47-.275-.898-.369-1.057-.116-.197-.098-.31-.097-.432 0-.12.015-.245.037-.386a9.98 9.98 0 0 1 .234-1.045l.217-.028c-.017-.035-.014-.065-.031-.097l-.041-.381a32.8 32.8 0 0 1 .382-1.194l.2-.019c-.008-.016-.01-.038-.018-.053l-.043-.316c.63-3.28 2.587-7.443 4.8-9.791.066-.069.133-.128.198-.194Z"/></g>
+<text x="712" y="834" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A" text-anchor="start">SQLite database</text>
+<text x="658" y="880" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">Every calculation with the</text>
+<text x="658" y="898" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">exact rule values used</text>
+<rect x="985" y="800" width="255" height="104" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" filter="url(#sh)"/>
+<rect x="985" y="816" width="5" height="72" rx="2.5" fill="#7C3AED"/>
+<rect x="1003" y="816" width="42" height="42" rx="11" fill="#7C3AED" fill-opacity="0.10"/>
+<g transform="translate(1012,825) scale(1.0)" fill="#7C3AED"><path d="M19.355 18.538a68.967 68.959 0 0 0 1.858-2.954.81.81 0 0 0-.062-.9c-.516-.685-1.504-2.075-2.042-3.362-.553-1.321-.636-3.375-.64-4.377a1.707 1.707 0 0 0-.358-1.05l-3.198-4.064a3.744 3.744 0 0 1-.076.543c-.106.503-.307 1.004-.536 1.5-.134.29-.29.6-.446.914l-.31.626c-.516 1.068-.997 2.227-1.132 3.59-.124 1.26.046 2.73.815 4.481.128.011.257.025.386.044a6.363 6.363 0 0 1 3.326 1.505c.916.79 1.744 1.922 2.415 3.5zM8.199 22.569c.073.012.146.02.22.02.78.024 2.095.092 3.16.29.87.16 2.593.64 4.01 1.055 1.083.316 2.198-.548 2.355-1.664.114-.814.33-1.735.725-2.58l-.01.005c-.67-1.87-1.522-3.078-2.416-3.849a5.295 5.295 0 0 0-2.778-1.257c-1.54-.216-2.952.19-3.84.45.532 2.218.368 4.829-1.425 7.531zM5.533 9.938c-.023.1-.056.197-.098.29L2.82 16.059a1.602 1.602 0 0 0 .313 1.772l4.116 4.24c2.103-3.101 1.796-6.02.836-8.3-.728-1.73-1.832-3.081-2.55-3.831zM9.32 14.01c.615-.183 1.606-.465 2.745-.534-.683-1.725-.848-3.233-.716-4.577.154-1.552.7-2.847 1.235-3.95.113-.235.223-.454.328-.664.149-.297.288-.577.419-.86.217-.47.379-.885.46-1.27.08-.38.08-.72-.014-1.043-.095-.325-.297-.675-.68-1.06a1.6 1.6 0 0 0-1.475.36l-4.95 4.452a1.602 1.602 0 0 0-.513.952l-.427 2.83c.672.59 2.328 2.316 3.335 4.711.09.21.175.43.253.653z"/></g>
+<text x="1057" y="834" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A" text-anchor="start">Obsidian vault</text>
+<text x="1003" y="880" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">Cards, daily index and an</text>
+<text x="1003" y="898" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">activity log of every action</text>
+<rect x="1320" y="290" width="250" height="124" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" filter="url(#sh)"/>
+<rect x="1320" y="306" width="5" height="92" rx="2.5" fill="#26A5E4"/>
+<rect x="1338" y="306" width="42" height="42" rx="11" fill="#26A5E4" fill-opacity="0.10"/>
+<g transform="translate(1347,315) scale(1.0)" fill="#26A5E4"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></g>
+<text x="1392" y="324" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A" text-anchor="start">Telegram channel</text>
+<text x="1338" y="370" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">About 100 items at 08:30,</text>
+<text x="1338" y="388" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">yesterday&#x27;s posts deleted</text>
+<rect x="1320" y="470" width="250" height="110" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" filter="url(#sh)"/>
+<rect x="1320" y="486" width="5" height="78" rx="2.5" fill="#DC2626"/>
+<rect x="1338" y="486" width="42" height="42" rx="11" fill="#DC2626" fill-opacity="0.10"/>
+<g transform="translate(1347,495) scale(1.0)" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0" />
+  <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" />
+</g>
+<text x="1392" y="504" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A" text-anchor="start">Admin chat</text>
+<text x="1338" y="550" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">Alerts: cooldowns, fallbacks,</text>
+<text x="1338" y="568" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">rule changes</text>
+<rect x="1320" y="640" width="250" height="110" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" filter="url(#sh)"/>
+<rect x="1320" y="656" width="5" height="78" rx="2.5" fill="#4338CA"/>
+<rect x="1338" y="656" width="42" height="42" rx="11" fill="#4338CA" fill-opacity="0.10"/>
+<g transform="translate(1347,665) scale(1.0)" fill="none" stroke="#4338CA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5" />
+  <path d="M20 21a8 8 0 0 0-16 0" />
+</g>
+<text x="1392" y="674" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A" text-anchor="start">Your private chat</text>
+<text x="1338" y="720" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">/analyse, /set, forward a</text>
+<text x="1338" y="738" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#475569" text-anchor="start">post to keep a favourite</text>
+<rect x="374.4" y="249" width="131.2" height="22" rx="11" fill="#FFFFFF" stroke="#B91C1C" stroke-width="1"/>
+<text x="440" y="264.5" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#B91C1C" text-anchor="middle">official figures</text>
+<rect x="405.2" y="513.0" width="109.60000000000001" height="22" rx="11" fill="#FFFFFF" stroke="#B45309" stroke-width="1"/>
+<text x="460.0" y="528.5" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#B45309" text-anchor="middle">legal figures</text>
+<rect x="408.8" y="645.0" width="102.4" height="22" rx="11" fill="#FFFFFF" stroke="#7C3AED" stroke-width="1"/>
+<text x="460.0" y="660.5" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#7C3AED" text-anchor="middle">your profile</text>
+<rect x="1086.0" y="431.0" width="52.0" height="22" rx="11" fill="#FFFFFF" stroke="#D97757" stroke-width="1"/>
+<text x="1112.0" y="446.5" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#D97757" text-anchor="middle">words</text>
+<rect x="973.2" y="765" width="73.6" height="22" rx="11" fill="#FFFFFF" stroke="#4338CA" stroke-width="1"/>
+<text x="1010" y="780.5" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#4338CA" text-anchor="middle">commands</text>
+<rect x="1145.2" y="679" width="109.60000000000001" height="22" rx="11" fill="#FFFFFF" stroke="#7C3AED" stroke-width="1"/>
+<text x="1200" y="694.5" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#7C3AED" text-anchor="middle">notes and log</text>
+<text x="1560" y="978" font-family="-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#94A3B8" text-anchor="end">Model estimates, not financial advice.  Logos: simple-icons (CC0) and Lucide (ISC).</text>
+</svg>
