@@ -58,3 +58,27 @@ def test_hourly_hunt_posts_header_and_cards_once(settings, db, limiter):
     n = len(bot.tg.sent)
     bot.tick(datetime(2026, 10, 3, 10, 40))                 # next hour: same listings, nothing new
     assert bot.claude.calls == 2 and len(bot.tg.sent) == n
+
+
+def test_resale_needs_unit_listing_but_new_launch_may_use_project_page(settings, db, limiter):
+    bot = make_bot(settings, db, limiter, HISTORY)
+    keep, dropped = hunt.validate([
+        cand("Echelon", "https://www.edgeprop.sg/condo-apartment/echelon"),
+        cand("New One", "https://www.edgeprop.sg/new-launch/new-one", category_key="condo_new_launch"),
+    ], bot.s, db)
+    assert [x.name for x in keep] == ["New One"] and "not a unit listing" in dropped[0]
+    assert "book a showflat" in hunt.card(keep[0], bot.s)
+
+
+def test_quiet_during_us_session(settings, db, limiter):
+    from zoneinfo import ZoneInfo
+    from propbot.bot import us_session_open
+    sgt = ZoneInfo("Asia/Singapore")
+    assert us_session_open(datetime(2026, 10, 5, 22, 0, tzinfo=sgt))       # Mon 10:00 New York
+    assert not us_session_open(datetime(2026, 10, 5, 20, 0, tzinfo=sgt))   # before the open
+    assert not us_session_open(datetime(2026, 10, 3, 23, 0, tzinfo=sgt))   # Saturday
+    assert us_session_open(datetime(2026, 11, 10, 4, 30, tzinfo=sgt))      # winter time: closes 05:00 SGT
+    bot = make_bot(settings, db, limiter, HISTORY)
+    bot.claude = FakeClaude()
+    bot.tick(datetime(2026, 10, 5, 22, 40, tzinfo=sgt))
+    assert bot.tg.sent == [] and bot.claude.calls == 0

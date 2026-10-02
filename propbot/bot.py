@@ -34,6 +34,16 @@ BUTTONS = [("🔄 Run again", "proppulse"), ("📊 Status", "propstatus")]
 ASK_TOOLS = ["WebSearch", "WebFetch"]
 
 
+NEW_YORK = ZoneInfo("America/New_York")
+
+
+def us_session_open(now: datetime) -> bool:
+    """US regular session, Mon to Fri 09:30 to 16:00 New York (21:30 to 04:00 SGT in US summer time).
+    ponytail: ignores US market holidays; the desk is idle then anyway."""
+    ny = (now if now.tzinfo else now.replace(tzinfo=ZoneInfo("Asia/Singapore"))).astimezone(NEW_YORK)
+    return ny.weekday() < 5 and (9, 30) <= (ny.hour, ny.minute) < (16, 0)
+
+
 def plain(text: str) -> str:
     import html
     return html.unescape(re.sub(r"<[^>]+>", "", text))
@@ -268,7 +278,9 @@ class Bot:
 
     # ------------------------------------------------------------ loops
     def tick(self, now: datetime) -> None:
-        """Hourly pulse at check_minute; the slot is stored so a restart doesn't post twice."""
+        """Hourly pulse and hunt; the slot is stored so a restart doesn't post twice."""
+        if self.s.run.avoid_us_session and us_session_open(now):
+            return      # trading desk hours: leave the NAS and the Claude plan to it, catch up afterwards
         slot = now.strftime("%Y-%m-%d %H")
         if self.s.pulse.enabled and now.minute >= self.s.pulse.check_minute and self.db.meta_get("pulse_slot") != slot:
             self.db.meta_set("pulse_slot", slot)
