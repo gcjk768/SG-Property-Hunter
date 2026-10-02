@@ -98,6 +98,7 @@ class RunCfg(_Strict):
     prepare_cron: str = "0 6 * * *"
     post_cron: str = "30 8 * * *"
     timezone: str = "Asia/Singapore"
+    avoid_us_session: bool = True   # no scheduled checks while the trading desk trades (US regular session)
     rules_check_cron: str = "0 5 * * 1"
     rules_max_age_days: int = 10
     max_run_minutes: int = 120

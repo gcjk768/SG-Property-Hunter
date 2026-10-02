@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import statistics
 from dataclasses import dataclass
 from datetime import datetime
@@ -24,6 +25,11 @@ log = logging.getLogger("propbot.hunt")
 
 TITLE = "🏘"
 TOOLS = ["WebSearch", "WebFetch"]
+# a resale card must link to the unit's own listing (where you contact the agent to buy), e.g.
+# edgeprop.sg/listing/..., propertyguru.com.sg/listing/..., commercialguru.com.sg/listing/...
+LISTING_PATH = re.compile(r"/listings?/", re.I)
+# new launches, BTO and new ECs are bought through the project (showflat booking or HDB), so its page is the link
+PROJECT_PAGE_OK = {"condo_new_launch", "bto", "ec"}
 
 
 @dataclass
@@ -57,7 +63,11 @@ def brief(settings: Settings, today: str, n: int) -> str:
     return (f"Run date: {today} (Asia/Singapore). Find {n + 3} real Singapore properties that are listed for sale "
             f"right now, each with its own listing page, priced S${s.budget_min_sgd:,.0f} to S${s.budget_max_sgd:,.0f}. "
             f"Favour what can be rented out soon or resold for a gain. Mix the categories in stdin. Return the "
-            f"discovery object; every candidate must have a real listing URL you saw.")
+            f"discovery object. Include new launch condos. For resale homes, EC resale and commercial units the url "
+            f"must be that unit's own listing page where a buyer contacts the agent (for example "
+            f"edgeprop.sg/listing/..., propertyguru.com.sg/listing/..., commercialguru.com.sg/listing/...), never a "
+            f"project, condo directory or article page. For new launch condos, BTO and new ECs use the project's "
+            f"official or listing page.")
 
 
 def stdin_text(settings: Settings, db: DB) -> str:
@@ -98,6 +108,8 @@ def validate(cands: list[dict], settings: Settings, db: DB) -> tuple[list[Listin
             why = f"price {price} outside budget"
         elif c.get("price_label") == "transacted":
             why = "a past sale, not a listing"
+        elif c.get("category_key") not in PROJECT_PAGE_OK and not LISTING_PATH.search(urlsplit(url).path):
+            why = "not a unit listing page (project or article page)"
         elif c.get("category_key") not in settings.enabled_categories():
             why = f"category {c.get('category_key')} off"
         elif (c.get("remaining_lease_years") or 99) < s.min_remaining_lease_years:
@@ -151,7 +163,8 @@ def card(x: Listing, settings: Settings) -> str:
     if x.gist:
         lines.append(f"💡 {esc(x.gist[:300])}")
     maps = "https://www.google.com/maps/search/?api=1&query=" + quote_plus(f"{x.address or x.name} Singapore")
-    lines.append(f'🔗 <a href="{esc_attr(x.url)}">{esc(x.site)}</a>  ·  <a href="{esc_attr(maps)}">Map</a>')
+    buy = "Project page, book a showflat" if x.category in PROJECT_PAGE_OK else "Listing, contact the agent"
+    lines.append(f'🔗 <a href="{esc_attr(x.url)}">{esc(buy)}</a> ({esc(x.site)})  ·  <a href="{esc_attr(maps)}">Map</a>')
     if x.snippet_only:
         lines.append("<i>From a search result, the page wasn't opened: check the listing.</i>")
     return "\n".join(lines)
