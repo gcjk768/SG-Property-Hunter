@@ -245,14 +245,14 @@ class PulseCfg(_Strict):
     min_sales_for_median: int = 5
     value_discount_pct: float = 15  # notable when this far below the median price per sqm
     min_yield_pct: float = 8.0      # or when the estimated gross yield reaches this
-    max_items: int = 8
+    max_items: int = 0             # 0 = all
 
 
 class HuntCfg(_Strict):
     """Hourly listing hunt: claude -p web search for real listings, one card each, new ones only."""
     enabled: bool = True
     check_minute: int = 37
-    per_run: int = 5
+    per_run: int = 10
 
 
 class ObsidianCfg(_Strict):

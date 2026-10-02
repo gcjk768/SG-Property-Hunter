@@ -40,12 +40,12 @@ pulse:                         # hourly HDB resale pulse from data.gov.sg (free,
   min_sales_for_median: 5
   value_discount_pct: 15         # notable when the price per sqm is this far under that median
   min_yield_pct: 8.0             # or when HDB median rent gives this gross yield
-  max_items: 8                   # deals per message
+  max_items: 0                   # 0 = list every notable deal (split across messages)
 
 hunt:                          # hourly listing hunt: claude -p haiku web search, one card per new listing
   enabled: true
   check_minute: 37               # minute past every hour (the pulse runs at :07)
-  per_run: 5                     # new listings posted per hunt at most
+  per_run: 10                    # new listings posted per hunt at most (every valid one found, up to this)
 
 telegram:
   chat_id: "<TELEGRAM_CHAT_ID>"      # the owner Channel (forum group shared by the fleet)

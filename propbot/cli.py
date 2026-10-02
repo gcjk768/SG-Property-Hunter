@@ -346,7 +346,7 @@ def cmd_hunt(args) -> int:
         print("No Claude token in .env", file=sys.stderr)
         return 2
     if args.post:
-        print(f"posted {bot.hunt((bot.chat, bot.thread), manual=True)} listings")
+        print(f"posted {bot.hunt((bot.chat, bot.thread), manual=True, limit=args.limit)} listings")
         return 0
     listings, dropped, note = hunt.run(bot.claude, settings, bot.db, _today(args, settings), settings.hunt.per_run)
     for x in listings:
@@ -432,6 +432,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     hu = sub.add_parser("hunt", help="listing hunt now (one Claude call); --post sends it to the topic")
     hu.add_argument("--post", action="store_true")
+    hu.add_argument("--limit", type=int, help="post at most this many (default hunt.per_run)")
     hu.set_defaults(func=cmd_hunt)
 
     for name, step in (("run", 5), ("discover", 5), ("backfill", 4), ("purge", 6)):

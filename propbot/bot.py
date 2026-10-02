@@ -128,11 +128,11 @@ class Bot:
                 return msgs
             self.send(where, msgs, buttons=BUTTONS)
             pulse.mark_alerted(self.db, deals)
-            shown = deals[:self.s.pulse.max_items]
+            shown = deals[:self.s.pulse.max_items] if self.s.pulse.max_items > 0 else deals
             link = self.vault.report("HDB pulse", "\n\n".join(plain(m) for m in msgs) + "\n")
             self.vault.activity("pulse", f"{'manual' if manual else 'hourly'}: {added} new sales, "
                                 f"{ctx['new']} new notable, posted {len(shown)}: "
-                                + "; ".join(f"{d.flat_type.title()} {d.town.title()} S${d.price:,.0f}" for d in shown),
+                                + "; ".join(f"{d.flat_type.title()} {d.town.title()} S${d.price:,.0f}" for d in shown)[:800],
                                 link or "")
             return msgs
 
@@ -140,7 +140,7 @@ class Bot:
         self.pulse(where, manual=True)
 
     # ------------------------------------------------------------ listing hunt
-    def hunt(self, where, *, manual: bool, now: datetime | None = None) -> int:
+    def hunt(self, where, *, manual: bool, now: datetime | None = None, limit: int | None = None) -> int:
         """One Claude web search; posts a header plus one card per new listing. Returns cards posted."""
         if self.claude is None:
             if manual:
@@ -151,7 +151,7 @@ class Bot:
         if manual:
             self.tg.typing(where[0], where[1])
         try:
-            listings, dropped, note = hunt.run(self.claude, self.s, self.db, now.date(), self.s.hunt.per_run)
+            listings, dropped, note = hunt.run(self.claude, self.s, self.db, now.date(), limit or self.s.hunt.per_run)
         except ClaudeUnavailable as exc:
             self.vault.activity("error", f"listing hunt: Claude unavailable: {exc.reason}")
             if manual:
