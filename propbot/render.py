@@ -260,8 +260,10 @@ def render_listing(card: Card, settings: Settings, *, rank: int = 1, of: int = 1
         lines.append(f"Year by year, base case (value starts at {esc(proj.v0_label)}):")
         lines.append("<pre>" + esc(year_table(card)) + "</pre>")
         rows = proj.base.rows[:max(H, X)]
-        worst = min(rows, key=lambda r: r.change_pct)
-        best = max(rows, key=lambda r: r.change_pct)
+        lo = min(r.change_pct for r in rows)
+        hi = max(r.change_pct for r in rows)
+        worst = next(r for r in rows if r.change_pct <= lo + 0.05)   # first of the tied years
+        best = next(r for r in rows if r.change_pct >= hi - 0.05)
         drop = (f"year {worst.year} ({table_change(worst.change_pct).replace('dep ', 'minus ')})"
                 if worst.change_pct < 0 else "none in the base case")
         decay_total = proj.lease_decay_total
