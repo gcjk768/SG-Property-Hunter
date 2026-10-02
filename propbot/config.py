@@ -234,6 +234,14 @@ class LimitsCfg(_Strict):
     claude: ClaudeLimits = Field(default_factory=ClaudeLimits)
 
 
+class ObsidianCfg(_Strict):
+    enabled: bool = False
+    vault_path: str = "/vault"
+    folder: str = "propbot"
+    read_profile: bool = True
+    log_web_requests: bool = True
+
+
 class Secrets(BaseModel):
     telegram_bot_token: str = ""
     claude_code_oauth_token: str = ""
@@ -261,6 +269,7 @@ class Settings(_Strict):
     discovery: DiscoveryCfg = Field(default_factory=DiscoveryCfg)
     claude: ClaudeCfg = Field(default_factory=ClaudeCfg)
     limits: LimitsCfg = Field(default_factory=LimitsCfg)
+    obsidian: ObsidianCfg = Field(default_factory=ObsidianCfg)
 
     # filled by load_settings, not part of config.yaml
     base_dir: Path = Field(default=Path("."), exclude=True)

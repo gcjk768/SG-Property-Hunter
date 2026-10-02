@@ -16,8 +16,9 @@ KINDS = {
 
 
 class Alerts:
-    def __init__(self, db: DB, admin_chat_id: str = "", telegram=None, run_id: str = ""):
+    def __init__(self, db: DB, admin_chat_id: str = "", telegram=None, run_id: str = "", vault=None):
         self.db = db
+        self.vault = vault
         self.admin_chat_id = admin_chat_id
         self.telegram = telegram
         self.run_id = run_id
@@ -44,6 +45,9 @@ class Alerts:
             except Exception as exc:  # alerts must never crash a run
                 log.warning("admin alert failed: %s", exc)
         log.warning("%s", message)
+        if self.vault is not None:
+            self.vault.activity("alert", f"{kind.replace('_', ' ')}: {text[:300]}", run_id=self.run_id,
+                                sent="yes" if delivered else "no")
         self.db.insert("alerts_log", {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                                       "run_id": self.run_id, "kind": kind, "key": key,
                                       "text": text[:2000], "sent": delivered})

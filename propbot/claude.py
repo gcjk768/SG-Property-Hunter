@@ -95,7 +95,8 @@ def extract_structured(data: dict) -> dict | None:
 
 class ClaudeRunner:
     def __init__(self, settings: Settings, limiter: RateLimiter,
-                 run: Callable[..., subprocess.CompletedProcess] = subprocess.run):
+                 run: Callable[..., subprocess.CompletedProcess] = subprocess.run, journal=None):
+        self.journal = journal or (lambda kind, text, data=None: None)
         self.settings = settings
         self.cfg = settings.claude
         self.limiter = limiter
@@ -178,6 +179,7 @@ class ClaudeRunner:
                     retried_on_fallback = True
                     model = self.cfg.fallback_model
                     continue
+                self.journal("claude_limit", f"{label} hit the {kind} limit, resets {reset}", None)
                 raise ClaudeUnavailable(f"{kind} usage limit reached", kind, reset)
             try:
                 data = parse_cli_output(proc.stdout)
@@ -200,5 +202,7 @@ class ClaudeRunner:
                     raise ClaudeUnavailable(f"{kind} usage limit reached", kind, reset)
                 raise ClaudeUnavailable(f"{label}: CLI reported {data.get('subtype')}: {text[:200]}")
             used = ",".join((data.get("modelUsage") or {}).keys()) or model
+            self.journal("claude_call", f"{label} finished in {data.get('num_turns')} turns",
+                         {"cost_usd": cost})
             return ClaudeResult(extract_structured(data), str(data.get("result", "")), cost, used, data,
                                 int(data.get("num_turns") or 0))

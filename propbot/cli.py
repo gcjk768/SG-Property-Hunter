@@ -20,10 +20,28 @@ log = logging.getLogger("propbot")
 CARD_COMMANDS = {"run", "serve", "analyse", "discover"}
 
 
+def _vault(settings: Settings):
+    from .vault import NullVault, Vault
+    if not settings.obsidian.enabled:
+        return NullVault()
+    v = Vault.from_settings(settings)
+    v.ensure_templates()
+    return v
+
+
 def _settings(args, *, require_income: bool) -> tuple[Settings, DB]:
     settings = load_settings(args.config)
     db = DB(settings.db_path)
-    overrides = profile_overrides(db)
+    overrides: dict = {}
+    vault = _vault(settings)
+    if settings.obsidian.read_profile:
+        vault_over = vault.profile_overrides()
+        try:
+            apply_profile_overrides(settings, vault_over)
+        except ConfigError as exc:
+            raise ConfigError(f"Profile.md in the Obsidian vault: {exc}") from exc
+        overrides.update(vault_over)
+    overrides.update(profile_overrides(db))
     for item in getattr(args, "set", None) or []:
         if "=" not in item:
             raise ConfigError(f"--set expects key=value, got {item!r}")
@@ -31,6 +49,7 @@ def _settings(args, *, require_income: bool) -> tuple[Settings, DB]:
         overrides[k.strip()] = parse_override_value(v.strip())
     settings = apply_profile_overrides(settings, overrides)
     check_safety_floors(settings, require_income=require_income)
+    args._vault = vault
     return settings, db
 
 
@@ -59,12 +78,31 @@ def _parse_positional(text: str) -> dict:
 
 
 def cmd_analyse(args) -> int:
+    settings, db = _settings(args, require_income=True)
+    vault = args._vault
+    if args.watchlist:
+        items = vault.watchlist()
+        if not items:
+            print("Watchlist.md in the vault has no entries (or the vault is off).")
+            return 2
+        for item in items:
+            args.listing = item
+            args.category = args.price = args.size = args.rent = args.remaining_lease = args.tenure = None
+            args.area = args.name = None
+            print(f"=== {item} ===")
+            _analyse_one(args, settings, db, vault)
+            print()
+        vault.activity("watchlist", f"analysed {len(items)} watchlist items", "Watchlist")
+        return 0
+    return _analyse_one(args, settings, db, vault)
+
+
+def _analyse_one(args, settings, db, vault) -> int:
     from .engine.card import build_card, card_row, rates_from_db
     from .models import Candidate, ComparablesSummary, Growth
     from .render import render_listing
     from .rules.loader import RuleTrace, Rules
 
-    settings, db = _settings(args, require_income=True)
     if args.listing and args.listing.startswith("http"):
         print("Analysing a listing URL needs the evidence fetcher, which arrives in build step 5. "
               "Type the figures instead (see propbot analyse --help).")
@@ -119,6 +157,9 @@ def cmd_analyse(args) -> int:
     msg = render_listing(card, settings, run_time=run_time)
     if args.store:
         db.insert("cards", card_row(card, "analyse", None))
+    link = vault.write_card(card, plain(msg), run_id="analyse") if vault.available() else None
+    if link:
+        print(f"[saved to the vault as {link}.md]")
     if args.html:
         print(msg)
     else:
@@ -188,7 +229,7 @@ def cmd_test_telegram(args) -> int:
         print("TELEGRAM_BOT_TOKEN is not set in .env")
         return 2
     limiter = RateLimiter(db, settings, run_id="test-telegram")
-    tg = TelegramClient(settings.secrets.telegram_bot_token, settings, limiter)
+    tg = TelegramClient(settings.secrets.telegram_bot_token, settings, limiter, journal=args._vault.journal)
     me = tg.get_me()
     print(f"Bot: @{me.get('username')}")
     target = args.chat or settings.telegram.admin_chat_id or settings.telegram.chat_id
@@ -207,9 +248,10 @@ def cmd_rules_check(args) -> int:
     from .rules.checker import run_rules_check
     settings, db = _settings(args, require_income=False)
     limiter = RateLimiter(db, settings, run_id=f"rules-{datetime.now():%Y%m%d%H%M}")
-    alerts = Alerts(db, settings.telegram.admin_chat_id, None)
-    runner = ClaudeRunner(settings, limiter)
-    out = run_rules_check(settings, db, runner, _today(args, settings), alert=alerts)
+    vault = args._vault
+    alerts = Alerts(db, settings.telegram.admin_chat_id, None, vault=vault)
+    runner = ClaudeRunner(settings, limiter, journal=vault.journal)
+    out = run_rules_check(settings, db, runner, _today(args, settings), alert=alerts, vault=vault)
     print(json.dumps({"confirmed": out.confirmed, "changed": out.changed, "unreadable": out.unreadable,
                       "rejected": out.rejected, "needs_manual": out.needs_manual, "error": out.error,
                       "run_note": out.run_note}, indent=1, default=str))
@@ -235,6 +277,11 @@ def cmd_status(args) -> int:
     print("Unverified rules: " + (", ".join(unverified) or "none"))
     pend = rules.pending_changes()
     print("Pending rule changes: " + (", ".join(pend) or "none"))
+    v = args._vault
+    if settings.obsidian.enabled:
+        print(f"Obsidian vault: {v.base} ({'writable' if v.available() else 'NOT available'})")
+    else:
+        print("Obsidian vault: off (obsidian.enabled is false)")
     rows = db.all("SELECT name, downloaded_at, rows FROM datasets")
     print("Datasets: " + (", ".join(f"{r['name']} ({r['downloaded_at']}, {r['rows']} rows)" for r in rows) or "none yet"))
     return 0
@@ -291,6 +338,7 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--html", action="store_true", help="print the Telegram HTML")
     a.add_argument("--detail", action="store_true", help="print the working figures")
     a.add_argument("--store", action="store_true", help="store the calculation row in the database")
+    a.add_argument("--watchlist", action="store_true", help="analyse every entry in Watchlist.md in the vault")
     a.set_defaults(func=cmd_analyse)
 
     t = sub.add_parser("test-telegram", help="send and delete a test message")

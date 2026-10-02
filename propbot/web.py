@@ -69,7 +69,8 @@ class PoliteFetcher:
     def __init__(self, settings: Settings, db: DB, limiter: RateLimiter,
                  client: httpx.Client | None = None,
                  alert: Callable[[str, str, str], None] | None = None,
-                 allowed_domains: list[str] | None = None):
+                 allowed_domains: list[str] | None = None, journal=None):
+        self.journal = journal or (lambda kind, text, data=None: None)
         self.settings = settings
         self.cfg = settings.limits.web
         self.db = db
@@ -179,6 +180,16 @@ class PoliteFetcher:
                        f"after {('HTTP ' + str(status)) if status else 'repeated failures'} on {url}")
 
     def fetch(self, url: str, *, max_age_days: float | None = None) -> FetchResult:
+        try:
+            result = self._fetch(url, max_age_days=max_age_days)
+        except FetchRefused as exc:
+            self.journal("fetch_refused", f"{url}: {exc.reason}", {"stream": "web"})
+            raise
+        self.journal("fetch", f"{url} status {result.status}" + (" from cache" if result.from_cache else ""),
+                     {"stream": "web"})
+        return result
+
+    def _fetch(self, url: str, *, max_age_days: float | None = None) -> FetchResult:
         self.check_policy(url)
         host = host_of(url)
         cooling, until, reason = self.limiter.in_cooldown("web", host)

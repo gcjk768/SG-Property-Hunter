@@ -52,7 +52,8 @@ class DeleteOutcome:
 
 class TelegramClient:
     def __init__(self, token: str, settings: Settings, limiter: RateLimiter,
-                 client: httpx.Client | None = None, rng: random.Random | None = None):
+                 client: httpx.Client | None = None, rng: random.Random | None = None, journal=None):
+        self.journal = journal or (lambda kind, text, data=None: None)
         self.token = token
         self.cfg = settings.limits.telegram
         self.limiter = limiter
@@ -117,7 +118,10 @@ class TelegramClient:
         if reply_to:
             payload["reply_parameters"] = {"message_id": reply_to, "allow_sending_without_reply": True}
         result = self.call("sendMessage", payload)
-        return int(result["message_id"])
+        mid = int(result["message_id"])
+        first = text.split("\n", 1)[0][:120]
+        self.journal("telegram_send", f"sent message {mid} to {chat_id}: {first}", {"silent": silent})
+        return mid
 
     def edit_message_text(self, chat_id: str | int, message_id: int, text: str) -> None:
         self.call("editMessageText", {"chat_id": chat_id, "message_id": message_id, "text": text,
@@ -145,6 +149,8 @@ class TelegramClient:
         for mid in ids:
             if mid in old_ids:
                 self._delete_one_or_tombstone(chat_id, mid, out)
+        self.journal("telegram_delete", f"deleted {len(out.deleted)} messages in {chat_id}, tombstoned "
+                     f"{len(out.tombstoned)}, failed {len(out.failed)}", None)
         return out
 
     def _delete_one_or_tombstone(self, chat_id: str | int, mid: int, out: DeleteOutcome) -> None:
