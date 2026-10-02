@@ -21,7 +21,7 @@ profile:                      # you fill this in; the bot never guesses it
   disposed_private_date: ""   # yyyy-mm-dd if I sold private property in the last 30 months
   hdb_flat_mop_end: ""        # yyyy-mm-dd MOP end date of an HDB flat or EC I own now, empty if none
   marginal_income_tax_rate_pct: 0  # for rental income tax; the bot looks it up from the IRAS bands if 0
-  intent: [rent_out, live_then_sell, flip]  # ranked, used by the verdict
+  intent: [rent_out, flip]     # ranked, used by the verdict: passive income first, then selling for a gain
   hold_years: 10
   benchmark_return_pct: 4.0   # what my money would earn elsewhere (for comparison, not a promise)
   max_monthly_commitment_pct: 35  # my own comfort limit for instalment as a share of income, tighter than TDSR
@@ -43,7 +43,8 @@ telegram:
 run:
   daily_target_messages: 100     # total item messages per day, all kinds together
   outlooks_per_day: 10           # location outlooks within the 100
-  category_weights: {bto: 8, hdb_resale: 14, ec: 8, condo_resale: 16, condo_new_launch: 12, shophouse: 8, hdb_shop: 7, coffeeshop: 5, strata_commercial: 12}
+  # weighted toward what can be rented out from day one or sold for a gain; BTO and EC have long MOPs
+  category_weights: {bto: 4, hdb_resale: 12, ec: 6, condo_resale: 18, condo_new_launch: 10, shophouse: 10, hdb_shop: 9, coffeeshop: 7, strata_commercial: 14}
   repeat_days: 7                 # avoid reposting the same listing within this many days unless its price changed
   candidates_per_category: 25
   categories_refreshed_per_run: 9  # all enabled categories every day

@@ -23,6 +23,7 @@ def test_defaults_match_spec():
     assert s.profile.citizenship == "SC" and s.profile.age == 29
     assert s.enabled_categories() == ["bto", "hdb_resale", "ec", "condo_resale", "condo_new_launch",
                                       "shophouse", "hdb_shop", "coffeeshop", "strata_commercial"]
+    assert s.profile.intent == ["rent_out", "flip"]
     assert s.sources.datagov.datasets["hdb_resale_prices"].startswith("d_")
 
 
