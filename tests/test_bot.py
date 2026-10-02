@@ -84,9 +84,9 @@ def test_hourly_posts_only_new_then_stays_quiet(settings, db, limiter):
     bot.tick(datetime(2026, 10, 3, 9, 7))
     assert len(bot.tg.sent) == 1
     chat, thread, text, buttons = bot.tg.sent[0]
-    assert (chat, thread) == (CHAT, TOPIC) and text.startswith("🏠 <b>HDB RESALE PULSE</b>")
+    assert (chat, thread) == (CHAT, TOPIC) and text.startswith("🏠 <b>HDB RESALE DEALS</b>")
     assert "🆕" in text and buttons and len(text) < 4096
-    assert text.count("📍") == text.count(">Listings</a>") == 1   # every deal carries a link
+    assert text.count("🏢 <b>1. <a href=\"https://www.propertyguru.com.sg/") == 1 and "Map</a>" in text   # linked card
     bot.tick(datetime(2026, 10, 3, 9, 30))                  # same hour: no second check
     bot.tick(datetime(2026, 10, 3, 10, 7))                  # next hour: nothing new, silent
     assert len(bot.tg.sent) == 1

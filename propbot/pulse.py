@@ -19,6 +19,7 @@ import httpx
 from .config import Settings
 from .db import DB
 from .ratelimit import RateLimiter
+from .render import REPORT_TITLES, card, dot, note, section_messages
 from .telegram import esc, esc_attr
 
 log = logging.getLogger("propbot.pulse")
@@ -197,58 +198,44 @@ def listings_url(d: Deal) -> str:
             + quote_plus(f"{d.block} {d.street.title()}"))
 
 
-def deal_block(d: Deal, cfg) -> str:
+def deal_card(n: int, d: Deal, cfg) -> str:
     addr = f"Blk {d.block} {d.street.title()}"
     maps = "https://www.google.com/maps/search/?api=1&query=" + quote_plus(f"{addr} Singapore")
-    value = (f"🟢 <i>{d.discount_pct:.0f}% below median ▼</i>" if d.discount_pct >= cfg.value_discount_pct
-             else (f"⚪ <i>{abs(d.discount_pct):.0f}% {'below' if d.discount_pct >= 0 else 'above'} median</i>"))
-    lease = f"{d.remaining_lease:.0f}y lease left" if d.remaining_lease is not None else "lease unknown"
+    if d.discount_pct >= cfg.value_discount_pct:
+        value = f"🟢 {d.discount_pct:.0f}% below median ▼"
+    else:
+        value = f"⚪ {abs(d.discount_pct):.0f}% {'below' if d.discount_pct >= 0 else 'above'} median"
+    rent = None
     if d.yield_pct is not None:
         mark = "🟢" if d.yield_pct >= cfg.min_yield_pct else "⚪"
-        rent = f"📈 Rent ~{_money(d.rent)}/mo · {mark} <b>{d.yield_pct:.1f}%</b> gross"
-    else:
-        rent = "📈 Rent: no HDB median for this flat type"
-    return "\n".join([
-        f"{'🆕 ' if d.new else ''}🏢 <b>{esc(d.flat_type.title())} · {esc(d.town.title())}</b> · {esc(_month_label(d.month))}",
-        f"💰 {_money(d.price)} · S${d.psf:,.0f} psf · {value}",
-        f"🏠 {d.sqm:.0f} sqm · floor {esc(d.storey.lower())} · {lease}",
-        rent,
-        f'📍 <a href="{esc_attr(maps)}">{esc(addr)}</a>  ·  <a href="{esc_attr(listings_url(d))}">Listings</a>',
-    ])
+        rent = f"📈 {mark} " + dot(f"Rent ~{_money(d.rent)}/mo", f"{d.yield_pct:.1f}% gross")
+    lease = f"{d.remaining_lease:.0f}y lease left" if d.remaining_lease is not None else "lease unknown"
+    return card(n, f"{d.flat_type.title()} · {d.town.title()}", listings_url(d), [
+        "💰 " + dot(_money(d.price), f"S${d.psf:,.0f} psf", f"sold {_month_label(d.month)}"),
+        f"📉 {esc(value)} · {esc(lease)}",
+        rent or "",
+        "🏠 " + dot(f"{d.sqm:.0f} sqm", f"floor {d.storey.lower()}") + f' · <a href="{esc_attr(maps)}">Map</a>',
+    ], tag="NEW" if d.new else "", emoji="🏢", desc=addr)
 
 
 def render(deals: list[Deal], ctx: dict, settings: Settings, *, title_note: str = "") -> list[str]:
-    """Messages (each under 4096 chars), split between blocks only."""
+    """Car-tracker layout: header, numbered linked cards, collapsed method note last; split between cards."""
     cfg = settings.pulse
     shown = deals[:cfg.max_items] if cfg.max_items > 0 else deals     # 0 = list them all
-    more = f" · top {len(shown)}" if len(shown) < len(deals) else ""
-    sub = title_note or (f"{len(deals)} notable, {ctx['new']} new{more}" if deals else "no new notable deals")
-    head = f"🏠 <b>HDB RESALE PULSE</b> · {esc(sub)}"
-    blocks = [deal_block(d, cfg) for d in shown] or [
-        f"⚪ <i>Nothing beats the bar right now: {cfg.value_discount_pct:g}% under the town median or "
+    summary = "\n".join([f"🆕 New: <b>{ctx['new']}</b>", f"📋 Notable in the last two months: <b>{len(deals)}</b>",
+                         f"📦 Sales checked: <b>{ctx['rows']:,}</b> · newest {esc(_month_label(ctx['latest_month']))}"])
+    cards = [deal_card(n, d, cfg) for n, d in enumerate(shown, 1)] or [
+        f"⚪ <i>Nothing beats the bar right now: {cfg.value_discount_pct:g}% under the median or "
         f"{cfg.min_yield_pct:g}% gross yield.</i>"]
-    links = ('<a href="https://data.gov.sg/datasets/d_8b84c4ee58e3cfc0ece0d773c8ca6abc/view">Resale data</a>  ·  '
+    links = ('🌐 <a href="https://data.gov.sg/datasets/d_8b84c4ee58e3cfc0ece0d773c8ca6abc/view">Resale data</a>  ·  '
              '<a href="https://services2.hdb.gov.sg/webapp/BB33RTIS/BB33PReslTrans.jsp">HDB resale prices</a>')
-    notes = (f"<blockquote expandable>How it's picked: HDB resale transactions from data.gov.sg in the latest two "
-             f"months ({esc(_month_label(ctx['latest_month']))} newest, {ctx['rows']:,} sales). A deal shows when its price "
-             f"per sqm is {cfg.value_discount_pct:g}% or more under the {cfg.median_months} month median for the same "
-             f"town, flat type and 10 year lease band, or HDB's median rent ({esc(ctx['rent_quarter'] or 'unknown')}) gives "
-             f"{cfg.min_yield_pct:g}% gross or more. Budget S${settings.search.budget_min_sgd:,.0f} to "
-             f"S${settings.search.budget_max_sgd:,.0f}, lease at least {settings.search.min_remaining_lease_years:g} "
-             f"years. These are completed sales, a guide to what is achievable, not listings. Renting out the whole "
-             f"flat needs the 5 year MOP first. Gross yield is before costs. Not financial advice.</blockquote>")
-    tail = f"{DIVIDER}\n{links}\n{notes}"
-    msgs, cur = [], head
-    for b in blocks:
-        if len(cur) + len(b) + 2 > 3800:
-            msgs.append(cur)
-            cur = b
-        else:
-            cur += "\n\n" + b
-    if len(cur) + len(tail) + 2 > 4000:
-        msgs.append(cur)
-        cur = tail
-    else:
-        cur += "\n\n" + tail
-    msgs.append(cur)
-    return msgs
+    method = note(
+        f"How it's picked: completed HDB resale sales from data.gov.sg in the latest two months. A sale shows when its "
+        f"price per sqm is {cfg.value_discount_pct:g}% or more under the {cfg.median_months} month median for the same "
+        f"town, flat type and 10 year lease band, or HDB's median rent ({esc(ctx['rent_quarter'] or 'unknown')}) gives "
+        f"{cfg.min_yield_pct:g}% gross or more. Budget S${settings.search.budget_min_sgd:,.0f} to "
+        f"S${settings.search.budget_max_sgd:,.0f}, lease at least {settings.search.min_remaining_lease_years:g} years. "
+        f"The name links to flats for sale in that block now. Renting out the whole flat needs the 5 year MOP "
+        f"first. Gross yield is before costs. Not financial advice.")
+    sub = title_note or datetime.now().strftime("%a %d %b %Y")
+    return section_messages(REPORT_TITLES["pulse"], sub, [summary, *cards, links], method)

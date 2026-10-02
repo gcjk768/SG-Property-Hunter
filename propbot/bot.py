@@ -23,7 +23,7 @@ from .claude import ClaudeUnavailable
 from .config import ConfigError, Settings
 from .db import DB
 from .ratelimit import BudgetExceeded, RateLimiter
-from .render import DIVIDER, SECTION_TITLES
+from .render import DIVIDER, REPORT_TITLES, SECTION_TITLES, header
 from .telegram import TelegramClient, esc
 
 log = logging.getLogger("propbot.bot")
@@ -154,7 +154,7 @@ class Bot:
         """One Claude web search; posts a header plus one card per new listing. Returns cards posted."""
         if self.claude is None:
             if manual:
-                self.send(where, f"{hunt.TITLE} <b>LISTING HUNT</b> · Claude is not set up")
+                self.send(where, header(REPORT_TITLES["hunt"], "Claude is not set up"))
             return 0
         now = now or datetime.now(self.tz)
         self.limiter.set_run(f"hunt-{now:%Y%m%d%H%M}")
@@ -165,15 +165,15 @@ class Bot:
         except ClaudeUnavailable as exc:
             self.vault.activity("error", f"listing hunt: Claude unavailable: {exc.reason}")
             if manual:
-                self.send(where, f"{hunt.TITLE} <b>LISTING HUNT</b> · Claude unavailable\n\n<i>{esc(exc.reason)}</i>")
+                self.send(where, header(REPORT_TITLES["hunt"], "Claude unavailable") + f"\n\n<i>{esc(exc.reason)}</i>")
             return 0
         self.vault.activity("hunt", f"{len(listings)} new listings, {len(dropped)} dropped"
                             + (f" ({'; '.join(dropped)[:300]})" if dropped else ""))
         if not listings:
             if manual:
-                self.send(where, hunt.header([], note, len(dropped)), buttons=[("📊 Status", "propstatus")])
+                self.send(where, hunt.messages([], note, len(dropped), self.s), buttons=[("📊 Status", "propstatus")])
             return 0
-        msgs = [hunt.header(listings, note, len(dropped))] + [hunt.card(x, self.s) for x in listings]
+        msgs = hunt.messages(listings, note, len(dropped), self.s)
         self.send(where, msgs, buttons=[("🏠 HDB pulse", "proppulse"), ("📊 Status", "propstatus")])
         hunt.mark_posted(self.db, listings)
         for x in listings:
