@@ -102,9 +102,3 @@ Not confirmed, so not used in any calculation yet:
 
 Planning figures, labelled on every card: commercial LTV 70% and bank tenure capped at remaining lease
 minus 20 years.
-
-## pddbot
-
-No pddbot checkout was available during the build, so `ratelimit.py`, `telegram.py`, `claude.py`,
-`alerts.py` and `lock.py` were written fresh in the shape the brief describes. Compare them with
-pddbot's versions before sharing a compose file.
