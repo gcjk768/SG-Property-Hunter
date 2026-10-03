@@ -18,7 +18,7 @@ from urllib.parse import quote_plus, urlsplit
 from .config import Settings
 from .db import DB
 from .pulse import SQFT_PER_SQM, months_back
-from .render import REPORT_TITLES, card, dot, note, outlook_line, outlook_years, section_messages
+from .render import MSG_BUDGET, REPORT_TITLES, card, dot, header, note, outlook_line, outlook_years
 from .telegram import esc, esc_attr
 from .web import is_allowed_domain, is_never_fetch
 
@@ -182,19 +182,42 @@ def listing_card(n: int, x: Listing, settings: Settings) -> str:
     return card(n, x.name, x.url, lines, tag="NEW", emoji=TITLE, desc=label)
 
 
+def estate_blocks(listings: list[Listing], settings: Settings) -> list[str]:
+    """One Telegram message per estate (town), its cards grouped by property type, numbered across the whole post.
+
+    An estate never shares a message with another; only an over-long one splits, by type, repeating its heading."""
+    order = list(settings.categories)
+    nums = {id(x): n for n, x in enumerate(listings, 1)}
+    by_area: dict[str, list[Listing]] = {}
+    for x in listings:
+        by_area.setdefault(x.area.strip().title() or "Other areas", []).append(x)
+    parts = []
+    for area in sorted(by_area, key=lambda a: (a == "Other areas", a)):
+        groups = []
+        for cat in sorted({x.category for x in by_area[area]}, key=lambda c: order.index(c) if c in order else 99):
+            label = settings.categories[cat].label if cat in settings.categories else cat
+            cards = "\n\n".join(listing_card(nums[id(x)], x, settings) for x in by_area[area] if x.category == cat)
+            groups.append(f"<b>{esc(label)}</b>\n{cards}")
+        head = f"📍 <b>{esc(area.upper())}</b> · {len(by_area[area])} for sale"
+        block = head + "\n\n" + "\n\n".join(groups)
+        parts += [block] if len(block) <= MSG_BUDGET - 200 else [head + "\n\n" + g for g in groups]
+    return parts
+
+
 def messages(listings: list[Listing], run_note: str, dropped: int, settings: Settings) -> list[str]:
     """Car-tracker layout: header, summary, numbered linked cards, collapsed notes last."""
     summary = "\n".join([f"🆕 New for sale: <b>{len(listings)}</b>", f"🚫 Dropped by checks: <b>{dropped}</b>"])
-    cards = [listing_card(n, x, settings) for n, x in enumerate(listings, 1)] or [
-        "⚪ <i>Nothing new for sale that passed the checks this time.</i>"]
+    blocks = estate_blocks(listings, settings) or ["⚪ <i>Nothing new for sale that passed the checks this time.</i>"]
     detail = (f"Found by Claude (haiku) web search, then checked here: allowed site, budget, lease, a unit listing "
               f"page for resale (new launches, BTO and ECs link the project), not posted before. Asking prices, "
               f"not valuations. 🔮 is Claude's rough value estimate over 5 years (BTO 10), not a forecast. "
               f"Not financial advice.")
     if run_note:
         detail += f" Search note: {run_note[:300]}"
-    return section_messages(REPORT_TITLES["hunt"], datetime.now().strftime("%a %d %b %Y"), [summary, *cards],
-                            note(esc(detail)))
+    top = header(REPORT_TITLES["hunt"], datetime.now().strftime("%a %d %b %Y")) + "\n\n" + summary
+    msgs = [top, *blocks]
+    msgs[-1] += "\n\n" + note(esc(detail))     # ponytail: notes may push the last message over 4096; telegram.py resends plain
+    return msgs
 
 
 def run(claude, settings: Settings, db: DB, today, n: int) -> tuple[list[Listing], list[str], str]:

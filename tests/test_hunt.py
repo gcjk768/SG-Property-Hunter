@@ -49,10 +49,12 @@ def test_hourly_hunt_posts_header_and_cards_once(settings, db, limiter):
     bot = make_bot(settings, db, limiter, HISTORY)
     bot.claude = FakeClaude()
     bot.tick(datetime(2026, 10, 3, 9, 40))                  # pulse :07 and hunt :37 both due
-    hunt_msgs = [s for s in bot.tg.sent if "PROPERTY FOR SALE" in s[2]]
+    first = next(i for i, s in enumerate(bot.tg.sent) if "PROPERTY FOR SALE" in s[2])
+    hunt_msgs = bot.tg.sent[first:]                         # summary message, then one message per estate
     assert all((c, t) == (CHAT, TOPIC) for c, t, *_ in hunt_msgs)
-    assert len(hunt_msgs) == 1 and "New for sale: <b>2</b>" in hunt_msgs[0][2]
-    text = hunt_msgs[0][2]
+    assert "New for sale: <b>2</b>" in hunt_msgs[0][2]
+    assert len(hunt_msgs) == 2 and "BISHAN" in hunt_msgs[1][2]
+    text = chr(10).join(m[2] for m in hunt_msgs)
     assert '🏘 <b>1. <a href="https://www.edgeprop.sg/listing/1?ref=x">Good One</a></b> · Resale condo 🆕 <i>NEW</i>' in text
     assert "<b>2. <a" in text
     assert "check the listing" in text and hunt_msgs[-1][3]
@@ -112,3 +114,17 @@ def test_pulse_outlook_maps_estimates_by_index(settings):
         {"i": 1, "pct": 7, "reason": "Mature town"}, {"i": 5, "pct": 1, "reason": "bad index"}]}))
     pulse.outlook(fake, settings, deals)
     assert deals[0].outlook_pct is None and (deals[1].outlook_pct, deals[1].outlook_reason) == (7, "Mature town")
+
+
+def test_messages_group_by_estate_then_type_in_one_message(settings, db, limiter):
+    bot = make_bot(settings, db, limiter, HISTORY)
+    cs = [cand("A", "https://edgeprop.sg/listing/11", area="Yishun"),
+          cand("B", "https://edgeprop.sg/listing/12", area="Bukit Batok", category_key="hdb_resale"),
+          cand("C", "https://edgeprop.sg/listing/13", area="Yishun", category_key="hdb_resale"),
+          cand("D", "https://edgeprop.sg/listing/14", area="Yishun", category_key="bto")]
+    keep, _ = hunt.validate(cs, bot.s, db)
+    msgs = hunt.messages(keep, "", 0, bot.s)
+    assert len(msgs) == 3                                              # summary, Bukit Batok, Yishun
+    assert "BUKIT BATOK" in msgs[1] and "YISHUN" not in msgs[1]
+    y = msgs[2]
+    assert "BUKIT BATOK" not in y and y.index("<b>BTO</b>") < y.index("<b>HDB resale</b>") < y.index("<b>Resale condo</b>")
