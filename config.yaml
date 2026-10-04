@@ -67,7 +67,7 @@ run:
   prepare_cron: "0 6 * * *"
   post_cron: "30 8 * * *"
   timezone: Asia/Singapore
-  avoid_us_session: true         # scheduled checks pause Mon to Fri 09:30 to 16:00 New York (21:30 to 04:00 SGT now), the trading desk hours
+  avoid_us_session: false        # scheduled checks pause Mon to Fri 09:30 to 16:00 New York (21:30 to 04:00 SGT now), the trading desk hours
   rules_check_cron: "0 5 * * 1"
   rules_max_age_days: 10
   max_run_minutes: 120
@@ -150,7 +150,7 @@ discovery:
 claude:
   binary: claude
   model: haiku                   # fleet policy 2026-10-03: non trading apps stay cheap
-  fallback_model: sonnet
+  fallback_model: haiku          # equal to model = no fallback (the owner, 2026-10-03)
   auth: oauth                    # oauth = CLAUDE_CODE_OAUTH_TOKEN, apikey = ANTHROPIC_API_KEY
   max_retries: 4
   discovery: {max_turns: 30, timeout_seconds: 900, max_budget_usd: 1.00, calls_per_run: 1}  # the hourly listing hunt
