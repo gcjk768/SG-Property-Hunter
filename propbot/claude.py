@@ -133,8 +133,9 @@ class ClaudeRunner:
         if not self._drop_permission_prompts:
             cmd += ["--permission-prompts", "none"]
         cmd += ["--strict-mcp-config", "--no-session-persistence",
-                "--max-turns", str(max_turns), "--model", model,
-                "--fallback-model", self.cfg.fallback_model]
+                "--max-turns", str(max_turns), "--model", model]
+        if self.cfg.fallback_model != model:   # the CLI refuses a fallback equal to the main model
+            cmd += ["--fallback-model", self.cfg.fallback_model]
         if self.cfg.auth == "apikey":
             if max_budget_usd:
                 cmd += ["--max-budget-usd", f"{max_budget_usd:.2f}"]
@@ -175,7 +176,7 @@ class ClaudeRunner:
                 kind, reset = limit
                 self.limiter.log("claude", label, method="EXEC", url=f"claude:{label}",
                                  note=f"usage limit {kind} {reset}")
-                if kind in ("opus", "sonnet") and not retried_on_fallback:
+                if kind in ("opus", "sonnet") and not retried_on_fallback and self.cfg.fallback_model != model:
                     retried_on_fallback = True
                     model = self.cfg.fallback_model
                     continue
