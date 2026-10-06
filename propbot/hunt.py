@@ -17,7 +17,9 @@ from urllib.parse import quote_plus, urlsplit
 
 from .config import Settings
 from .db import DB
-from .pulse import SQFT_PER_SQM, months_back
+from . import ura
+from .engine.projection import value_outlook
+from .pulse import SQFT_PER_SQM, months_back, town_cagr
 from .render import MSG_BUDGET, REPORT_TITLES, card, dot, header, note, outlook_line, outlook_years
 from .telegram import esc, esc_attr
 from .web import is_allowed_domain, is_never_fetch
@@ -52,8 +54,10 @@ class Listing:
     gist: str
     snippet_only: bool
     vs_median_pct: float | None = None   # positive = below the HDB median for the town and lease band
-    outlook_pct: float | None = None     # Claude's estimate of the value change over outlook_years(category)
+    outlook_pct: float | None = None     # value change over outlook_years(category)
     outlook_reason: str = ""
+    outlook_source: str = "est"   # "data" once a transaction trend replaced Claude's guess
+    mrt: str = ""                        # location line from propbot/geo.py
 
 
 def listing_key(url: str) -> str:
@@ -158,6 +162,34 @@ def hdb_context(listings: list[Listing], db: DB, today) -> None:
             x.vs_median_pct = (1 - (x.price / x.sqft) / med_psf) * 100
 
 
+def data_outlook(listings: list[Listing], settings: Settings, db: DB, today) -> None:
+    """Replace Claude's guess with a transaction trend where one exists: the HDB town's resale trend
+    or the condo project's own URA resale trend, each continued with the lease decay table."""
+    a = settings.assumptions
+    for x in listings:
+        tc, what = None, ""
+        if x.category == "hdb_resale" and x.area:
+            tc, what = town_cagr(db, x.area, None, today), f"{x.area.title()} HDB resales"
+        elif x.category in ("condo_resale", "ec") and x.name:
+            tc, what = ura.project_cagr(db, x.name, today), f"{x.name.title()} resales"
+        if not tc:
+            continue
+        cagr, n = tc
+        freehold = x.tenure in ("freehold", "999 year")
+        x.outlook_pct = value_outlook(cagr, x.lease_left, freehold, outlook_years(x.category), a.lease_decay,
+                                      a.base_cagr_cap_pct)
+        x.outlook_reason = f"{what} {cagr:+.1f}%/yr ({n} sales)" + ("" if freehold else ", lease decay applied")
+        x.outlook_source = "data"
+
+
+def locate(listings: list[Listing], geo, today) -> None:
+    """Nearest MRT and upcoming stations per listing (best effort, empty without OneMap credentials)."""
+    if geo is None:
+        return
+    for x in listings:
+        x.mrt = geo.describe(x.address or x.name, x.area, today)
+
+
 def listing_card(n: int, x: Listing, settings: Settings) -> str:
     label = settings.categories[x.category].label if x.category in settings.categories else x.category
     lines = [
@@ -171,7 +203,9 @@ def listing_card(n: int, x: Listing, settings: Settings) -> str:
         lines.append(f"📉 {mark} {abs(x.vs_median_pct):.0f}% {word} recent {esc(x.area.title())} HDB sales {arrow}")
     if x.rent:
         lines.append("📈 " + dot(f"Asking rent S${x.rent:,.0f}/mo", f"{x.rent * 12 / x.price * 100:.1f}% gross"))
-    lines.append(outlook_line(x.price, x.outlook_pct, outlook_years(x.category), x.outlook_reason))
+    lines.append(outlook_line(x.price, x.outlook_pct, outlook_years(x.category), x.outlook_reason, source=x.outlook_source))
+    if x.mrt:
+        lines.append("🚇 " + esc(x.mrt))
     if x.gist:
         lines.append("💡 " + esc(x.gist[:300]))
     maps = "https://www.google.com/maps/search/?api=1&query=" + quote_plus(f"{x.address or x.name} Singapore")
@@ -210,8 +244,9 @@ def messages(listings: list[Listing], run_note: str, dropped: int, settings: Set
     blocks = estate_blocks(listings, settings) or ["⚪ <i>Nothing new for sale that passed the checks this time.</i>"]
     detail = (f"Found by Claude (haiku) web search, then checked here: allowed site, budget, lease, a unit listing "
               f"page for resale (new launches, BTO and ECs link the project), not posted before. Asking prices, "
-              f"not valuations. 🔮 is Claude's rough value estimate over 5 years (BTO 10), not a forecast. "
-              f"Not financial advice.")
+              f"not valuations. 🔮 over 5 years (BTO 10): 'data' continues the town's or project's own resale trend "
+              f"with the lease decay table; 'est' is the model's rough guess. 🚇 is the nearest MRT exit by "
+              f"straight line and planned stations matched by name. Not a forecast, not financial advice.")
     if run_note:
         detail += f" Search note: {run_note[:300]}"
     top = header(REPORT_TITLES["hunt"], datetime.now().strftime("%a %d %b %Y")) + "\n\n" + summary
@@ -220,7 +255,7 @@ def messages(listings: list[Listing], run_note: str, dropped: int, settings: Set
     return msgs
 
 
-def run(claude, settings: Settings, db: DB, today, n: int) -> tuple[list[Listing], list[str], str]:
+def run(claude, settings: Settings, db: DB, today, n: int, geo=None) -> tuple[list[Listing], list[str], str]:
     """One Claude call; returns (valid new listings, at most n), drop reasons and the model's run note."""
     cfg = settings.claude.discovery
     base = settings.prompts_dir
@@ -232,8 +267,11 @@ def run(claude, settings: Settings, db: DB, today, n: int) -> tuple[list[Listing
         max_turns=cfg.max_turns, timeout=cfg.timeout_seconds)
     data = res.structured or {}
     listings, dropped = validate(data.get("candidates") or [], settings, db)
+    listings = listings[:n]
     hdb_context(listings, db, today)
-    return listings[:n], dropped, data.get("run_note") or ""
+    data_outlook(listings, settings, db, today)
+    locate(listings, geo, today)
+    return listings, dropped, data.get("run_note") or ""
 
 
 def mark_posted(db: DB, listings: list[Listing]) -> None:

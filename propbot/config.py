@@ -80,6 +80,7 @@ class TelegramCfg(_Strict):
     chat_id: str = "@your_channel_or_numeric_id"
     thread_id: int = 0            # forum topic in a shared group; 0 = no topic
     owner_user_id: int = 0
+    allowed_user_ids: list[int] = Field(default_factory=list)   # friends who may use the bot in their private chat
     admin_chat_id: str = ""
     replace_previous: bool = True
     notify_types: list[str] = Field(default_factory=lambda: ["rules_update"])

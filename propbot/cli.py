@@ -34,14 +34,19 @@ def _settings(args, *, require_income: bool) -> tuple[Settings, DB]:
     db = DB(settings.db_path)
     overrides: dict = {}
     vault = _vault(settings)
-    if settings.obsidian.read_profile:
+    friend = getattr(args, "friend", False)
+    if friend:      # someone other than the owner: a blank profile, never the owner's Profile.md or saved fields
+        from .config import Profile
+        settings = settings.model_copy(update={"profile": Profile()})
+    elif settings.obsidian.read_profile:
         vault_over = vault.profile_overrides()
         try:
             apply_profile_overrides(settings, vault_over)
         except ConfigError as exc:
             raise ConfigError(f"Profile.md in the Obsidian vault: {exc}") from exc
         overrides.update(vault_over)
-    overrides.update(profile_overrides(db))
+    if not friend:
+        overrides.update(profile_overrides(db))
     for item in getattr(args, "set", None) or []:
         if "=" not in item:
             raise ConfigError(f"--set expects key=value, got {item!r}")
@@ -300,6 +305,12 @@ def cmd_status(args) -> int:
         print(f"Obsidian vault: {v.base} ({'writable' if v.available() else 'NOT available'})")
     else:
         print("Obsidian vault: off (obsidian.enabled is false)")
+    print(f"HDB resale stored: {db.scalar('SELECT COUNT(*) FROM hdb_resale', default=0):,}; private sales stored: "
+          f"{db.scalar('SELECT COUNT(*) FROM ura_resi', default=0):,}; MRT stations: "
+          f"{db.scalar('SELECT COUNT(DISTINCT station) FROM mrt_exits', default=0)}")
+    print("Keys: URA " + ("set" if settings.secrets.ura_access_key else "NOT set") + ", OneMap "
+          + ("set" if settings.secrets.onemap_email else "NOT set") + ", Claude "
+          + ("set" if settings.secrets.claude_code_oauth_token or settings.secrets.anthropic_api_key else "NOT set"))
     rows = db.all("SELECT name, downloaded_at, rows FROM datasets")
     print("Datasets: " + (", ".join(f"{r['name']} ({r['downloaded_at']}, {r['rows']} rows)" for r in rows) or "none yet"))
     return 0
@@ -356,6 +367,44 @@ def cmd_hunt(args) -> int:
     return 0
 
 
+def cmd_backfill(args) -> int:
+    """Download the full HDB resale history (2017 on) and, with a URA key, every private sale of the last five years."""
+    import httpx
+    from . import pulse, ura
+    from .ratelimit import RateLimiter
+    settings, db = _settings(args, require_income=False)
+    limiter = RateLimiter(db, settings, run_id=f"backfill-{datetime.now():%Y%m%d%H%M}")
+    today = _today(args, settings)
+    with httpx.Client(timeout=120, headers={"User-Agent": settings.limits.web.user_agent}) as http:
+        first = date(2017, 1, 1)
+        months = pulse.months_back(today, (today.year - first.year) * 12 + today.month - first.month + 1)
+        added = 0
+        for i in range(0, len(months), 12):         # a year per request keeps each answer within one page or two
+            added += pulse.fetch_months(db, settings, limiter, http, months[i:i + 12])
+            print(f"HDB resale {months[min(i + 11, len(months) - 1)]} to {months[i]}: {added:,} new sales so far")
+        print(f"HDB resale stored: {db.scalar('SELECT COUNT(*) FROM hdb_resale', default=0):,}")
+        if settings.secrets.ura_access_key:
+            n = ura.refresh(db, settings, limiter, http, today)
+            print(f"URA private sales: {n:,} new, {db.scalar('SELECT COUNT(*) FROM ura_resi', default=0):,} stored")
+        else:
+            print("URA_ACCESS_KEY is not set in .env, so private condo data was skipped")
+    return 0
+
+
+def cmd_backtest(args) -> int:
+    """Check the lease decay table against HDB flats that sold twice (needs `propbot backfill` first)."""
+    from . import backtest
+    settings, db = _settings(args, require_income=False)
+    if db.scalar("SELECT COUNT(*) FROM hdb_resale", default=0) < 100_000:
+        print("Not enough history stored. Run `propbot backfill` first (it downloads every HDB resale since 2017).")
+        return 2
+    result = backtest.run(db, settings, min_gap_years=args.min_gap_years)
+    text = backtest.report(result)
+    print(text)
+    args._vault.report("Lease decay backtest", text + "\n")
+    return 0
+
+
 def cmd_later(step: int):
     def run(args) -> int:
         print(f"'{args.cmd}' arrives in build step {step}; the build is paused after step 3 for the maths check.")
@@ -408,6 +457,7 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--detail", action="store_true", help="print the working figures")
     a.add_argument("--store", action="store_true", help="store the calculation row in the database")
     a.add_argument("--watchlist", action="store_true", help="analyse every entry in Watchlist.md in the vault")
+    a.add_argument("--friend", action="store_true", help="blank profile, ignore the owner's Profile.md (used for friends)")
     a.set_defaults(func=cmd_analyse)
 
     t = sub.add_parser("test-telegram", help="send and delete a test message")
@@ -435,7 +485,15 @@ def build_parser() -> argparse.ArgumentParser:
     hu.add_argument("--limit", type=int, help="post at most this many (default hunt.per_run)")
     hu.set_defaults(func=cmd_hunt)
 
-    for name, step in (("run", 5), ("discover", 5), ("backfill", 4), ("purge", 6)):
+    bf = sub.add_parser("backfill", help="download the full HDB resale history (and URA private sales with a key)")
+    bf.add_argument("--date")
+    bf.set_defaults(func=cmd_backfill)
+
+    bt = sub.add_parser("backtest", help="check the lease decay table against flats that sold twice")
+    bt.add_argument("--min-gap-years", type=float, default=3)
+    bt.set_defaults(func=cmd_backtest)
+
+    for name, step in (("run", 5), ("discover", 5), ("purge", 6)):
         x = sub.add_parser(name)
         x.add_argument("rest", nargs="*")
         x.set_defaults(func=cmd_later(step))
@@ -443,6 +501,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    for stream in (sys.stdout, sys.stderr):          # Windows consoles default to cp1252 and cannot print the card emoji
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     parser = build_parser()
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING,

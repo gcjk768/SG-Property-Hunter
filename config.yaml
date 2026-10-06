@@ -51,6 +51,7 @@ telegram:
   chat_id: "<TELEGRAM_CHAT_ID>"      # the owner Channel (forum group shared by the fleet)
   thread_id: <THREAD_ID>                # "PropBot" topic; the bot ignores every other topic
   owner_user_id: 388437106       # the owner; /prop commands also work in his private chat with the bot
+  allowed_user_ids: []           # friends' Telegram user ids: they may use the bot in their private chat and set /propprofile
   admin_chat_id: ""
   replace_previous: true
   notify_types: [rules_update]   # everything else posts silently
@@ -67,7 +68,7 @@ run:
   prepare_cron: "0 6 * * *"
   post_cron: "30 8 * * *"
   timezone: Asia/Singapore
-  avoid_us_session: false        # scheduled checks pause Mon to Fri 09:30 to 16:00 New York (21:30 to 04:00 SGT now), the trading desk hours
+  avoid_us_session: true         # scheduled checks pause Mon to Fri 09:30 to 16:00 New York (21:30 to 04:00 SGT now), the trading desk hours
   rules_check_cron: "0 5 * * 1"
   rules_max_age_days: 10
   max_run_minutes: 120
@@ -126,7 +127,8 @@ sources:
       hdb_resale_prices: d_8b84c4ee58e3cfc0ece0d773c8ca6abc   # Resale flat prices based on registration date from Jan 2017 onwards
       hdb_median_rent: d_23000a00c52996c55106084ed0339566     # Median rent by town and flat type
       hdb_resale_price_index: d_f0c768860912d66940efdac9435dc046  # HDB Resale Price Index (1Q2009 = 100), quarterly
-  ura: {enabled: true}           # needs URA_ACCESS_KEY from the free registration
+      mrt_exits: d_b39d3a0871985372d7e1637193335da5             # LTA MRT station exits (GeoJSON), for the nearest MRT line
+  ura: {enabled: true}           # needs URA_ACCESS_KEY from the free registration; private resale deals and condo trends
   onemap: {enabled: true}        # needs ONEMAP_EMAIL and ONEMAP_PASSWORD from the free registration
   listing_domains_allowed: [edgeprop.sg, propertyguru.com.sg, commercialguru.com.sg, stackedhomes.com, businesstimes.com.sg, straitstimes.com, channelnewsasia.com, hdb.gov.sg, ura.gov.sg, iras.gov.sg, mas.gov.sg, cpf.gov.sg, lta.gov.sg, knightfrank.com.sg, era.com.sg, propnex.com, huttons.com.sg, colliers.com, savills.com.sg]
   never_fetch_domains: [99.co, srx.com.sg, facebook.com, instagram.com, carousell.sg, xiaohongshu.com, reddit.com]
@@ -150,7 +152,7 @@ discovery:
 claude:
   binary: claude
   model: haiku                   # fleet policy 2026-10-03: non trading apps stay cheap
-  fallback_model: haiku          # equal to model = no fallback (the owner, 2026-10-03)
+  fallback_model: sonnet
   auth: oauth                    # oauth = CLAUDE_CODE_OAUTH_TOKEN, apikey = ANTHROPIC_API_KEY
   max_retries: 4
   discovery: {max_turns: 30, timeout_seconds: 900, max_budget_usd: 1.00, calls_per_run: 1}  # the hourly listing hunt

@@ -24,13 +24,32 @@ Logos: Telegram, Docker, Claude, Obsidian, SQLite and Python are the official br
 | Step | What | Status |
 | --- | --- | --- |
 | 1 | Config and safety floors, SQLite, rate limiter, polite fetcher, run lock, Telegram client, Claude wrapper, alerts | Done, tested |
-| 2 | Rules file, loader, weekly checker, MRT pipeline | Done, tested; one real check call made |
-| 3 | Eligibility, costs, financing, projection, verdict, `propbot analyse` | Done, tested. **Stopped here for the maths check** |
-| 4 | data.gov.sg, URA, rates, OneMap, indices, `propbot backfill` | Next |
-| 5 | Discovery, evidence, outlooks, curation, rendering, `propbot run --dry-run` | Later, then a second stop |
-| 6 | Private chat, favourites, scheduler, status, Docker, compose, full README | Last |
+| 2 | Rules file, loader, weekly checker, MRT pipeline | Done, tested |
+| 3 | Eligibility, costs, financing, projection, verdict, `propbot analyse` | Done, tested |
+| 4 | data.gov.sg HDB sales and rents, URA private sales, MRT exits, OneMap geocoding, `propbot backfill` | Done. Live SORA rates not built, the bank rate is assumed |
+| 5 | Hourly HDB pulse, condo pulse, listing hunt with data outlook and MRT line | Done, tested. The full daily discover, curate and `propbot run` pipeline is not built |
+| 6 | Telegram bot, per user profiles, scheduler, status, Docker, compose, setup guide | Done. Favourites and `propbot purge` are not built |
 
-The four worked example cards for the step 3 check are in [docs/worked_examples.md](docs/worked_examples.md).
+The four worked example cards are in [docs/worked_examples.md](docs/worked_examples.md).
+New here? Start with [docs/SETUP.md](docs/SETUP.md).
+
+## What it posts
+
+| Command | What | Needs |
+| --- | --- | --- |
+| `/proppulse` | HDB resale sales that are cheap for their town, flat type and lease band, or high yield | nothing |
+| `/propcondo` | Private condo resales cheap for their own project | URA key |
+| `/prophunt` | Real listings found by Claude web search, grouped by estate | Claude token, owner only |
+| `/propanalyse` | Full card for one property: upfront cost, loan, stress tests, 10 year outlook, verdict | your profile |
+| `/propprofile` | Set your own income, cash and CPF (friends) | nothing |
+| `/propask` | Ask anything about SG property | Claude token, owner only |
+| `/propstatus`, `/prophelp` | Data, schedule, budgets, command list | nothing |
+
+Every card carries three signals beyond the price.
+
+- **🔮 Outlook.** The 5 year value change (10 for BTO). Where there is data it is labelled `data`: the town's or project's own resale price trend over the last years, capped at the base growth cap in `config.yaml`, then reduced by the lease decay table. Where there is no data it is labelled `est` and is Claude's rough guess.
+- **🚇 Location.** The nearest MRT exit by straight line, and planned stations from `rules/mrt_pipeline.yaml` matched by name. The distance needs a free OneMap login.
+- **⚠️ Rate stress** (on `/propanalyse`, bank loans only). The monthly instalment if rates rise 1 and 2 points, and how far that is over your own limit. An HDB loan rate is pegged to the CPF rate, so it is not shown for those.
 
 ## Try it
 
@@ -38,13 +57,16 @@ The four worked example cards for the step 3 check are in [docs/worked_examples.
 uv venv --python 3.12 .venv && . .venv/bin/activate
 uv pip install -e '.[test]'
 pytest
-bash docs/worked_examples.sh            # the four worked examples
+propbot backfill                        # one time: HDB sales since 2017, for trends and the backtest
+propbot pulse                           # print the HDB deals, send nothing
 propbot analyse --help                  # type in your own figures
+propbot backtest                        # check the lease decay table against real repeat sales
 ```
 
 `propbot analyse` refuses to start while `profile.gross_monthly_income` is 0. Fill in the profile in
 `config.yaml`, or pass `--set gross_monthly_income=6500` (and the same for `cash_available` and
-`cpf_oa_balance`) for a one off run.
+`cpf_oa_balance`) for a one off run. Full steps for a new user, including the Telegram bot, are in
+[docs/SETUP.md](docs/SETUP.md).
 
 ## Obsidian vault on the NAS
 
@@ -73,6 +95,70 @@ What propbot writes:
 
 propbot never deletes a note and never writes outside its folder. The SQLite database stays the
 record the bot runs on; the vault is the copy you read and edit. Set `obsidian.enabled: false` to turn it off.
+
+## How to judge appreciation or depreciation
+
+A property's value moves with two forces: what wears it down, and what lifts it. Judge them
+separately, then combine them. The projection code in `propbot/engine/projection.py` does exactly this.
+It takes a yearly market growth rate for each scenario, subtracts a lease decay set by the remaining
+lease (`lease_decay` in `config.yaml`), and works out what you would net on sale after costs.
+The scenarios show what your assumptions imply. They do not predict the future.
+
+**What pushes value down**
+
+- **Lease decay.** Leasehold value falls as the remaining lease shortens, and the fall speeds up below about 60 years. Freehold has none.
+- **Age and condition.** Older buildings need more maintenance, and the land share of the price shrinks.
+- **Oversupply.** Many launches nearby cap rents and resale prices.
+- **Financing limits.** Banks and CPF restrict loans on short leases, which shrinks the buyer pool when you sell.
+
+**What pushes value up**
+
+- **Location.** MRT access, including planned lines, plus schools, jobs nearby and URA Master Plan zoning.
+- **Land share.** Freehold, low density sites and older estates with collective sale potential hold value better.
+- **Scarcity and demand.** Limited supply, strong rental demand and a wide pool of eligible buyers.
+- **Market cycle.** Interest rates, cooling measures and the overall price index move every property together.
+
+**How to measure it instead of guessing**
+
+1. Compare recent transactions of similar units in the same project and nearby, on price per square foot (URA, SRX, data.gov.sg).
+2. Check the project's own past resale gains, including how units of the same age sold.
+3. Estimate yearly growth as market growth minus lease decay. Run a low, middle and high case, then check the net after stamp duties, selling costs and loan paydown.
+4. Compare rental yield with the mortgage cost. If yield is weak and the lease is decaying, price gains must carry the whole return.
+
+The value outlook on each Telegram card is a trend, not a forecast. Where it says `data`, it continues the
+town's or project's own past price trend, capped, with the lease decay table applied. A boom in the
+past five years is not a promise of another one, which is why the cap exists. Check steps 1 and 2 yourself
+before you rely on it. This tool is not financial advice.
+
+## Does the lease decay table hold up?
+
+`propbot backtest` takes every HDB flat that sold twice at least 3 years apart (28,505 pairs from the 2017 to
+2026 data). It moves the first price by the town and flat type's median price per sqm, applies the
+table's decay for each year held, and compares that with the second price.
+
+| Lease left at first sale | Table decay per year | Flats | Years held | Average error | What the data says per year |
+| --- | --- | --- | --- | --- | --- |
+| Above 80 years | 0.0% | 10,013 | 4.7 | +2.2% | 0.47% |
+| 70 to 80 years | 0.3% | 6,992 | 4.9 | minus 1.0% | 0.09% |
+| 60 to 70 years | 0.7% | 8,375 | 4.7 | minus 1.1% | 0.47% |
+| 50 to 60 years | 1.2% | 2,832 | 4.3 | minus 1.8% | 0.79% |
+| Below 50 years | 2.0% | 293 | 4.2 | minus 5.7% | 0.63% |
+
+A positive error means the model predicted more than the flat fetched, so the table decays too little.
+
+- **Short leases.** The table decays older leases faster than the flats did, by about 0.2 to 0.4 points a year at 50 to 70 years. It is cautious, not wrong.
+- **Long leases.** Flats with over 80 years left still lagged their town by about 0.5 points a year, even though the table charges nothing. That is probably age and condition, not the lease.
+- **Caution.** The market side is the town median across flats of every age, so older flats lag newer ones for reasons other than the lease. This checks the table. It does not replace it.
+
+The table in `config.yaml` is unchanged. Moving it is your call. The raw output is in [docs/backtest_2026-10-06.txt](docs/backtest_2026-10-06.txt).
+
+## What is still open
+
+- **Live SORA rates.** The bank rate is assumed in `config.yaml`. Loading MAS SORA would make the stress test start from today's rate.
+- **Master Plan zoning and distance to planned stations.** LTA has not published coordinates for most planned stations, so they are matched by name only.
+- **Condo trends need history.** The URA key gives five years of private sales. A project with fewer than 3 sales at either end of the trend window gets no data outlook.
+- **The daily pipeline.** `propbot run`, `discover` and `purge`, plus favourites, from the original plan are not built. The hourly hunt covers discovery for now.
+- **Friend accounts live in the bot's database.** They are not in the vault, so they do not show up in Obsidian.
 
 ## How the rules file was checked
 

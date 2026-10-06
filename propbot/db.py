@@ -10,7 +10,7 @@ from typing import Any, Iterable
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 
--- rate limiting (same shape as pddbot)
+-- rate limiting
 CREATE TABLE IF NOT EXISTS rate_state (
   bucket TEXT NOT NULL,
   key TEXT NOT NULL DEFAULT '',
@@ -129,6 +129,19 @@ CREATE INDEX IF NOT EXISTS hdb_resale_month ON hdb_resale(month);
 CREATE TABLE IF NOT EXISTS hdb_rent (
   quarter TEXT, town TEXT, flat_type TEXT, median_rent REAL, PRIMARY KEY (quarter, town, flat_type));
 CREATE TABLE IF NOT EXISTS pulse_alerted (key TEXT PRIMARY KEY, alerted_at TEXT);
+
+-- URA private residential transactions (propbot/ura.py); key is the caveat itself
+CREATE TABLE IF NOT EXISTS ura_resi (
+  key TEXT PRIMARY KEY, project TEXT, street TEXT, district TEXT, segment TEXT, prop_type TEXT, sale_type TEXT,
+  month TEXT, sqm REAL, floor TEXT, tenure TEXT, freehold INTEGER, lease_start INTEGER, price REAL, first_seen TEXT);
+CREATE INDEX IF NOT EXISTS ura_resi_month ON ura_resi(month);
+CREATE INDEX IF NOT EXISTS ura_resi_project ON ura_resi(project);
+
+-- location signals (propbot/geo.py)
+CREATE TABLE IF NOT EXISTS mrt_exits (station TEXT, exit_code TEXT, lat REAL, lon REAL, PRIMARY KEY (station, exit_code));
+
+-- one profile per Telegram user for /propprofile and /propanalyse (the owner's lives in Profile.md)
+CREATE TABLE IF NOT EXISTS user_profiles (user_id INTEGER, key TEXT, value TEXT, PRIMARY KEY (user_id, key));
 """
 
 
@@ -155,11 +168,15 @@ class DB:
         with self._lock:
             self.conn.executemany(sql, rows)
 
+    # The scheduler thread and the Telegram listener share one connection. Reading the rows has to happen
+    # inside the lock too, or the other thread's query resets the cursor mid-read (IndexError, wrong rows).
     def one(self, sql: str, params: Iterable[Any] = ()) -> sqlite3.Row | None:
-        return self.execute(sql, params).fetchone()
+        with self._lock:
+            return self.conn.execute(sql, tuple(params)).fetchone()
 
     def all(self, sql: str, params: Iterable[Any] = ()) -> list[sqlite3.Row]:
-        return self.execute(sql, params).fetchall()
+        with self._lock:
+            return self.conn.execute(sql, tuple(params)).fetchall()
 
     def scalar(self, sql: str, params: Iterable[Any] = (), default: Any = None) -> Any:
         row = self.one(sql, params)
@@ -210,3 +227,17 @@ def profile_overrides(db: DB) -> dict[str, Any]:
 
 def set_profile_override(db: DB, key: str, value: Any) -> None:
     db.upsert("profile_overrides", {"key": key, "value": json.dumps(value)}, "key")
+
+
+def user_profile(db: DB, user_id: int) -> dict[str, Any]:
+    return {r["key"]: json.loads(r["value"]) for r in db.all("SELECT key, value FROM user_profiles WHERE user_id=?",
+                                                              (user_id,))}
+
+
+def set_user_profile(db: DB, user_id: int, values: dict[str, Any]) -> None:
+    for k, v in values.items():
+        db.upsert("user_profiles", {"user_id": user_id, "key": k, "value": json.dumps(v)}, ["user_id", "key"])
+
+
+def clear_user_profile(db: DB, user_id: int) -> None:
+    db.execute("DELETE FROM user_profiles WHERE user_id=?", (user_id,))

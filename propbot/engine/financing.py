@@ -92,6 +92,9 @@ class LoanOption:
     own_share_pct: float          # today's instalment as a share of assessed income
     planning_figure: bool = False
     notes: list[str] = field(default_factory=list)
+    instalment_up1: float = 0.0   # rate stress test: the instalment if rates are 1 and 2 points higher
+    instalment_up2: float = 0.0
+    income_assessed: float = 0.0
 
 
 @dataclass
@@ -149,12 +152,18 @@ def _ratios(loan: float, rate: float, stress: float, tenure: int, profile: Profi
     inc_alone = assessed_income(profile, rules, trace, include_co=False)
     debts = profile.monthly_debt_repayments
     out = {"instalment": inst, "instalment_stress": inst_s,
+           "instalment_up1": instalment(loan, rate + 1, tenure), "instalment_up2": instalment(loan, rate + 2, tenure),
+           "income_assessed": inc,
            "tdsr_pct": (inst_s + debts) / inc * 100 if inc else float("inf"),
            "tdsr_pct_alone": ((inst_s + debts) / inc_alone * 100 if inc_alone else None) if profile.has_co_buyer else None,
            "msr_pct": inst_s / inc * 100 if msr_applies and inc else None,
            "msr_pct_alone": (inst_s / inc_alone * 100 if inc_alone else None) if msr_applies and profile.has_co_buyer else None,
            "own_share_pct": inst / inc * 100 if inc else float("inf")}
     return out
+
+
+def _extra(r: dict) -> dict:
+    return {k: r[k] for k in ("instalment_up1", "instalment_up2", "income_assessed")}
 
 
 def bank_residential(cand: Candidate, price: float, valuation: float, profile: Profile, rules: Rules,
@@ -189,7 +198,7 @@ def bank_residential(cand: Candidate, price: float, valuation: float, profile: P
         notes.append(f"reduced LTV because a full LTV tenure would be under 5 years")
     return LoanOption("bank", ltv_pct, reduced, min_cash_pct, tenure, rate, stress, loan, binding,
                       r["instalment"], r["instalment_stress"], r["tdsr_pct"], r["tdsr_pct_alone"], r["msr_pct"],
-                      r["msr_pct_alone"], msr_applies, r["own_share_pct"], notes=notes)
+                      r["msr_pct_alone"], msr_applies, r["own_share_pct"], **_extra(r), notes=notes)
 
 
 def hdb_loan(cand: Candidate, price: float, valuation: float, profile: Profile, rules: Rules,
@@ -211,7 +220,7 @@ def hdb_loan(cand: Candidate, price: float, valuation: float, profile: Profile, 
     r = _ratios(loan, rate, stress, tenure, profile, rules, trace, True)
     return LoanOption("HDB", h["ltv_pct"], False, 0.0, tenure, rate, stress, loan, binding, r["instalment"],
                       r["instalment_stress"], r["tdsr_pct"], r["tdsr_pct_alone"], r["msr_pct"], r["msr_pct_alone"],
-                      True, r["own_share_pct"])
+                      True, r["own_share_pct"], **_extra(r))
 
 
 def bank_commercial(cand: Candidate, price: float, valuation: float, profile: Profile, rules: Rules,
@@ -232,7 +241,7 @@ def bank_commercial(cand: Candidate, price: float, valuation: float, profile: Pr
     r = _ratios(loan, rate, stress, tenure, profile, rules, trace, False)
     return LoanOption("bank, commercial", plan["ltv_pct"], False, 100 - plan["ltv_pct"], tenure, rate, stress, loan,
                       binding, r["instalment"], r["instalment_stress"], r["tdsr_pct"], r["tdsr_pct_alone"], None, None,
-                      False, r["own_share_pct"], planning_figure=True,
+                      False, r["own_share_pct"], **_extra(r), planning_figure=True,
                       notes=["LTV is a planning figure; banks decide commercial LTV"])
 
 

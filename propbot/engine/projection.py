@@ -64,6 +64,18 @@ def decay_pct(remaining: float | None, freehold: bool, table: dict[str, float]) 
     return table.get("below_50_years", 0.0)
 
 
+def value_outlook(cagr_pct: float, remaining_lease: float | None, freehold: bool, years: int,
+                  table: dict[str, float], cap_pct: float | None = None) -> float:
+    """Percent value change over `years`: market growth (capped) then the lease decay band, year by year,
+    the same step the yearly simulation takes."""
+    g = (min(cagr_pct, cap_pct) if cap_pct is not None else cagr_pct) / 100.0
+    v = 1.0
+    for t in range(years):
+        rem = remaining_lease - t if remaining_lease is not None else None
+        v *= (1 + g) * (1 - decay_pct(rem, freehold, table) / 100.0)
+    return (v - 1) * 100
+
+
 def add_years(d: date, years: int) -> date:
     try:
         return d.replace(year=d.year + years)

@@ -4,6 +4,8 @@ Free official data, no key: one request an hour for the latest two months, a ful
 median window once a day. A deal is notable when its price per sqm is value_discount_pct below the
 12 month median for the same town, flat type and lease band, or when HDB's median rent for that town
 and flat type gives at least min_yield_pct gross. Each transaction is posted once (pulse_alerted).
+The 5 year outlook on a card is data: the town and flat type's price trend over the last TREND_YEARS
+(the daily refresh also stores a slice from five years ago), continued with the lease decay table.
 """
 from __future__ import annotations
 
@@ -19,6 +21,7 @@ import httpx
 
 from .config import Settings
 from .db import DB
+from .engine.projection import value_outlook
 from .ratelimit import RateLimiter
 from .render import REPORT_TITLES, card, dot, note, outlook_line, section_messages
 from .telegram import esc, esc_attr
@@ -31,6 +34,8 @@ SQFT_PER_SQM = 10.7639
 DIVIDER = "━━━━━━━━━━━━━━━━"
 RENT_TYPE = {"1 ROOM": "1-RM", "2 ROOM": "2-RM", "3 ROOM": "3-RM", "4 ROOM": "4-RM", "5 ROOM": "5-RM",
              "EXECUTIVE": "EXEC"}
+TREND_YEARS = 5
+TREND_WINDOW = 3          # months in each end of the trend comparison
 
 
 @dataclass
@@ -50,8 +55,9 @@ class Deal:
     rent: float | None
     yield_pct: float | None
     new: bool = True
-    outlook_pct: float | None = None     # Claude's 5 year value change estimate
+    outlook_pct: float | None = None     # 5 year value change from the town trend and the lease decay table
     outlook_reason: str = ""
+    mrt: str = ""                        # location line from propbot/geo.py
 
     @property
     def psf(self) -> float:
@@ -59,12 +65,21 @@ class Deal:
 
 
 # ------------------------------------------------------------ fetching
-def months_back(today: date, n: int) -> list[str]:
-    y, m, out = today.year, today.month, []
+def months_back(today: date, n: int, *, skip: int = 0) -> list[str]:
+    """The n months ending `skip` months before today's month, newest first."""
+    y, m = today.year, today.month
+    for _ in range(skip):
+        y, m = (y, m - 1) if m > 1 else (y - 1, 12)
+    out = []
     for _ in range(n):
         out.append(f"{y:04d}-{m:02d}")
         y, m = (y, m - 1) if m > 1 else (y - 1, 12)
     return out
+
+
+def trend_months(today: date, years_back: int) -> list[str]:
+    """The TREND_WINDOW months that sit years_back years before the latest TREND_WINDOW months."""
+    return months_back(today, TREND_WINDOW, skip=years_back * 12)
 
 
 def parse_lease(text: str | None) -> float | None:
@@ -89,13 +104,9 @@ def _get(http: httpx.Client, limiter: RateLimiter, params: dict) -> dict:
     return data["result"]
 
 
-def refresh(db: DB, settings: Settings, limiter: RateLimiter, http: httpx.Client, today: date,
-            *, full: bool) -> int:
-    """Store resale rows for the last 2 months (full: the whole median window) and, when full, rents.
-    Returns how many transactions were seen for the first time."""
-    import json
+def fetch_months(db: DB, settings: Settings, limiter: RateLimiter, http: httpx.Client, months: list[str]) -> int:
+    """Store every resale transaction in `months`. Returns how many were seen for the first time."""
     ds = settings.sources.datagov.datasets
-    months = months_back(today, settings.pulse.median_months + 1 if full else 2)
     stamp = datetime.now().isoformat(timespec="seconds")
     before = db.scalar("SELECT COUNT(*) FROM hdb_resale", default=0)
     offset = 0
@@ -119,8 +130,19 @@ def refresh(db: DB, settings: Settings, limiter: RateLimiter, http: httpx.Client
         offset += len(recs)
         if len(recs) < PAGE or offset >= res.get("total", 0):
             break
+    return db.scalar("SELECT COUNT(*) FROM hdb_resale", default=0) - before
+
+
+def refresh(db: DB, settings: Settings, limiter: RateLimiter, http: httpx.Client, today: date,
+            *, full: bool) -> int:
+    """Store resale rows for the last 2 months (full: the whole median window plus the slice from
+    TREND_YEARS ago) and, when full, rents. Returns how many transactions were seen for the first time."""
+    months = months_back(today, settings.pulse.median_months + 1 if full else 2)
+    if full:
+        months += trend_months(today, TREND_YEARS)
+    added = fetch_months(db, settings, limiter, http, months)
     if full or not db.scalar("SELECT COUNT(*) FROM hdb_rent", default=0):
-        rid = ds["hdb_median_rent"]
+        rid = settings.sources.datagov.datasets["hdb_median_rent"]
         total = _get(http, limiter, {"resource_id": rid, "limit": 1}).get("total", 0)
         recs = _get(http, limiter, {"resource_id": rid, "limit": 500, "offset": max(0, total - 500)}).get("records", [])
         rents = []
@@ -130,7 +152,44 @@ def refresh(db: DB, settings: Settings, limiter: RateLimiter, http: httpx.Client
             except (KeyError, TypeError, ValueError):
                 continue           # 'na' and '-' mean too few rentals
         db.executemany("INSERT OR REPLACE INTO hdb_rent VALUES (?,?,?,?)", rents)
-    return db.scalar("SELECT COUNT(*) FROM hdb_resale", default=0) - before
+    return added
+
+
+# ------------------------------------------------------------ trends
+def trend_cagr(db: DB, table: str, where: str, params: list, today: date, years_back: int,
+               *, min_n: int = 5) -> tuple[float, int] | None:
+    """Yearly % change of the median price per sqm between the TREND_WINDOW months years_back ago and the
+    latest TREND_WINDOW months, for rows matching `where`. None when either end has under min_n sales.
+    ponytail: the two windows are compared as exactly years_back apart; the month offset is at most TREND_WINDOW."""
+    now, then = months_back(today, TREND_WINDOW), trend_months(today, years_back)
+    def med(months):
+        rows = db.all(f"SELECT price, sqm FROM {table} WHERE {where} AND sqm > 0 AND month IN "
+                      f"({','.join('?' * len(months))})", [*params, *months])
+        return (statistics.median(r["price"] / r["sqm"] for r in rows), len(rows)) if len(rows) >= min_n else None
+    a, b = med(then), med(now)
+    if not a or not b:
+        return None
+    return ((b[0] / a[0]) ** (1 / years_back) - 1) * 100, min(a[1], b[1])
+
+
+def town_cagr(db: DB, town: str, flat_type: str | None, today: date, min_n: int = 5) -> tuple[float, int] | None:
+    where, params = "town=?", [town.upper()]
+    if flat_type:
+        where, params = "town=? AND flat_type=?", [town.upper(), flat_type.upper()]
+    return trend_cagr(db, "hdb_resale", where, params, today, TREND_YEARS, min_n=min_n)
+
+
+def data_outlook(deals: list[Deal], settings: Settings, db: DB, today: date, years: int = 5) -> None:
+    """Fill outlook_pct from the town and flat type trend plus the lease decay table (no Claude call)."""
+    a = settings.assumptions
+    for d in deals:
+        tc = town_cagr(db, d.town, d.flat_type, today, settings.pulse.min_sales_for_median)
+        if not tc:
+            continue
+        cagr, n = tc
+        d.outlook_pct = value_outlook(cagr, d.remaining_lease, False, years, a.lease_decay, a.base_cagr_cap_pct)
+        d.outlook_reason = (f"{d.town.title()} {d.flat_type.lower()} sales {cagr:+.1f}%/yr over {TREND_YEARS}y, "
+                            f"lease decay applied")
 
 
 # ------------------------------------------------------------ picking
@@ -183,23 +242,6 @@ def mark_alerted(db: DB, deals: list[Deal]) -> None:
     db.executemany("INSERT OR IGNORE INTO pulse_alerted VALUES (?, ?)", [(d.key, stamp) for d in deals])
 
 
-def outlook(claude, settings: Settings, deals: list[Deal]) -> None:
-    """One no-tools claude -p call: a 5 year value change estimate per deal. Raises ClaudeUnavailable."""
-    if not deals:
-        return
-    rows = [{"i": i, "town": d.town, "flat_type": d.flat_type, "sqm": d.sqm, "storey": d.storey,
-             "lease_left": d.remaining_lease, "price": d.price, "vs_town_median_pct": round(-d.discount_pct, 1)}
-            for i, d in enumerate(deals)]
-    base = settings.prompts_dir
-    res = claude.call(label="outlook", brief="Estimate the 5 year value change for every flat in stdin.",
-                      stdin_text=json.dumps(rows), system_file=base / "outlook_system.md",
-                      schema=json.loads((base / "outlook_schema.json").read_text(encoding="utf-8")),
-                      disallowed_tools=settings.claude.no_tools, max_turns=2, timeout=300)
-    for e in (res.structured or {}).get("estimates") or []:
-        if isinstance(e.get("i"), int) and 0 <= e["i"] < len(deals):
-            deals[e["i"]].outlook_pct, deals[e["i"]].outlook_reason = e.get("pct"), e.get("reason") or ""
-
-
 # ------------------------------------------------------------ rendering
 def _money(x: float) -> str:
     return f"S${x:,.0f}"
@@ -234,7 +276,8 @@ def deal_card(n: int, d: Deal, cfg) -> str:
         "💰 " + dot(_money(d.price), f"S${d.psf:,.0f} psf", f"sold {_month_label(d.month)}"),
         f"📉 {esc(value)} · {esc(lease)}",
         rent or "",
-        outlook_line(d.price, d.outlook_pct, 5, d.outlook_reason),
+        outlook_line(d.price, d.outlook_pct, 5, d.outlook_reason, source="data"),
+        ("🚇 " + esc(d.mrt)) if d.mrt else "",
         "🏠 " + dot(f"{d.sqm:.0f} sqm", f"floor {d.storey.lower()}") + f' · <a href="{esc_attr(maps)}">Map</a>',
     ], tag="NEW" if d.new else "", emoji="🏢", desc=addr)
 
@@ -257,7 +300,9 @@ def render(deals: list[Deal], ctx: dict, settings: Settings, *, title_note: str 
         f"{cfg.min_yield_pct:g}% gross or more. Budget S${settings.search.budget_min_sgd:,.0f} to "
         f"S${settings.search.budget_max_sgd:,.0f}, lease at least {settings.search.min_remaining_lease_years:g} years. "
         f"The name links to flats for sale in that block now. Renting out the whole flat needs the 5 year MOP "
-        f"first. Gross yield is before costs. 🔮 is Claude's rough 5 year value estimate, not a forecast. "
-        f"Not financial advice.")
+        f"first. Gross yield is before costs. 🔮 is a data estimate: the town and flat type's resale price trend over "
+        f"the past {TREND_YEARS} years, continued 5 years with the lease decay table, capped at "
+        f"{settings.assumptions.base_cagr_cap_pct:g}%/yr. 🚇 is the nearest MRT exit by straight line and planned "
+        f"stations matched by name. Not a forecast, not financial advice.")
     sub = title_note or datetime.now().strftime("%a %d %b %Y")
     return section_messages(REPORT_TITLES["pulse"], sub, [summary, *cards, links], method)

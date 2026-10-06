@@ -106,16 +106,6 @@ def test_commercial_category_budget_and_outlook_on_card(settings, db, limiter):
     assert "🔮 🔴 5y est ▼5% · ~S$4,275,000 · Lease decay" in hunt.listing_card(1, keep[0], bot.s)
 
 
-def test_pulse_outlook_maps_estimates_by_index(settings):
-    from propbot import pulse
-    deals = [pulse.Deal("k", "2026-09", "BISHAN", "4 ROOM", "1", "ST", "07 TO 09", 90, 70, 600_000, 7000, 5, None, None)
-             for _ in range(2)]
-    fake = SimpleNamespace(call=lambda **kw: SimpleNamespace(structured={"estimates": [
-        {"i": 1, "pct": 7, "reason": "Mature town"}, {"i": 5, "pct": 1, "reason": "bad index"}]}))
-    pulse.outlook(fake, settings, deals)
-    assert deals[0].outlook_pct is None and (deals[1].outlook_pct, deals[1].outlook_reason) == (7, "Mature town")
-
-
 def test_messages_group_by_estate_then_type_in_one_message(settings, db, limiter):
     bot = make_bot(settings, db, limiter, HISTORY)
     cs = [cand("A", "https://edgeprop.sg/listing/11", area="Yishun"),

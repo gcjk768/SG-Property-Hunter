@@ -209,6 +209,12 @@ def render_listing(card: Card, settings: Settings, *, rank: int = 1, of: int = 1
     lines.append(esc(f"Stress test at {opt.stress_rate_pct:.1f}%: {money(opt.instalment_stress)}/month, {tdsr}{msr}, "
                      f"your own limit {settings.profile.max_monthly_commitment_pct:.0f}%, this loan uses "
                      f"{pct(opt.own_share_pct)}"))
+    if opt.loan > 0 and opt.income_assessed > 0 and opt.lender != "HDB":   # the HDB rate is pegged to CPF OA, it does not float
+        limit = opt.income_assessed * settings.profile.max_monthly_commitment_pct / 100
+        up = [f"{money(x)}/month ({pct(x / opt.income_assessed * 100)})" for x in (opt.instalment_up1, opt.instalment_up2)]
+        worst = opt.instalment_up2 - limit
+        tail = f", {money(worst)}/month over your limit at 2 points" if worst > 0 else ", still inside your limit"
+        lines.append("⚠️ " + esc(f"If rates rise 1 point: {up[0]}, 2 points: {up[1]}{tail}"))
     m = proj.monthly_if_rented
     if m:
         when = "" if m["year"] == 1 else f" from year {m['year']}"
@@ -361,7 +367,7 @@ def check_generated_text(text: str, allowed: Iterable[str]) -> list[str]:
 
 
 # ------------------------------------------------------------ report sections (same layout as the SG car tracker bot)
-REPORT_TITLES = {"pulse": "🏠 HDB resale deals", "hunt": "🏘 Property for sale"}
+REPORT_TITLES = {"pulse": "🏠 HDB resale deals", "hunt": "🏘 Property for sale", "condo": "🏙 Condo resale deals"}
 TAG_EMOJI = {"NEW": "🆕", "DROP": "🟢"}
 MSG_BUDGET = 3800
 
@@ -379,13 +385,14 @@ def outlook_years(category: str) -> int:
     return 10 if category == "bto" else 5
 
 
-def outlook_line(price: float, pct: float | None, years: int, reason: str = "") -> str:
-    """`🔮 🟢 5y est ▲12% · ~S$896,000 · reason`; empty when there is no usable estimate."""
+def outlook_line(price: float, pct: float | None, years: int, reason: str = "", source: str = "est") -> str:
+    """`🔮 🟢 5y data ▲12% · ~S$896,000 · reason`; empty when there is no usable estimate.
+    source is "data" (transaction trend plus the lease decay table) or "est" (the model's guess)."""
     if pct is None or not (OUTLOOK_RANGE[0] <= pct <= OUTLOOK_RANGE[1]):
         return ""
     mark, arrow = ("🟢", "▲") if pct > 0 else ("🔴", "▼") if pct < 0 else ("⚪", "")
     value = f"~S${round(price * (1 + pct / 100), -3):,.0f}"
-    return f"🔮 {mark} " + dot(f"{years}y est {arrow}{abs(pct):.0f}%", value, (reason or "")[:120])
+    return f"🔮 {mark} " + dot(f"{years}y {source} {arrow}{abs(pct):.0f}%", value, (reason or "")[:120])
 
 
 def header(title: str, subtitle: str = "") -> str:

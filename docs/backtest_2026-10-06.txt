@@ -1,0 +1,14 @@
+Repeat sales used: 28505
+
+lease band at purchase   table/yr      n years  mean err median err data says/yr
+above 80 years               0.0%  10013   4.7     +2.2%      +1.2%        0.47%
+70 to 80 years               0.3%   6992   4.9     -1.0%      -1.6%        0.09%
+60 to 70 years               0.7%   8375   4.7     -1.1%      -2.0%        0.47%
+50 to 60 years               1.2%   2832   4.3     -1.8%      -3.2%        0.79%
+below 50 years               2.0%    293   4.2     -5.7%      -7.0%        0.63%
+
+Error = predicted / actual second price, minus one. Positive: the table decays too little for that band
+(the model predicted more than the flat fetched). Negative: it decays too much. Near zero: the band is right.
+data says/yr = the table's figure plus the error spread over the years held.
+Caution: the market side is the town median over flats of every age, so older flats also lag newer ones
+for reasons other than the lease. Treat the result as a check on the table, not a replacement for it.
