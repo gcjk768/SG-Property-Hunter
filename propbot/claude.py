@@ -1,4 +1,4 @@
-"""Bounded `claude -p` calls (same wrapper shape as pddbot).
+"""Bounded `claude -p` calls.
 
 Never two calls at once; per run and per day caps through the claude bucket;
 CLAUDE_CODE_MAX_RETRIES from config; --fallback-model; usage limit detection. An Opus or Sonnet

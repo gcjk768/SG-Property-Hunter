@@ -121,7 +121,7 @@ def test_ura_without_key_does_nothing(settings, db, limiter):
 def test_distance_and_station_names():
     assert haversine_m(1.3521, 103.8198, 1.3521, 103.8198) == 0
     assert haversine_m(1.3000, 103.8000, 1.3090, 103.8000) == pytest.approx(1000, rel=0.01)    # 0.009 degrees of latitude
-    assert station_label("SPRINGLEAF MRT STATION") == "Springleaf" and station_label("PUNGGOL LRT STATION") == "Punggol"
+    assert station_label("SPRINGLEAF MRT STATION") == "Springleaf MRT" and station_label("FARMWAY LRT STATION") == "Farmway LRT"
     rows = parse_exits({"features": [
         {"geometry": {"type": "Point", "coordinates": [103.8, 1.3]}, "properties": {"STATION_NA": "X MRT STATION", "EXIT_CODE": "Exit 1"}},
         {"geometry": {"type": "Polygon", "coordinates": []}, "properties": {"STATION_NA": "SKIP"}}]})
@@ -141,7 +141,7 @@ def test_geo_nearest_and_upcoming(settings, db, limiter, tmp_path):
     db.executemany("INSERT INTO mrt_exits VALUES (?,?,?,?)", [("FAR MRT STATION", "Exit 1", 1.40, 103.90),
                                                               ("NEAR MRT STATION", "Exit 2", 1.3009, 103.8000)])
     name, dist = g.nearest(1.3, 103.8)
-    assert name == "Near" and 90 < dist < 110
+    assert name == "Near MRT" and 90 < dist < 110
     assert g.upcoming("Blk 5 Hougang Ave 1", "Hougang") == ["Hougang (Cross Island Line, 2030)"]
     assert g.upcoming("Blk 5 Bishan Rd", "Bishan") == []           # opened stations are not "upcoming"
 
@@ -334,3 +334,50 @@ def test_db_reads_are_safe_across_threads(db):
     [t.start() for t in ts]
     [t.join() for t in ts]
     assert errors == []
+
+
+# ------------------------------------------------------------ OneMap access token
+def fake_jwt(exp: float) -> str:
+    import base64
+    body = base64.urlsafe_b64encode(json.dumps({"exp": exp}).encode()).decode().rstrip("=")
+    return f"h.{body}.s"
+
+
+def test_token_expiry_and_status_line(settings):
+    import time
+    assert geo.token_expiry(fake_jwt(1_800_000_000)) == 1_800_000_000 and geo.token_expiry("garbage") is None
+    s = settings.model_copy()
+    s.secrets.onemap_email = s.secrets.onemap_password = s.secrets.onemap_access_token = ""
+    assert geo.onemap_state(s) == "NOT set"
+    s.secrets.onemap_access_token = fake_jwt(time.time() + 3600)
+    assert geo.onemap_state(s).startswith("token valid until")
+    s.secrets.onemap_access_token = fake_jwt(time.time() - 3600)
+    assert "EXPIRED" in geo.onemap_state(s)
+    s.secrets.onemap_email, s.secrets.onemap_password = "a@b.c", "pw"
+    assert geo.onemap_state(s) == "set, renews itself"
+
+
+def test_geo_uses_a_pasted_token_until_it_expires(settings, db, limiter, tmp_path):
+    import time
+    seen = []
+
+    def handler(req):
+        seen.append((req.url.path, req.headers.get("Authorization")))
+        return httpx.Response(200, json={"results": [{"LATITUDE": "1.3", "LONGITUDE": "103.8"}]})
+
+    s = settings.model_copy()
+    s.secrets.onemap_email = s.secrets.onemap_password = ""
+    live = fake_jwt(time.time() + 3600)
+    s.secrets.onemap_access_token = live
+    g = Geo(db, s, limiter, httpx.Client(transport=httpx.MockTransport(handler)), tmp_path / "none.yaml")
+    assert g.geocode("1 Test Rd") == (1.3, 103.8)
+    assert seen == [("/api/common/elastic/search", live)]           # the pasted token is sent, nothing is fetched to renew
+    s.secrets.onemap_access_token = fake_jwt(time.time() - 60)
+    assert g.geocode("2 Other Rd") is None and len(seen) == 1       # expired: no call, no crash
+
+
+def test_search_text_matches_what_onemap_understands():
+    assert geo.search_text("Blk 722 Yishun St 71") == "722 YISHUN ST 71"
+    assert geo.search_text("BLOCK 233C, Sumang Lane, Singapore 823233") == "233C SUMANG LANE 823233"
+    assert geo.search_text("1 Test Rd #05-12") == "1 TEST RD"
+    assert geo.search_text("The Skywoods") == "THE SKYWOODS"

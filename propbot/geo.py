@@ -7,6 +7,7 @@ Everything here is best effort: an error is logged and the card goes out without
 """
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import math
@@ -29,6 +30,39 @@ ONEMAP_SEARCH = "https://www.onemap.gov.sg/api/common/elastic/search"
 TOKEN_LIFE_S = 2 * 24 * 3600          # OneMap tokens last 3 days; renew after 2
 
 
+def search_text(query: str) -> str:
+    """What OneMap's search understands: 'Blk 722 Yishun St 71, Singapore 760722' -> '722 YISHUN ST 71 760722'.
+    It finds nothing when 'Blk', a unit number or the word Singapore is in the text, but accepts HDB abbreviations."""
+    q = re.sub(r"#\d+\s*-\s*\d+", " ", query.upper())
+    q = re.sub(r"\b(BLK|BLOCK)\b\.?", " ", q)
+    q = re.sub(r"\bSINGAPORE\b", " ", q)
+    return re.sub(r"[\s,]+", " ", q).strip()
+
+
+def token_expiry(token: str) -> float | None:
+    """The exp claim (epoch seconds) of a OneMap JWT, or None when it cannot be read. The token is not verified."""
+    try:
+        part = token.split(".")[1]
+        return float(json.loads(base64.urlsafe_b64decode(part + "=" * (-len(part) % 4)))["exp"])
+    except (IndexError, ValueError, KeyError, TypeError):
+        return None
+
+
+def onemap_state(settings: Settings, now: float | None = None) -> str:
+    """One line for status: how the OneMap login is set up and when it runs out."""
+    sec, now = settings.secrets, now or time.time()
+    if sec.onemap_email and sec.onemap_password:
+        return "set, renews itself"
+    if sec.onemap_access_token:
+        exp = token_expiry(sec.onemap_access_token)
+        if exp is None:
+            return "token set, expiry unknown"
+        left = (exp - now) / 3600
+        when = datetime.fromtimestamp(exp).strftime("%d %b %H:%M")
+        return f"token valid until {when}" if left > 0 else f"token EXPIRED {when}, paste a new one"
+    return "NOT set"
+
+
 def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     p1, p2 = math.radians(lat1), math.radians(lat2)
     dphi, dl = p2 - p1, math.radians(lon2 - lon1)
@@ -37,8 +71,10 @@ def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 
 
 def station_label(name: str) -> str:
-    """'SPRINGLEAF MRT STATION' -> 'Springleaf'."""
-    return re.sub(r"\s+(MRT|LRT)\s+STATION.*$", "", name.strip(), flags=re.I).title()
+    """'SPRINGLEAF MRT STATION' -> 'Springleaf MRT'; LRT stations keep their LRT."""
+    m = re.search(r"\s+(MRT|LRT)\s+STATION", name, flags=re.I)
+    kind = m.group(1).upper() if m else "MRT"
+    return f"{re.sub(r'\s+(MRT|LRT)\s+STATION.*$', '', name.strip(), flags=re.I).title()} {kind}"
 
 
 def parse_exits(geojson: dict) -> list[tuple[str, str, float, float]]:
@@ -90,6 +126,12 @@ class Geo:
     def _token(self) -> str | None:
         sec = self.s.secrets
         if not (sec.onemap_email and sec.onemap_password):
+            tok = sec.onemap_access_token       # a pasted token: usable until it expires, then the line is left out
+            exp = token_expiry(tok) if tok else None
+            if tok and (exp is None or time.time() < exp):
+                return tok
+            if tok:
+                log.warning("OneMap access token expired; paste a new one in .env (or set ONEMAP_EMAIL and ONEMAP_PASSWORD)")
             return None
         exp = float(self.db.meta_get("onemap_token_exp") or 0)
         tok = self.db.meta_get("onemap_token")
@@ -106,7 +148,7 @@ class Geo:
         return tok
 
     def geocode(self, query: str) -> tuple[float, float] | None:
-        q = re.sub(r"\s+", " ", query).strip().upper()
+        q = search_text(query)
         if not q:
             return None
         row = self.db.one("SELECT json FROM onemap_cache WHERE query=?", (q,))
@@ -155,11 +197,11 @@ class Geo:
         parts = []
         try:
             if self.ensure_stations(today or date.today()):
-                hit = self.geocode(f"{address} Singapore") if address else None
+                hit = self.geocode(address) if address else None
                 near = self.nearest(*hit) if hit else None
                 if near:
                     mark = "🟢 " if near[1] <= self._radius else ""
-                    parts.append(f"{mark}{near[0]} MRT {near[1]:,.0f} m")
+                    parts.append(f"{mark}{near[0]} {near[1]:,.0f} m")
         except Exception as exc:
             log.warning("location lookup failed for %r: %s", address, exc)
         up = self.upcoming(address, area)

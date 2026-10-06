@@ -22,7 +22,7 @@ from . import hunt, pulse, ura
 from .claude import ClaudeUnavailable
 from .config import ConfigError, Profile, Settings, apply_profile_overrides, parse_override_value
 from .db import DB, clear_user_profile, set_user_profile, user_profile
-from .geo import Geo
+from .geo import Geo, onemap_state
 from .ratelimit import BudgetExceeded, RateLimiter
 from .render import DIVIDER, REPORT_TITLES, SECTION_TITLES, header
 from .telegram import TelegramClient, esc
@@ -187,7 +187,7 @@ class Bot:
         """Notable private resales from the URA Data Service; needs URA_ACCESS_KEY."""
         if not self.s.secrets.ura_access_key:
             if manual:
-                self.send(where, header(REPORT_TITLES["condo"], "not set up") + "\n\n<i>URA_ACCESS_KEY is missing from .env.</i>")
+                self.send(where, header(REPORT_TITLES["condo"], "not set up") + "\n\n<i>Needs URA_ACCESS_KEY in .env. URA gives that key only to registered companies, so this stays off for individuals.</i>")
             return None
         with self._pulse_lock:
             now = now or datetime.now(self.tz)
@@ -375,7 +375,7 @@ class Bot:
             f"🏙 {q('SELECT COUNT(*) FROM ura_resi', default=0):,} private sales stored"
             + ("" if self.s.secrets.ura_access_key else " · <i>URA_ACCESS_KEY not set</i>"),
             f"🚇 {q('SELECT COUNT(DISTINCT station) FROM mrt_exits', default=0)} MRT stations"
-            + ("" if self.s.secrets.onemap_email else " · <i>OneMap login not set, no distance to MRT</i>"), "",
+            + f" · <i>OneMap {esc(onemap_state(self.s))}</i>", "",
             f"🤖 <b>Claude</b> · {claude.get('today', 0)} / {claude.get('day_limit')} calls today · {esc(self.s.claude.model)}",
             f"🧮 <b>Bar</b> · {self.s.pulse.value_discount_pct:g}% under median or {self.s.pulse.min_yield_pct:g}% gross",
         ]), buttons=[("🔄 Run pulse", "proppulse")])
@@ -384,7 +384,7 @@ class Bot:
         self.send(where, "\n".join([
             f"{SECTION_TITLES['help']} <b>HELP</b> · SG Property Hunter", "",
             "🏠 <b>/proppulse</b> · notable HDB resale deals now",
-            "🏙 <b>/propcondo</b> · notable private condo resales (URA data)",
+            "🏙 <b>/propcondo</b> · private condo resales (needs a URA company key, off by default)",
             "🏘 <b>/prophunt</b> · real listings for sale now (Claude web search, owner only)",
             "👤 <b>/propprofile</b> · set your own income, cash and CPF for /propanalyse",
             "🧮 <b>/propanalyse</b> · full card for one property",

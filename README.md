@@ -26,7 +26,7 @@ Logos: Telegram, Docker, Claude, Obsidian, SQLite and Python are the official br
 | 1 | Config and safety floors, SQLite, rate limiter, polite fetcher, run lock, Telegram client, Claude wrapper, alerts | Done, tested |
 | 2 | Rules file, loader, weekly checker, MRT pipeline | Done, tested |
 | 3 | Eligibility, costs, financing, projection, verdict, `propbot analyse` | Done, tested |
-| 4 | data.gov.sg HDB sales and rents, URA private sales, MRT exits, OneMap geocoding, `propbot backfill` | Done. Live SORA rates not built, the bank rate is assumed |
+| 4 | data.gov.sg HDB sales and rents, URA private sales, MRT exits, OneMap geocoding, `propbot backfill` | Done and tested. URA needs a company key, so it is dormant. Live SORA rates not built |
 | 5 | Hourly HDB pulse, condo pulse, listing hunt with data outlook and MRT line | Done, tested. The full daily discover, curate and `propbot run` pipeline is not built |
 | 6 | Telegram bot, per user profiles, scheduler, status, Docker, compose, setup guide | Done. Favourites and `propbot purge` are not built |
 
@@ -38,7 +38,7 @@ New here? Start with [docs/SETUP.md](docs/SETUP.md).
 | Command | What | Needs |
 | --- | --- | --- |
 | `/proppulse` | HDB resale sales that are cheap for their town, flat type and lease band, or high yield | nothing |
-| `/propcondo` | Private condo resales cheap for their own project | URA key |
+| `/propcondo` | Private condo resales cheap for their own project | URA key, company registration only, so off for most people |
 | `/prophunt` | Real listings found by Claude web search, grouped by estate | Claude token, owner only |
 | `/propanalyse` | Full card for one property: upfront cost, loan, stress tests, 10 year outlook, verdict | your profile |
 | `/propprofile` | Set your own income, cash and CPF (friends) | nothing |
@@ -48,7 +48,7 @@ New here? Start with [docs/SETUP.md](docs/SETUP.md).
 Every card carries three signals beyond the price.
 
 - **🔮 Outlook.** The 5 year value change (10 for BTO). Where there is data it is labelled `data`: the town's or project's own resale price trend over the last years, capped at the base growth cap in `config.yaml`, then reduced by the lease decay table. Where there is no data it is labelled `est` and is Claude's rough guess.
-- **🚇 Location.** The nearest MRT exit by straight line, and planned stations from `rules/mrt_pipeline.yaml` matched by name. The distance needs a free OneMap login.
+- **🚇 Location.** The nearest MRT exit by straight line, and planned stations from `rules/mrt_pipeline.yaml` matched by name. The distance needs a free OneMap login or access token.
 - **⚠️ Rate stress** (on `/propanalyse`, bank loans only). The monthly instalment if rates rise 1 and 2 points, and how far that is over your own limit. An HDB loan rate is pegged to the CPF rate, so it is not shown for those.
 
 ## Try it
@@ -156,7 +156,8 @@ The table in `config.yaml` is unchanged. Moving it is your call. The raw output 
 
 - **Live SORA rates.** The bank rate is assumed in `config.yaml`. Loading MAS SORA would make the stress test start from today's rate.
 - **Master Plan zoning and distance to planned stations.** LTA has not published coordinates for most planned stations, so they are matched by name only.
-- **Condo trends need history.** The URA key gives five years of private sales. A project with fewer than 3 sales at either end of the trend window gets no data outlook.
+- **Private condo data.** URA issues its key only to registered companies, so `/propcondo` and condo trends are built and tested but dormant. Condos fall back to the model's `est` outlook. A free source of private transactions would switch them on.
+- **OneMap token.** A pasted token lasts about 3 days. Setting `ONEMAP_EMAIL` and `ONEMAP_PASSWORD` instead lets the bot renew it.
 - **The daily pipeline.** `propbot run`, `discover` and `purge`, plus favourites, from the original plan are not built. The hourly hunt covers discovery for now.
 - **Friend accounts live in the bot's database.** They are not in the vault, so they do not show up in Obsidian.
 

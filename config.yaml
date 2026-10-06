@@ -128,7 +128,7 @@ sources:
       hdb_median_rent: d_23000a00c52996c55106084ed0339566     # Median rent by town and flat type
       hdb_resale_price_index: d_f0c768860912d66940efdac9435dc046  # HDB Resale Price Index (1Q2009 = 100), quarterly
       mrt_exits: d_b39d3a0871985372d7e1637193335da5             # LTA MRT station exits (GeoJSON), for the nearest MRT line
-  ura: {enabled: true}           # needs URA_ACCESS_KEY from the free registration; private resale deals and condo trends
+  ura: {enabled: true}           # needs URA_ACCESS_KEY, which URA issues only to registered companies; without it /propcondo and condo trends stay off
   onemap: {enabled: true}        # needs ONEMAP_EMAIL and ONEMAP_PASSWORD from the free registration
   listing_domains_allowed: [edgeprop.sg, propertyguru.com.sg, commercialguru.com.sg, stackedhomes.com, businesstimes.com.sg, straitstimes.com, channelnewsasia.com, hdb.gov.sg, ura.gov.sg, iras.gov.sg, mas.gov.sg, cpf.gov.sg, lta.gov.sg, knightfrank.com.sg, era.com.sg, propnex.com, huttons.com.sg, colliers.com, savills.com.sg]
   never_fetch_domains: [99.co, srx.com.sg, facebook.com, instagram.com, carousell.sg, xiaohongshu.com, reddit.com]

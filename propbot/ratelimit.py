@@ -1,4 +1,4 @@
-"""Rate limits, budgets, backoff and cooldowns (same module shape as pddbot).
+"""Rate limits, budgets, backoff and cooldowns.
 
 Buckets: web (with a sub bucket per domain), datagov, ura, onemap, telegram, claude, analyses.
 Each bucket has a minimum gap with jitter, optional rolling per minute cap, and per run and

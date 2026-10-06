@@ -273,6 +273,7 @@ class Secrets(BaseModel):
     ura_access_key: str = ""
     onemap_email: str = ""
     onemap_password: str = ""
+    onemap_access_token: str = ""      # a token pasted from OneMap; expires after about 3 days
     tz: str = "Asia/Singapore"
 
     def __repr__(self) -> str:  # never print secrets
@@ -375,7 +376,7 @@ def _read_env(base_dir: Path) -> Secrets:
     if env_file.exists():
         values.update({k: v or "" for k, v in dotenv_values(env_file).items()})
     for key in ("TELEGRAM_BOT_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY",
-                "URA_ACCESS_KEY", "ONEMAP_EMAIL", "ONEMAP_PASSWORD", "TZ"):
+                "URA_ACCESS_KEY", "ONEMAP_EMAIL", "ONEMAP_PASSWORD", "ONEMAP_ACCESS_TOKEN", "TZ"):
         if os.environ.get(key):
             values[key] = os.environ[key]
     return Secrets(**{k.lower(): v for k, v in values.items() if k.lower() in Secrets.model_fields})

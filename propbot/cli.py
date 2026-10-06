@@ -20,6 +20,9 @@ log = logging.getLogger("propbot")
 CARD_COMMANDS = {"run", "serve", "analyse", "discover"}
 
 
+from .geo import onemap_state
+
+
 def _vault(settings: Settings):
     from .vault import NullVault, Vault
     if not settings.obsidian.enabled:
@@ -309,7 +312,7 @@ def cmd_status(args) -> int:
           f"{db.scalar('SELECT COUNT(*) FROM ura_resi', default=0):,}; MRT stations: "
           f"{db.scalar('SELECT COUNT(DISTINCT station) FROM mrt_exits', default=0)}")
     print("Keys: URA " + ("set" if settings.secrets.ura_access_key else "NOT set") + ", OneMap "
-          + ("set" if settings.secrets.onemap_email else "NOT set") + ", Claude "
+          + onemap_state(settings) + ", Claude "
           + ("set" if settings.secrets.claude_code_oauth_token or settings.secrets.anthropic_api_key else "NOT set"))
     rows = db.all("SELECT name, downloaded_at, rows FROM datasets")
     print("Datasets: " + (", ".join(f"{r['name']} ({r['downloaded_at']}, {r['rows']} rows)" for r in rows) or "none yet"))

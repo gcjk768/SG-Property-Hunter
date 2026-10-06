@@ -37,10 +37,10 @@ still runs the HDB and condo deal alerts and `/propanalyse`, but not the hunt or
 
 | Key | What it adds | Where to get it |
 | --- | --- | --- |
-| `URA_ACCESS_KEY` | Private condo deals (`/propcondo`) and condo price trends | Register at https://eservice.ura.gov.sg/maps/api/ |
-| `ONEMAP_EMAIL` and `ONEMAP_PASSWORD` | Distance to the nearest MRT station on every card | Register at https://www.onemap.gov.sg/apidocs/ |
+| `URA_ACCESS_KEY` | Private condo deals (`/propcondo`) and condo price trends | URA issues it only to registered companies at https://eservice.ura.gov.sg/maps/api/, so most individuals cannot get one. Skip it |
+| `ONEMAP_EMAIL` and `ONEMAP_PASSWORD`, or `ONEMAP_ACCESS_TOKEN` | Distance to the nearest MRT station on every card | Register at https://www.onemap.gov.sg/apidocs/. With the email and password the bot renews its own token. A pasted `ONEMAP_ACCESS_TOKEN` works for about 3 days, then the distance line drops out until you paste a new one. `propbot status` shows the expiry |
 
-Without these keys the bot works and simply leaves those lines out. HDB deals, the MRT station list
+Without these keys the bot works and simply leaves those lines out. Without the URA key, condo cards show the model's `est` outlook instead of a `data` one, and there is no `/propcondo`. HDB deals, the MRT station list
 and planned stations need no key.
 
 ## 5. Fill in `.env`
@@ -51,8 +51,9 @@ Copy `.env.example` to `.env` in the project folder and fill it in. Never commit
 TELEGRAM_BOT_TOKEN=123456:ABC...
 CLAUDE_CODE_OAUTH_TOKEN=...        # or ANTHROPIC_API_KEY=...
 URA_ACCESS_KEY=                    # optional
-ONEMAP_EMAIL=                      # optional
+ONEMAP_EMAIL=                      # optional, with the password the bot renews its own token
 ONEMAP_PASSWORD=                   # optional
+ONEMAP_ACCESS_TOKEN=               # optional alternative: a pasted token, lasts about 3 days
 ```
 
 ## 6. Edit `config.yaml`
@@ -158,7 +159,7 @@ for the second time, by lease band. The current result is in the README.
 | `TELEGRAM_BOT_TOKEN is not set` | `.env` is missing or not in the folder you run the command from |
 | No messages arrive | You did not press Start on the bot, or `chat_id` is wrong |
 | `profile.gross_monthly_income is 0` | Fill in the profile, step 6 |
-| No 🚇 line on cards | OneMap login not set. Planned stations still show by name |
-| `/propcondo` says URA key missing | Set `URA_ACCESS_KEY`, step 4 |
+| No 🚇 line on cards | OneMap login not set or the pasted token expired (`propbot status` shows which). Planned stations still show by name |
+| `/propcondo` says URA key missing | Expected for individuals. URA gives the key only to companies |
 | Hunt and `/propask` do nothing | Claude token not set, step 3 |
 | Emoji crash on a Windows console | Update to the latest code. The command line now forces UTF-8 |
