@@ -48,7 +48,7 @@ New here? Start with [docs/SETUP.md](docs/SETUP.md).
 Every card carries three signals beyond the price.
 
 - **🔮 Outlook.** The 5 year value change (10 for BTO). Where there is data it is labelled `data`: the town's or project's own resale price trend over the last years, capped at the base growth cap in `config.yaml`, then reduced by the lease decay table. Where there is no data it is labelled `est` and is Claude's rough guess.
-- **🚇 Location.** The nearest MRT exit by straight line, and planned stations from `rules/mrt_pipeline.yaml` matched by name. The distance needs a free OneMap login or access token.
+- **🚇 Location.** The nearest MRT exit by straight line, and planned stations from `rules/mrt_pipeline.yaml` matched by name. The distance needs a free OneMap login (`ONEMAP_EMAIL` and `ONEMAP_PASSWORD`, which renew themselves) or a pasted `ONEMAP_ACCESS_TOKEN` (about 3 days).
 - **⚠️ Rate stress** (on `/propanalyse`, bank loans only). The monthly instalment if rates rise 1 and 2 points, and how far that is over your own limit. An HDB loan rate is pegged to the CPF rate, so it is not shown for those.
 
 ## Try it
@@ -157,7 +157,7 @@ The table in `config.yaml` is unchanged. Moving it is your call. The raw output 
 - **Live SORA rates.** The bank rate is assumed in `config.yaml`. Loading MAS SORA would make the stress test start from today's rate.
 - **Master Plan zoning and distance to planned stations.** LTA has not published coordinates for most planned stations, so they are matched by name only.
 - **Private condo data.** URA issues its key only to registered companies, so `/propcondo` and condo trends are built and tested but dormant. Condos fall back to the model's `est` outlook. A free source of private transactions would switch them on.
-- **OneMap token.** A pasted token lasts about 3 days. Setting `ONEMAP_EMAIL` and `ONEMAP_PASSWORD` instead lets the bot renew it.
+- **OneMap token.** The distance line works with `ONEMAP_ACCESS_TOKEN` in `.env`, but a pasted token lasts about 3 days, then the line drops out until you paste a new one. `propbot status` shows the expiry date. Setting `ONEMAP_EMAIL` and `ONEMAP_PASSWORD` instead lets the bot renew its own token.
 - **The daily pipeline.** `propbot run`, `discover` and `purge`, plus favourites, from the original plan are not built. The hourly hunt covers discovery for now.
 - **Friend accounts live in the bot's database.** They are not in the vault, so they do not show up in Obsidian.
 
