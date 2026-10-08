@@ -11,6 +11,7 @@ import html
 import random
 import re
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -136,6 +137,22 @@ class TelegramClient:
         first = text.split("\n", 1)[0][:120]
         self.journal("telegram_send", f"sent message {mid} to {chat_id}: {first}", {"silent": silent})
         return mid
+
+    def send_document(self, chat_id: str | int, path, caption: str = "", *, thread_id: int | None = None,
+                      silent: bool = False) -> int:
+        """Upload a file (the weekly PDF). One try: the caller logs a failure and the next week retries."""
+        self.limiter.acquire("telegram")
+        data: dict[str, Any] = {"chat_id": chat_id, "caption": caption, "parse_mode": "HTML",
+                                "disable_notification": silent}
+        if thread_id:
+            data["message_thread_id"] = thread_id
+        with open(path, "rb") as f:
+            resp = self.http.post(self._url("sendDocument"), data=data, files={"document": (Path(path).name, f)})
+        self.limiter.log("telegram", "sendDocument", method="POST", url=f"{API}/bot<token>/sendDocument", status=resp.status_code)
+        body = resp.json()
+        if not body.get("ok"):
+            raise TelegramError("sendDocument", body.get("error_code"), body.get("description", ""))
+        return int(body["result"]["message_id"])
 
     def edit_message_text(self, chat_id: str | int, message_id: int, text: str) -> None:
         self.call("editMessageText", {"chat_id": chat_id, "message_id": message_id, "text": text,

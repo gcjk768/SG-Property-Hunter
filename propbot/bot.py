@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-from . import hunt, pulse, ura
+from . import condo_report, hunt, pulse, ura
 from .claude import ClaudeUnavailable
 from .config import ConfigError, Profile, Settings, apply_profile_overrides, parse_override_value
 from .db import DB, clear_user_profile, set_user_profile, user_profile
@@ -29,7 +29,7 @@ from .telegram import TelegramClient, esc
 
 log = logging.getLogger("propbot.bot")
 
-COMMANDS = ("proppulse", "propcondo", "prophunt", "propanalyse", "propask", "propprofile", "propstatus", "prophelp")
+COMMANDS = ("proppulse", "propcondo", "propcondoreport", "prophunt", "propanalyse", "propask", "propprofile", "propstatus", "prophelp")
 # a friend in a private chat gets the free commands only; hunt and ask spend the owner's Claude plan
 FRIEND_COMMANDS = {"proppulse", "propcondo", "propanalyse", "propprofile", "propstatus", "prophelp"}
 PROFILE_KEYS = ("citizenship", "age", "first_timer", "marital_status", "buying_with", "gross_monthly_income",
@@ -252,6 +252,53 @@ class Bot:
     def cmd_hunt(self, arg, where) -> None:
         self.hunt(where, manual=True)
 
+    # ------------------------------------------------------------ weekly condo report
+    def condo_report(self, where, *, manual: bool, now: datetime | None = None) -> bool:
+        """One Claude search per segment (resale, new launch), then a PDF and a short summary. True when posted."""
+        if self.claude is None:
+            if manual:
+                self.send(where, header(REPORT_TITLES["condo_report"], "Claude is not set up"))
+            return False
+        now = now or datetime.now(self.tz)
+        self.limiter.set_run(f"condo-{now:%Y%m%d%H%M}")
+        if manual:
+            self.tg.typing(where[0], where[1])
+        cfg = self.s.condo_report
+        data = {}
+        for seg, n in (("resale", cfg.resale_count), ("new_launch", cfg.new_launch_count)):
+            try:
+                data[seg], dropped, _ = condo_report.run(self.claude, self.s, seg, n, now.date())
+            except ClaudeUnavailable as exc:
+                data[seg] = []
+                self.vault.activity("error", f"condo report {seg}: Claude unavailable: {exc.reason}")
+                continue
+            self.vault.activity("condo_report", f"{seg}: {len(data[seg])} listings, {len(dropped)} dropped"
+                                + (f" ({'; '.join(dropped)[:300]})" if dropped else ""))
+        if not any(data.values()):
+            if manual:
+                self.send(where, header(REPORT_TITLES["condo_report"], "nothing found or Claude unavailable"))
+            return False
+        pdf = self.s.base_dir / "data" / f"condo-report-{now:%Y-%m-%d}.pdf"
+        condo_report.build_pdf(pdf, data, now.date())
+        text = condo_report.summary(data, now.date())
+        self.send(where, text)
+        self.tg.send_document(where[0], pdf, "📄 <b>Condo weekly report</b> · resale and new launch, ranked", thread_id=where[1])
+        link = self.vault.report("Condo report", plain(text) + "\n")
+        base = getattr(self.vault, "base", None)
+        try:     # keep the PDF next to the note in the vault; best effort
+            if base:
+                dest = base / f"Reports/{now:%Y/%m}" / pdf.name
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_bytes(pdf.read_bytes())
+        except OSError as exc:
+            log.warning("condo pdf not copied to the vault: %s", exc)
+        self.vault.activity("condo_report", f"posted report: {len(data['resale'])} resale, {len(data['new_launch'])} new launch",
+                            link or "")
+        return True
+
+    def cmd_condoreport(self, arg, where) -> None:
+        self.condo_report(where, manual=True)
+
     # ------------------------------------------------------------ analyse
     def cmd_analyse(self, arg, where) -> None:
         from .cli import AnalyseInputError, _settings, build_parser, card_message
@@ -385,13 +432,14 @@ class Bot:
             f"{SECTION_TITLES['help']} <b>HELP</b> · SG Property Hunter", "",
             "🏠 <b>/proppulse</b> · notable HDB resale deals now",
             "🏙 <b>/propcondo</b> · private condo resales (needs a URA company key, off by default)",
+            "📄 <b>/propcondoreport</b> · condo PDF now (resale and new launch, ranked; owner only)",
             "🏘 <b>/prophunt</b> · real listings for sale now (Claude web search, owner only)",
             "👤 <b>/propprofile</b> · set your own income, cash and CPF for /propanalyse",
             "🧮 <b>/propanalyse</b> · full card for one property",
             "<code>/propanalyse hdb_resale, Tampines, 600000, 1001, 99 year, 68, 3200</code>",
             "💬 <b>/propask</b> · ask anything about SG property",
             "📊 <b>/propstatus</b> · data, schedule and budgets", "",
-            f"<i>Posts by itself every hour at :{self.s.pulse.check_minute:02d} only when new notable deals appear; hunts new listings at :{self.s.hunt.check_minute:02d}.</i>",
+            f"<i>Condo PDF every Sunday 09:00. Posts by itself every hour at :{self.s.pulse.check_minute:02d} only when new notable deals appear; hunts new listings at :{self.s.hunt.check_minute:02d}.</i>",
         ]))
 
     # ------------------------------------------------------------ loops
@@ -400,6 +448,10 @@ class Bot:
         if self.s.run.avoid_us_session and us_session_open(now):
             return      # trading desk hours: leave the NAS and the Claude plan to it, catch up afterwards
         slot = now.strftime("%Y-%m-%d %H")
+        c = self.s.condo_report
+        if c.enabled and now.weekday() == c.weekday and now.hour >= c.hour and self.db.meta_get("condo_day") != str(now.date()):
+            self.db.meta_set("condo_day", str(now.date()))     # once a day even if it fails: Claude calls are capped
+            self.condo_report((self.chat, self.thread), manual=False, now=now)
         if self.s.pulse.enabled and now.minute >= self.s.pulse.check_minute and self.db.meta_get("pulse_slot") != slot:
             self.db.meta_set("pulse_slot", slot)
             self.pulse((self.chat, self.thread), manual=False, now=now)

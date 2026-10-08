@@ -47,6 +47,13 @@ hunt:                          # hourly listing hunt: claude -p haiku web search
   check_minute: 37               # minute past every hour (the pulse runs at :07)
   per_run: 10                    # new listings posted per hunt at most (every valid one found, up to this)
 
+condo_report:                  # weekly condo PDF (resale and new launch), posted by itself
+  enabled: true
+  weekday: 6                     # Monday is 0, so 6 is Sunday
+  hour: 9                        # Asia/Singapore
+  resale_count: 20
+  new_launch_count: 10
+
 telegram:
   chat_id: "<TELEGRAM_CHAT_ID>"      # the owner Channel (forum group shared by the fleet)
   thread_id: <THREAD_ID>                # "PropBot" topic; the bot ignores every other topic

@@ -258,6 +258,15 @@ class HuntCfg(_Strict):
     per_run: int = 10
 
 
+class CondoReportCfg(_Strict):
+    """Weekly condo report (resale and new launch) as a PDF, posted once on this weekday from this hour."""
+    enabled: bool = True
+    weekday: int = 6                # Monday is 0, so 6 is Sunday
+    hour: int = 9                   # Asia/Singapore
+    resale_count: int = 20
+    new_launch_count: int = 10
+
+
 class ObsidianCfg(_Strict):
     enabled: bool = False
     vault_path: str = "/vault"
@@ -297,6 +306,7 @@ class Settings(_Strict):
     obsidian: ObsidianCfg = Field(default_factory=ObsidianCfg)
     pulse: PulseCfg = Field(default_factory=PulseCfg)
     hunt: HuntCfg = Field(default_factory=HuntCfg)
+    condo_report: CondoReportCfg = Field(default_factory=CondoReportCfg)
 
     # filled by load_settings, not part of config.yaml
     base_dir: Path = Field(default=Path("."), exclude=True)

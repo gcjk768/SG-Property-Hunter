@@ -370,6 +370,24 @@ def cmd_hunt(args) -> int:
     return 0
 
 
+def cmd_condo_report(args) -> int:
+    from . import condo_report
+    bot, settings = _bot(args)
+    if bot.claude is None:
+        print("No Claude token in .env", file=sys.stderr)
+        return 2
+    if args.post:
+        print("posted" if bot.condo_report((bot.chat, bot.thread), manual=True) else "nothing posted")
+        return 0
+    today = _today(args, settings)
+    data = {seg: condo_report.run(bot.claude, settings, seg, n, today)[0]
+            for seg, n in (("resale", settings.condo_report.resale_count), ("new_launch", settings.condo_report.new_launch_count))}
+    out = settings.base_dir / "data" / f"condo-report-{today}.pdf"
+    condo_report.build_pdf(out, data, today)
+    print(plain(condo_report.summary(data, today)), f"\nPDF: {out}")
+    return 0
+
+
 def cmd_backfill(args) -> int:
     """Download the full HDB resale history (2017 on) and, with a URA key, every private sale of the last five years."""
     import httpx
@@ -487,6 +505,9 @@ def build_parser() -> argparse.ArgumentParser:
     hu.add_argument("--post", action="store_true")
     hu.add_argument("--limit", type=int, help="post at most this many (default hunt.per_run)")
     hu.set_defaults(func=cmd_hunt)
+    co = sub.add_parser("condo-report", help="weekly condo PDF now (two Claude calls); --post sends it to the topic")
+    co.add_argument("--post", action="store_true")
+    co.set_defaults(func=cmd_condo_report)
 
     bf = sub.add_parser("backfill", help="download the full HDB resale history (and URA private sales with a key)")
     bf.add_argument("--date")

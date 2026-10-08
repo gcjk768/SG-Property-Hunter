@@ -367,7 +367,7 @@ def check_generated_text(text: str, allowed: Iterable[str]) -> list[str]:
 
 
 # ------------------------------------------------------------ report sections (same layout as the SG car tracker bot)
-REPORT_TITLES = {"pulse": "🏠 HDB resale deals", "hunt": "🏘 Property for sale", "condo": "🏙 Condo resale deals"}
+REPORT_TITLES = {"pulse": "🏠 HDB resale deals", "hunt": "🏘 Property for sale", "condo": "🏙 Condo resale deals", "condo_report": "🏙 Condo weekly report"}
 TAG_EMOJI = {"NEW": "🆕", "DROP": "🟢"}
 MSG_BUDGET = 3800
 
