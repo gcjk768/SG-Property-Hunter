@@ -182,7 +182,7 @@ limits:
   official_apis:
     datagov_requests_per_day: 200
     ura_requests_per_day: 100
-    onemap_requests_per_day: 300
+    onemap_requests_per_day: 800
     min_gap_seconds: 1.0
   telegram:
     min_gap_seconds: 3.5

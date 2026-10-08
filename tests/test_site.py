@@ -121,3 +121,39 @@ def test_propnex_retail_maps_to_our_categories():
     assert retail_kind("Other Retail", "846 Yishun Ring Road") == "hdb_shop"
     assert retail_kind("Shop / Shophouse", "Jurong East Prime Corner Shop, YUHUA VILLAGE") == "hdb_shop"
     assert retail_kind("Mall Shop", "Kembangan Plaza") == "strata_commercial"
+
+
+def test_insights_money_rent_proof_and_outlook(settings, db):
+    from propbot import insights
+    from propbot.engine.card import rates_from_db
+    from propbot.rules.loader import Rules
+    rules = Rules.load(settings.rules_dir / "sg_property_rules.yaml")
+    rates = rates_from_db(db, settings, rules, None)
+
+    hdb = {"kind": "hdb_resale", "price": 600_000, "lease_left": 80, "type": "4 Room"}
+    m = insights.money(hdb, rules, rates)
+    assert m["hdb"]["down"] == 150_000 and m["bank"]["down"] == 150_000 and m["bsd"] == 12_600      # 75% loan; BSD 1% of 180k + 2% of 180k + 3% of 240k
+    assert m["grants"]["cpf_housing_grant"] == 80_000 and m["hdb"]["monthly"] > 0 and m["hdb"]["years"] == 25
+    assert "hdb" not in insights.money(dict(hdb, kind="condo_resale"), rules, rates)                 # no HDB loan for a condo
+    shop = insights.money(dict(hdb, kind="shophouse", price=2_000_000), rules, rates)
+    assert shop["bank"]["cash_only"] and shop["bank"]["ltv"] == 70                                  # commercial: no CPF, 70% planning loan
+
+    db.insert("hdb_rent", {"quarter": "2026-Q2", "town": "TAMPINES", "flat_type": "4-RM", "median_rent": 3000})
+    assert insights.rent(db, "Tampines", "4 Room", 600_000) == {"monthly": 3000, "quarter": "2026-Q2", "yield_pct": 6.0}
+    assert insights.rent(db, "Tampines", "", 600_000) is None
+
+    rows = [{"month": f"2026-0{i}", "storey": s, "sqm": 90.0, "price": p}
+            for i, (s, p) in enumerate([("01 TO 03", 500_000), ("07 TO 09", 560_000), ("13 TO 15", 640_000)], 1)]
+    pr = insights.block_proof(rows)
+    assert pr["recent"][0]["month"] == "2026-03" and [b["band"][:3] for b in pr["bands"]] == ["Low", "Mid", "Hig"]
+
+    base = {"tenure": "99 year", "lease_left": 85, "area": "Tampines", "type": "4 Room", "deal_pct": 6.0, "reliable": True,
+            "upcoming_mrt": [], "trend": {"cagr_pct": 5.0, "sales": 40}}
+    up = insights.outlook(base, settings)
+    assert up["label"] == "Likely to rise" and up["pct"] > 3 and any("at most +4.0%" in w["text"] for w in up["why"])
+    fall = insights.outlook(dict(base, lease_left=45, trend={"cagr_pct": 0.0, "sales": 40}, deal_pct=-8.0), settings)
+    assert fall["label"] == "Likely to fall" and fall["pct"] < -3
+    none = insights.outlook(dict(base, trend=None, lease_left=None, tenure="unknown"), settings)
+    assert none["label"] == "Not enough data" and none["pct"] is None
+    free = insights.outlook(dict(base, tenure="freehold", lease_left=None, trend=None), settings)
+    assert free["pct"] == 0 and any("Freehold" in w["text"] for w in free["why"])

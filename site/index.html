@@ -6,6 +6,7 @@
 <title>The Block Ledger · Singapore homes priced under their neighbours</title>
 <meta name="description" content="Singapore homes for sale, ranked by how far the asking price sits under recent sales in the same block. Updated every hour.">
 <meta name="theme-color" content="#14281f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2314281f'/%3E%3Cpath d='M12 50V28l10-8 10 8v22zm24 0V16l10-6 8 6v34z' fill='%23e2bf72'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -70,8 +71,12 @@ h1 em{font-style:italic;color:var(--brass);font-weight:300}
 .controls{position:sticky;top:0;z-index:20;margin:48px -22px 0;padding:14px 22px;
   background:rgba(243,238,226,.88);backdrop-filter:blur(10px) saturate(1.2);-webkit-backdrop-filter:blur(10px);
   border-bottom:1px solid var(--line)}
-.tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
-.tabs::-webkit-scrollbar{display:none}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scrollbar-width:thin;scrollbar-color:var(--brass) rgba(20,40,31,.12);
+  -webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+.tabs::-webkit-scrollbar{height:8px}
+.tabs::-webkit-scrollbar-track{background:rgba(20,40,31,.12);border-radius:99px}
+.tabs::-webkit-scrollbar-thumb{background:var(--brass);border-radius:99px}
+.tab{scroll-snap-align:start}
 .tab{flex:none;border:1.5px solid var(--ink);background:transparent;color:var(--ink);font:600 16px/1 var(--body);
   padding:11px 16px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s}
 .tab span{opacity:.6;margin-left:6px;font-weight:500}
@@ -162,6 +167,39 @@ footer p{margin:0}
 .bto .plate{height:170px}
 .bto .facts b{font-size:15px}
 .pick .reason{font-size:15px;opacity:.85;margin-top:8px;max-width:34ch}
+
+/* ---------- outlook, money, proof, nearby, save ---------- */
+.outlook{border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.4;border:1px solid var(--line)}
+.outlook.up{background:var(--good-bg);color:#11402a}.outlook.down{background:var(--bad-bg);color:#5b2214}.outlook.flat,.outlook.na{background:var(--paper-2);color:var(--ink-2)}
+.outlook strong{font-size:17px}
+.outlook ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:5px}
+.outlook li{padding-left:22px;position:relative}
+.outlook li::before{position:absolute;left:0;font-weight:700}
+.outlook li.g::before{content:"▲";color:var(--good)}.outlook li.b::before{content:"▼";color:var(--bad)}
+.outlook .basis{margin-top:6px;font-size:12.5px;opacity:.75;font-style:italic}
+details.more{border:1px solid var(--line);border-radius:14px;background:var(--card)}
+details.more summary{cursor:pointer;list-style:none;padding:12px 14px;font-weight:700;font-size:15.5px;display:flex;justify-content:space-between;gap:8px}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::after{content:"+";font-size:20px;line-height:1;color:var(--brass)}
+details.more[open] summary::after{content:"–"}
+.more-body{padding:0 14px 14px;font-size:15px;color:var(--ink-2);display:grid;gap:8px}
+.more-body table{width:100%;border-collapse:collapse;font-size:14.5px}
+.more-body td,.more-body th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
+.more-body th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.more-body td.r,.more-body th.r{text-align:right}
+.more-body .fine{font-size:12.5px;opacity:.8;font-style:italic}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.two div{background:var(--paper-2);border-radius:10px;padding:8px 10px}
+.two b{display:block;font-size:19px;font-family:var(--display);font-weight:600}
+.two span{font-size:12.5px;color:var(--muted)}
+.actions{display:flex;gap:8px}
+.actions button{flex:1;border:1.5px solid var(--ink);background:transparent;color:var(--ink);font:700 15px/1 var(--body);padding:12px;border-radius:12px;cursor:pointer}
+.actions button.on{background:var(--bad);border-color:var(--bad);color:#fff}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;z-index:200;font-weight:600}
+.heart{position:absolute;top:12px;right:12px;z-index:3;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,253,247,.94);font-size:22px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.heart.on{background:var(--bad);color:#fff}
+.card{position:relative}
+.dom{font-size:13px;color:var(--muted);text-align:center}
 
 /* ---------- feng shui ---------- */
 .fs{border:1px solid rgba(176,128,42,.45);border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.4;
@@ -446,10 +484,64 @@ function chips(it){
   return c.length ? `<div class="chips">${c.join("")}</div>` : "";
 }
 
+const SAVED = new Set(JSON.parse(localStorage.getItem("saved") || "[]"));
+const saveSet = () => localStorage.setItem("saved", JSON.stringify([...SAVED]));
+const toast = t => { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 2200); };
+
+const outlookBox = it => {
+  const o = it.outlook; if (!o) return "";
+  const cls = o.label === "Likely to rise" ? "up" : o.label === "Likely to fall" ? "down" : o.pct == null ? "na" : "flat";
+  const head = o.pct == null ? esc(o.label) : `${o.pct > 0 ? "▲" : o.pct < 0 ? "▼" : "◆"} ${esc(o.label)}: about ${o.pct > 0 ? "+" : ""}${o.pct}% in ${o.years} years`;
+  return `<div class="outlook ${cls}"><strong>${head}</strong><ul>${o.why.map(w => `<li class="${w.good ? "g" : "b"}">${esc(w.text)}</li>`).join("")}</ul>
+    <div class="basis">Based on: ${esc(o.basis)}. A data-based guide, not a forecast.</div></div>`;
+};
+
+const moneyBox = it => {
+  const m = it.money; if (!m) return "";
+  const loan = (n, l) => l ? `<div><b>${full(l.monthly)}</b><span>${n}: a month over ${l.years} yrs at ${l.rate}%</span></div>` : "";
+  const down = (l) => l ? full(l.down) : "–";
+  const g = m.grants;
+  return `<details class="more"><summary>What you would pay</summary><div class="more-body">
+    <div class="two">${loan("HDB loan", m.hdb)}${loan("Bank loan", m.bank)}</div>
+    <table><tr><th>Upfront</th><th class="r">Amount</th></tr>
+      ${m.hdb ? `<tr><td>Down payment (HDB loan, ${m.hdb.ltv}% loan)</td><td class="r">${down(m.hdb)}</td></tr>` : ""}
+      <tr><td>Down payment (bank loan, ${m.bank.ltv}% loan)</td><td class="r">${down(m.bank)}</td></tr>
+      ${m.bank.cash_min ? `<tr><td>of which at least in cash (rest can be CPF)</td><td class="r">${full(m.bank.cash_min)}</td></tr>` : ""}
+      <tr><td>Buyer's stamp duty</td><td class="r">${full(m.bsd)}</td></tr></table>
+    ${g ? `<div>Grants a first-time family may get: CPF Housing Grant up to <b>${full(g.cpf_housing_grant)}</b>, plus Enhanced Grant up to <b>${full(g.ehg_max)}</b> if household income is ${full(g.ehg_income_ceiling)} a month or less.</div>` : ""}
+    <div class="fine">For a typical first-time Singapore citizen couple, from the official rules. Your own CPF, income and loan limits change this; check with HDB or a bank.</div></div></details>`;
+};
+
+const proofBox = it => {
+  const p = it.proof; if (!p || !p.recent.length) return "";
+  return `<details class="more"><summary>Recent sales in this block</summary><div class="more-body">
+    <table><tr><th>Month</th><th>Floor</th><th class="r">Size</th><th class="r">Price</th></tr>
+      ${p.recent.map(r => `<tr><td>${esc(r.month)}</td><td>${esc(r.storey)}</td><td class="r">${r.sqft.toLocaleString("en-SG")} sqft</td><td class="r">${full(r.price)}</td></tr>`).join("")}</table>
+    ${p.bands.length > 1 ? `<table><tr><th>Floors</th><th class="r">Middle price</th><th class="r">Sales</th></tr>
+      ${p.bands.map(b => `<tr><td>${esc(b.band)}</td><td class="r">${full(b.median)}</td><td class="r">${b.n}</td></tr>`).join("")}</table>
+      <div class="fine">Higher floors usually sell for more, so compare with your floor band, not just the block middle price.</div>` : ""}
+    </div></details>`;
+};
+
+const areaBox = it => {
+  const r = it.rent, t = it.trend, n = it.near || {}, bits = [];
+  if (r) bits.push(`<div class="two"><div><b>${full(r.monthly)}</b><span>typical monthly rent (${esc(r.quarter)})</span></div><div><b>${r.yield_pct}%</b><span>gross rental yield at this price</span></div></div>`);
+  if (n.schools_1km && n.schools_1km.length) bits.push(`<div><b>Primary schools within 1 km:</b> ${n.schools_1km.map(esc).join(", ")}${n.schools_2km > n.schools_1km.length ? ` (${n.schools_2km} within 2 km)` : ""}</div>`);
+  else if (n.schools_2km) bits.push(`<div><b>Primary schools:</b> none within 1 km, ${n.schools_2km} within 2 km</div>`);
+  if (n.hawker) bits.push(`<div><b>Hawker centre:</b> ${esc(n.hawker.name.replace(/\s*\(.*\)/, ""))}, ${n.hawker.m.toLocaleString("en-SG")} m</div>`);
+  if (n.clinic) bits.push(`<div><b>Polyclinic:</b> ${esc(n.clinic.name)}, ${n.clinic.m.toLocaleString("en-SG")} m</div>`);
+  if (!bits.length) return "";
+  return `<details class="more"><summary>Rent and what is nearby</summary><div class="more-body">${bits.join("")}
+    <div class="fine">Distances are in a straight line. Rent is HDB's median for the town and flat type; the flat type is our guess.</div></div></details>`;
+};
+
+const actions = it => `<div class="actions"><button data-act="share" data-k="${esc(it.key)}">Share</button></div>`;
+const heart = it => `<button class="heart${SAVED.has(it.key) ? " on" : ""}" data-act="save" data-k="${esc(it.key)}" aria-label="Save to shortlist" aria-pressed="${SAVED.has(it.key)}">♥</button>`;
+
 function card(it, i){
   const lease = /freehold|999/i.test(it.tenure || "") ? "Freehold" : it.lease_left ? `${Math.round(it.lease_left)} yrs` : "–";
   return `<article class="card" style="animation-delay:${Math.min(i, 12) * 45}ms">
-    <a class="plate${plateKind(it)}" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer" tabindex="-1" aria-hidden="true">${plateHtml(it)}${chips(it)}</a>
+    <a class="plate${plateKind(it)}" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer" tabindex="-1" aria-hidden="true">${plateHtml(it)}${chips(it)}</a>${heart(it)}
     <div class="body">
       ${verdict(it)}
       <div><div class="kind">${esc(it.label)}${it.type ? " · " + esc(it.type) : ""}</div>
@@ -462,10 +554,16 @@ function card(it, i){
       </div>
       ${dealBox(it)}
       ${whyList(it)}
+      ${outlookBox(it)}
+      ${proofBox(it)}
+      ${moneyBox(it)}
+      ${areaBox(it)}
       ${fsBox(it)}
       <a class="open" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer">Open listing <em>${esc(SITE[it.site] || it.site)} ↗</em></a>
+      ${actions(it)}
       ${alsoOn(it)}
       <div class="seen">Found ${day(it.first_seen)}${it.last_seen !== it.first_seen ? " · last checked " + day(it.last_seen) : ""}</div>
+      <div class="dom">${it.price_cut_on ? "Price cut " + day(it.price_cut_on) + ". " : ""}Listed ${it.days_listed === 0 ? "today" : it.days_listed + " day" + (it.days_listed === 1 ? "" : "s") + " ago"}${it.days_listed >= 30 ? ": a long time on the market, there may be room to negotiate" : ""}.</div>
     </div></article>`;
 }
 
@@ -533,7 +631,7 @@ function render(){
     return;
   }
   const q = state.q.trim().toLowerCase();
-  const list = ITEMS.filter(it => (state.kind === "all" || it.kind === state.kind || (state.kind === "rec" && RECOMMENDED.has(it.tier)))
+  const list = ITEMS.filter(it => (state.kind === "all" || it.kind === state.kind || (state.kind === "rec" && RECOMMENDED.has(it.tier)) || (state.kind === "saved" && SAVED.has(it.key)))
     && (!state.area || it.area === state.area) && (!state.max || it.price <= +state.max)
     && (state.found === "" || it.first_seen >= daysAgo(+state.found))
     && (!state.under || it.deal_pct > 0) && (!q || (it.name + " " + it.area).toLowerCase().includes(q)))
@@ -559,7 +657,7 @@ function setup(data){
 
   const counts = {}; ITEMS.forEach(it => counts[it.kind] = (counts[it.kind] || 0) + 1);
   const labels = Object.fromEntries(ITEMS.map(it => [it.kind, it.label]));
-  const tabs = [["all", "Everything", ITEMS.length], ["rec", "★ Recommended", ITEMS.filter(it => RECOMMENDED.has(it.tier)).length],
+  const tabs = [["all", "Everything", ITEMS.length], ["rec", "★ Recommended", ITEMS.filter(it => RECOMMENDED.has(it.tier)).length], ["saved", "♥ Saved", SAVED.size],
     ...KIND_ORDER.filter(k => counts[k] && k !== "bto").map(k => [k, labels[k], counts[k]]),
     ...(BTO.length || counts.bto ? [["bto_up", "Upcoming BTO", BTO.length + (counts.bto || 0)]] : [])];
   $("#tabs").innerHTML = tabs.map(([k, l, n]) => `<button class="tab" data-k="${k}" aria-pressed="false">${esc(l)}<span>${n}</span></button>`).join("");
@@ -576,6 +674,21 @@ function setup(data){
   for (const id of ["sort", "area", "max", "found"]) $("#" + id).addEventListener("change", e => { state[id] = e.target.value; render(); });
   $("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
   $("#under").addEventListener("change", e => { state.under = e.target.checked; render(); });
+  $("#grid").addEventListener("click", e => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const it = ITEMS.find(x => x.key === b.dataset.k); if (!it) return;
+    if (b.dataset.act === "save"){
+      SAVED.has(it.key) ? SAVED.delete(it.key) : SAVED.add(it.key); saveSet();
+      b.classList.toggle("on", SAVED.has(it.key)); b.setAttribute("aria-pressed", SAVED.has(it.key));
+      const tab = document.querySelector('.tab[data-k="saved"] span'); if (tab) tab.textContent = SAVED.size;
+      if (state.kind === "saved") render();
+    } else {
+      const text = `${it.name}, ${full(it.price)}${it.area ? " · " + it.area : ""}`;
+      const link = it.url;
+      if (navigator.share) navigator.share({title: it.name, text, url: link}).catch(() => {});
+      else navigator.clipboard.writeText(`${text}\n${link}`).then(() => toast("Link copied"), () => toast("Could not copy"));
+    }
+  });
   sync(); render();
 }
 

@@ -16,7 +16,7 @@ import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from . import bto, fengshui, tracker
+from . import bto, fengshui, insights, tracker
 from .db import DB
 from .hdb_report import MIN_SALES, match, norm
 from .web import host_of
@@ -146,8 +146,23 @@ def _place(geo, it: dict) -> None:
             it["mrt"], it["mrt_m"] = near[0], int(round(near[1], -1))
 
 
-def items(db: DB, today: date, geo=None) -> list[dict]:
+def _money_rules(db: DB, settings):
+    """Rules and today's rates for the money box; None (no box) when they cannot be loaded."""
+    if settings is None:
+        return None, None
+    try:
+        from .engine.card import rates_from_db
+        from .rules.loader import Rules
+        rules = Rules.load(settings.rules_dir / "sg_property_rules.yaml")
+        return rules, rates_from_db(db, settings, rules, None)
+    except Exception as exc:
+        log.warning("money box off: %s", exc)
+        return None, None
+
+
+def items(db: DB, today: date, geo=None, settings=None) -> list[dict]:
     photos, towns = _photos(db), None
+    rules, rates = _money_rules(db, settings or (geo.s if geo is not None else None))
     if geo is not None:
         try:
             geo.ensure_stations(today)
@@ -182,9 +197,20 @@ def items(db: DB, today: date, geo=None) -> list[dict]:
                 _place(geo, out[-1])
             it = out[-1]
             it["tier"], it["score"], it["why"] = verdict(it)
-            near = fengshui.nearest_by_kind(db, it["lat"], it["lon"]) if it.get("lat") else {}
-            it["fs"] = fengshui.reading(it["name"], it["price"], near, it["mrt"], it["mrt_m"])
+            places = fengshui.around(db, it["lat"], it["lon"]) if it.get("lat") else {}
+            it["fs"] = fengshui.reading(it["name"], it["price"], fengshui.nearest_by_kind(db, 0, 0, places), it["mrt"], it["mrt_m"])
             it.pop("lat", None), it.pop("lon", None)
+            hdb = kind == "hdb_resale"
+            it["proof"] = insights.block_proof(m["sales"]) if m else None
+            it["money"] = insights.money(it, rules, rates) if rules else None
+            it["rent"] = insights.rent(db, it["area"], it["type"], it["price"]) if hdb else None
+            it["trend"] = insights.trend(db, it["area"], it["type"], today) if hdb else None
+            it["near"] = insights.nearby(places)
+            it["upcoming_mrt"] = geo.upcoming(it["name"], it["area"]) if geo is not None else []
+            if settings is not None or geo is not None:
+                it["outlook"] = insights.outlook(it, settings or geo.s)
+            it["days_listed"] = (today - date.fromisoformat(r["first_seen"])).days
+            it["price_cut_on"] = r["price_changed_on"] if r["prev_price"] and r["prev_price"] > r["price"] else None
     return dedupe(out)
 
 
@@ -206,9 +232,9 @@ def dedupe(items_: list[dict]) -> list[dict]:
     return out
 
 
-def export(db: DB, out_dir: Path, today: date, now: datetime | None = None, geo=None) -> int:
+def export(db: DB, out_dir: Path, today: date, now: datetime | None = None, geo=None, settings=None) -> int:
     """Write data.json atomically (the browser never sees half a file). Returns listings written."""
-    data = items(db, today, geo)
+    data = items(db, today, geo, settings)
     out_dir.mkdir(parents=True, exist_ok=True)
     tmp = out_dir / "data.json.tmp"
     tmp.write_text(json.dumps({"updated": (now or datetime.now()).isoformat(timespec="minutes"), "items": data, "bto": bto.listed(db)},

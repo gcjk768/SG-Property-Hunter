@@ -8,9 +8,9 @@ All money maths is done in code from `rules/sg_property_rules.yaml`. Claude only
 
 ## How it fits together
 
-![propbot architecture: official data, listings, the rules file and your vault notes flow into a code only finance engine; Claude finds listings and writes the words; the renderer posts one item per message to Telegram and saves every action to SQLite and the Obsidian vault](docs/architecture.svg)
+![propbot architecture: official data, listings, the rules file and your vault notes flow into a code only finance engine; Claude finds listings and writes the words; the renderer posts one item per message to Telegram and saves every action to SQLite and the Obsidian vault; a website lane turns the tracked listings into one data file served by a web container through a public tunnel](docs/architecture.svg)
 
-Made with draw.io. [Open it in the draw.io editor](https://app.diagrams.net/?pv=0&grid=0#create=%7B%22type%22%3A%22xml%22%2C%22compressed%22%3Atrue%2C%22data%22%3A%227V1rd6I6F%2F41%2FThd3MWPiNoyr9CLtp32y1kRUkQRPIBV%2BuvfHW5VQMe2kZ5eZk1bCCEJm72fnX1JOOHV%2BfosQIuJ7lvYPeEYa33Cd084jpUYBv6QkjgrYfISO3CstGyjYOg847xiVrp0LBxmZWlR5Ptu5Cy2C03f87AZbZWhIPBX29UefdfaKlggG1cKhiZyq6V3jhVNyg9GLpxjx55E5QccI3NmB%2F7Syzo84fi%2B3Ff6anp5jvLGsvrhBFn%2BaqOI753wauD7UXo0X6vYJdTdplt%2Fx9Vi4AH2okNuMLn0jifkLnE%2BZMmFeztjMrwozmgi%2FbskY%2Bo8%2Bl70K0zemMIzi%2FXLFTiyyd9F4C%2FGUJI1A32P80t5WbhA3mGt8x3Td%2F0AToGSQksUpXa1R2hqAkSEd0%2BYDsXwO1h64cYI0g63BzEO3jQsViwPSxJagtypDqsf%2BHNozn98dEwHJSKCIpTwMin2MPweYRfbASL15jgMCV%2FC68MBeUURnp%2FCXyV5YXOoH2ccFJKrYcL%2FFk6fX3XR0sJJsy6p9uh4FqnhOmHkeDY5RMCTHLMKoF1yGk1I9ZUfWOHpTkpxW%2BTgIrwm5ZNo7kIBC4fIdWwPjl38SK484SByQI6UrDjyF1C6mkCfwwUySTMrwIyibVIfr3fyLltIBGAN9uc4CsjDZTcImQzlKCOnp6sNieVyuZxsSGsrK0MZSthFyy%2BCAgeZrOyQG36f3KTkuzm77vUMqGQoQ%2Fh9onInnRYcdH1zlrxhgK8IOR45rpOVEvETVMFWTvjAzHCT334jj47rqilzdgn6JP%2Bg3Af6OxGhlcQQXo8Cf4Y3KrYFhe%2FIcMVC4aTohpxcoijCAXmdZPTSoW89JB169iCp0xWll6IRud5lmUyysudgxex8Y1A8L7CiSIdd%2BBK75KyxxS9iDb%2FIAg2GEWoYpvSGQRksyKEzT%2FRTB4WLVLs9OmvyRjrJBSUvZfISOJ5EEdGNChkP10eLxanlIAIs4amHAYv7ztyG364zJgMNTQTC308Z8TR8sulQWOS2KcwKFQpzUpW%2Bedm7yCv%2BXR6HJvD10t0lbhKaE7b1xuGi9pwhrK8QrmEWASZU2RRqRk5UFrnoh9HmFd33Up3EiPn9AYwiwe8JNmcHC7rI7JV0ps%2B2OKUi2h5RNBXByiYl2wIoVEV7W4iFRIjzKQtLSS7FkmDWALnYrpFLQaDAN9JRxTJR%2BLySnoJyBUnjOmt4g5x6eW5wDyvf1s4n0fhMfL4c%2Fvat8%2BvVhSM%2FWbzFDzzzeTBvxw%2BxHOtdZTXgoX6s%2FU9TOzy6u2ZQl3H06ZWjOoqNzm4XD9yEuRxqsaEmdTh0d8tfzdsClK20rmJDXTuv%2FzB3wzHcP563lw%2FDpP6zdf77CXE3bc0xQG%2FdcBe9XlLX5K%2FjMRe5gz%2FW4uH82id9aDYZt8GY83bwMGRDdCe691x%2FBc8Qj%2Fnb5YO61SY8n7t8uFs8oTuhrXm%2Fn6w7cQZtAC1ID5dnxsKcG%2BHDsDPF5KlGmqOdGSL0tNYdzTanpExxNFXO7zjvTKwz236A2qNRL9a6D5wxXzFaV8trTVdPJv%2FgXdrkHZL%2FVFhVkrZZlWtXEY6rQTiOAqe2KpyqGZc3o%2BEBs7RNIefy8%2BwGtgoOxVSgBAYUKCiVVERLqpu01VCQhgqWKxS8O1dGUHJ%2FcQO%2Fh73ep6Ily3Pb1OTEqsIFo%2FU41MSe7RAT5s3WI9suG1I8y%2FVktsaQcjzkmUTd5p3uNi1fYdVtWpY8L6tKtWfVL4wqYooZxHBTNGLJ%2BRtGVGKTHWxE7VTve7V7r9fnknk8TOosB2%2FxWI%2FptZJrlUm9BIjVZ4sruTODe9scvlWdw3MlieCPMEGQ2NIEoV2dufNCDZuLVCy9doMTdwdMwrA8dUdhiCPgtn4iPWiFQ3gKOAWq9S%2FjaOJ7%2F4wDsO7pTeQlXt4GFrYK05xQgys0ZmT5234bqFS8M2yP7Qg13pkeMLozdlxiE9PHkx2eqrsJigrYcBHxWbnJu2Vifwm%2Fx8v4vTDC7bcSCn9ABSvUVpfr9%2F5mAohyjcRTYbmSLpO5Ksu1a6zHFo25Fcvu47n0DbAHeWmgYWcR4r3vQOgLUk881FLLX1jZUqNBdKG1RXSe4U9rsLUGWnkayMq%2Bx%2Fl8uKSrYJC%2FOECtZeTgsDmR7wyhvkrmDcXRMD94xGQk5ChCa7zbYf29RJ9vNSr6B3hyuW8g%2Bu1mRb%2FOHUpf9FPLAVi4OXkfjG5TkR51h9fpkZ4fqJf99MDxwgi5c%2FKufmQ%2B8eVJjcr8Ad5i%2FuvLvCA3K%2FN1vlb6Mk%2FsBybGKCC0Cfwp2FyO7zWo8JOuiZSPEXBGerQkpCBH2nWGBeMAoxlxaTxh7wcEUntdbBQEqg7VCggIXx8ExFazIFB1wh4DBG5xYDnm3iQUulI%2FNP0kIEjAJ8nvELMpfuIBAnFPs1Lcn1l%2BnPNho8Je58UrCbv49YVdkhoV9iLLbYN8nqWQDD04G7u%2BOYPnhKK%2B4%2Bak3KBqhYNlVlb78kmdOxuvnegPHDOnbHZ2n7UCpArijUvklFxjChJjq5IOWCIwPIK%2FDEycc1P2XBEKbBzlhVz9qwiwiyLnabuH95GV%2FaJk5erIKjRGVu6LklWoI6vUGFn5L0pWqY6sckNkfckqpTibylKIKpObi3IK62tmVXTnWaT%2FU9t%2FOg3tdIJ1c61kXhaSZalWez3vdja8L5kX%2BMLDOlq8dyqWqOm3TMV6XE%2FuM9Wp2CFRWFZ%2BKcqisELNlI16FHY7CJtMcMvTt7rsSZalMpM4IH1yb95c6dV02qzKqrtmaEcgV97CZlJbzVxXpkGrOu9WiVbfLqdNvRj1u%2FqN3lRO23aGGoy2J1gOw2uO8nRJeuquV%2Fd%2Frn3t7KqtzZi1PhTW%2Bmhm644AlLmd6I4SJ0%2BoKmu4d2k838N5JzRiQTBU5XkwtRljBuVDgX2pp60G0xvb4OxIH1kTOIbrSkqpIbPUp1o0mM6Yiz%2F%2B7lw65m8jvYCeLs7vIwMoNngWgCaKbJ71GaR2ZkArQ4%2BVWJ%2FbUK%2F%2BuuFs33%2Bptp%2BtuQmjoSN48rbFUxgyDaQuvCy2aEAnD9LOSIvZio5Us3l49croJl0Ffem7MB7i%2BcCROcFpbSbwx34UnkbrqFZHh26yfsdGiyweaiEnWccyXsK0LHq3z%2BQbK2qebzWqqA9IqH6Nomb6LUnqNaeoeZFvTlHXeaC%2FuaLWV9dTkzNmN58o%2Bfz3RB9dEVW7NtRCHWfPDT%2F11yK4trNVDe767W%2FUOEo6e0lV8nUx2COpyswT3oCevM7W2gCuvDJxmK5e7MGrIrR3sZ0Y0o%2BOvUwiBisHiE2We4bVjjfWjma%2Bh0Q7JuuGkrDCCuOZ%2B%2B6cwW%2BsHgWpZgnHEdVjXfjrPXasIPJMuzn1KMhVs%2F9o6vG4mdefUj0aqtG9eda7s4%2BxY0HZGZw%2BsncorvGoJ2pd2wYbULgfgSX6Yn1yYL1Kt1Nzp8rTid26vh%2F1eLBA%2BRdFCbYsWIxGnPyssnIBlK6vD2stzAh6heu6fXHWA4V7k7XTi8DyXGH3fpdlC31qa9QFWz29Lidv9Vk4lroV2jXLY4%2BkbheBn%2Bq%2FBhTuPSiqpJelS3LdPT96bbotZYM0ffbTuVXYyHcITFNirSeF5U4DjJKqL5n6YYQCcuY%2FnqSbTATLd%2BfsfGOdKzFVZ%2BgRdW7uAaKlc1sqr%2FS6zelcia1a8MfSuXzdQgh6Ovedq50uxqED1amvdyohs8Q1t9zJckLTT02DBrC52CZmo9uPQ%2BY7nDwbBnGbnNTtWVPuNEVveAYPLKDMU0ioBqjnhicb%2B%2F%2F8QPNbd1%2Fg6%2FzldSuyWSqL%2FfKkMFrY3G23WmLriNhcoZdQxYoacG5zNIhVt1TlPwPOKbbQhma%2BVXJSiTVx52MtRV0GKM0dbxKa63bo%2BlDH1XrhIsd7GdFTmlt7Wu1OixIw9jw%2FOZggL9nPjMCyt5yPcfDuRfLfCZrbua8lD2XWrHvnxBqwoQTNlFMujg7NZXrxTIPQfNyci%2F8kNLNMnrCZE5xtDpthkBbZyasBZL5Outq5bVgjIHyR7BZJtoQ8yfeHLPaLrImnL1PiMEBolSFJ9QSMA2RGOPiJpb8DUoTWoRBMx3NBO5jOS22lmlR7PAgW5IMgmI7r4ieaXhNN15%2FvxatRY1u5bUexY%2BLKvyfRbKcIBJB4uWY4gqBPJ5tpbqvBqLc0uj1mML0RjPkqSlPhtCwl7ndnMDXX5Gcj3Q2o0FvqU5u7nZZT5rSIJKEZcxKy0PIQABlHjJ0diWmxstbv7LW%2BK3GNhCDubG53%2BMDy86Q32kltFVUrtJtTteG%2FaUZXA6p2eDVIk8eItKXLZz8%2BYg%2BqyVy6mSWYh%2BsTU6jcK14jsuYwWeeXE4vYTcuQBOt%2F1O7hy9a2nSxyzV69UFijdhkqlg%2FlID3D8J2jWj4VetXs11WndqlYPv%2Bd%2FdFy0AgzswfQ5BcvUdwWTdr2RclccyCchVMbwOA8yHJSxHA%2FDoJVlDi%2FNjOCHRC79UkeyUVetWPAYOcp2daNcX2SIJ2EbXGG5qi8HcQPGr9yUl%2BLxrVGEBU0Fj5b%2BLZCrwbRWPiW8dvK9LhJZI6KT3g0AM4b3wsh7nWPfHnn4%2BBZGftLMt9NvqWQeKeSKCwpKvbDr%2FFOxTiMcJAGatNN9qGPNZfMkE7SDfTJXwueNfqZOL9yS%2BjSusPamMHRwrn5nh60sJqTFLEnHBGrKwRrMmggfHg8lxT%2BMpE5wQSeOwSVw38ukTn7xfEk66ifg9svlpMpzqRZvrz9YIOhA2TNnWZiukraE4HqD51GKy68rJQVGNP3XcAcL5tWPyLXJR8tC2uROnNkpJHcn8jBe4ClPnRwtKRHgXb0Vk3S4hpE4iZjB8LPkvnqUoPe1bPG6dP7D1oyP5hq3IWqxPrdpg8fniAWGIM8xQ4%2FPVyPjSlZQXez1OEJrkY9Wx8WSwfIAncedXvc%2FXb50ni%2BivShwBnPRlcfzUgsAtrQlxejG44sioefeDC9Ei%2BGClkEL1yN7m3DKe6HOpMpaT%2Btw6zh7xraZwfTGWs4DNxrPsN9%2FGCqx4ZzpDhBWa82GSdYBM4TaihQkC0yKLr8cBVLLF8PuXG%2B4ycRcxxlOtYPVihI3FXVzrPPhSV7Bs4wXqS1QC8%2FwSMmwZAfpftmHVI4xhtSupTj9dlnaRpUupLYoNL9CdhXA%2FaM%2FqwLV8x%2F4NtrguZ0YvjL7gh4x3qqnIVkxV%2B%2BqB2Uon6sIHhZuUlSg7nAQjUouLE6O13NHVb49zU73W0jQwWPS1tWFfvenebIWlf3b18rc9EYu53io9V1iiF9pr9vj1d9bwdvepfdeuk7ZEP8IvW79N2nYl1U3kS6JD676%2BVVVhoqf0Cq0lC6hV%2BloYQniuc5kE0OCIdSZIrS9ih7maKo%2B5WYgi974g5lispCjnJDFJlCPCCERZEpSpnWe5miqPuZmaL40Nt7maKMFEdlimqobntvkONqk%2B2NI%2FZrk7zuZ%2BaRMnCI5VnBW3mk0hBNHuEqPBLnlu%2FGiv7jsEgpUL6XRYq6X4lFCmPovSxSaYgmixwQRKLIFKWt7fcyRVH3MzNFuzxPyGXytUxRWZ5UbogmU1S9%2F9k6wp9ZBzXOYNlyUjb7RpVSban85VqavHFArIMiW5RC%2BHvZoqj7qdmCK2XjimXf4sFsUUlOOBAy4N2heKPaglQI9w1Zrh%2FyzpGVb8hH9sKX6RjezqUHuFJpgtd2eHM%2FeOV1vxaXCrS4tNISTfCq%2BoxNfz5H3nF1W8kRv3%2FWk9f91OxRCQzkgcTXsodcQorWgc6312NYu37EuzGsdEOrJb3uSbbrU8C8A9ad0PQdbi9L2e87zOt%2BZqZuMX9hxUN5utxQkRF%2FDMSrOpSzLfWyJRDJGocfLwBFzVh6u6L8Vs1YbumYfJLzckPgIQktQe4cxhZFXQpsYaFwUozqw3hEzKOB2Ytl862zX8si5Yb48nf33swhcBr4JEXlpXqAFhPdtzCp8X8%3D%22%2C%22effect%22%3A%22pop%22%7D), or open
+Made with draw.io. Open
 [docs/architecture.drawio](docs/architecture.drawio) in draw.io desktop or diagrams.net, where every logo is
 embedded. To redraw both files after a change, edit the layout in `docs/diagram/build.py` and run
 `python docs/diagram/build.py`.
@@ -47,14 +47,49 @@ New here? Start with [docs/SETUP.md](docs/SETUP.md).
 
 ### Family website: The Block Ledger
 
-A web page for family and friends, public at `https://blockledger.<tailnet>.ts.net` (its own Tailscale node `blockledger` with Funnel; the NAS itself is not exposed) and on port 8782 on the home NAS (container `property-site`, nginx). It lists every live listing the bot tracks, rebuilt every hour after the hunt (`propbot/site.py` writes `data/site/data.json`; `propbot site` rebuilds it now, `propbot site --bto` also refreshes BTO).
+A public web page for family and friends. It lists every live listing the bot tracks and explains each one in plain words,
+so people who never use Telegram can browse, filter, save and share. Nothing on it is personal: money figures are for a
+typical first-time Singapore citizen couple, never from `Profile.md`.
 
-- **Verdict and why.** Top pick, Worth a look, Fair price, Short lease, Above market or Not enough data, with the reasons in plain words: price against the same block's sales over 12 months, lease left and CPF use, price cuts and the nearest MRT. Worked out in code from the card's own facts, not by a model.
-- **Sorting.** Recommended, most under block price, price, newest, psf, size, lease left, nearest MRT, estate, plus tabs per property type, an area filter, a price cap and search.
-- **Pictures.** The listing's photo where the site allows it (EdgeProp `og:image` through the polite fetcher), else a OneMap street map with a pin on the block. PropertyGuru answers every automated request with a Cloudflare challenge, so it is never fetched.
-- **Upcoming BTO.** One Claude web-search call a week (`propbot/bto.py`) lists open and upcoming BTO projects; a failed week keeps the last list.
-- **Sources.** The hourly Claude hunt (PropertyGuru, EdgeProp and others) plus PropNex read directly: the newest 30 HDB, EC, condo and retail (shophouse, HDB shop, coffee shop and F&B) listings every hour through Jina Reader (`propbot/propnex.py`), with their photos. The same home found on several sites is shown once, with "also listed on" links. Checked and left out on 2026-10-09: Ohmyhome (human verification page, anti-bot service), 99.co and SRX (on `never_fetch_domains`).
-- **☯ Feng shui.** Every card lists the good and the bad from open data (`propbot/fengshui.py`): water, hills and parks nearby (NParks), cemeteries, columbaria and crematoria (NEA), big hospitals, the MRT, and the block number and price digits. A "what to look out for" guide on the page covers what only a viewing can show (door line, T-junctions, kitchen, bed, shape, light).
+**How the flow works**
+
+1. **Collect.** The hourly Claude hunt and a direct PropNex read (HDB, EC, condo and retail: shophouse, HDB shop, coffee
+   shop and F&B, mall shop) record every listing in the tracker. EdgeProp pages give a real photo. PropertyGuru,
+   Ohmyhome and other sites that answer automated requests with a challenge are never fetched.
+2. **Enrich.** Once an hour, `propbot/site.py` takes each live listing and adds facts from open data
+   (`propbot/insights.py`, `propbot/fengshui.py`): the block's recent sales by floor band, a verdict, the price
+   outlook, what a buyer would pay, rent and yield, schools, hawker centre, polyclinic, MRT, and a feng shui reading.
+3. **Publish.** The result is written as one data file in a single atomic step, so a reader never sees half of it.
+4. **Serve.** A small static web container serves the page and that file. The page does all sorting and filtering
+   in the browser.
+5. **Reach.** A separate network node with HTTPS exposes only that container to the internet. The NAS itself and its
+   other apps are not exposed, and no router port is opened.
+
+**What each card shows**
+
+- **Verdict and why.** Top pick, Worth a look, Fair price, Short lease, Above market or Not enough data, with reasons:
+  price against the same block's sales over 12 months, lease left and CPF use, price cuts, MRT distance.
+- **Outlook (appreciation or depreciation).** The likely value change over 5 years and the data behind it: the town's
+  resale price trend (counted at no more than the base growth cap), lease ageing from the decay table, planned MRT
+  stations, and the price against the block. It is labelled with its basis, and says "Not enough data" when a type has
+  no trend (condos and commercial units show lease ageing only).
+- **Recent sales in this block.** The last sales with floor and size, and the middle price by floor band, so a high
+  floor is not compared with a low one.
+- **What you would pay.** Down payment, monthly instalment on an HDB loan and a bank loan, stamp duty and the grants a
+  first-time family may get, all from the rules file through the same engine as `/propanalyse`.
+- **Rent and nearby.** HDB median rent and gross yield, primary schools within 1 km and 2 km, nearest hawker centre
+  and polyclinic.
+- **Feng shui.** The good and the bad from open data (water, hills and parks; cemeteries, columbaria, hospitals; the
+  MRT; the digits of the block and price), plus a viewing guide for what only a visit shows.
+- **Price history.** Days on the market and any price cut.
+
+**Using the page.** Tabs by property type, a Recommended tab and a Saved tab (a shortlist kept in the browser), an
+area filter, a price cap, a "found today / 3 days / 7 days" filter, search, and 11 sort orders. Each card has Share.
+An Upcoming BTO tab lists open and upcoming projects, refreshed weekly by one Claude web search.
+
+**Limits worth knowing.** The flat type is inferred from the price when a listing does not state it, so a wrong guess
+shifts the block comparison. "Rough guide" cards rest on few sales. Condos and commercial units have no sales
+benchmark here. The page says so in a "Worth checking yourself" box.
 
 Every card carries three signals beyond the price.
 

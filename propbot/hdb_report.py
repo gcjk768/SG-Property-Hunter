@@ -39,7 +39,7 @@ def norm(s: str) -> str:
 
 def match(db: DB, today: date, listings) -> list[dict]:
     """Attach the block's recent sales to each listing; listings with no sale of their block in 12 months are left out."""
-    rows = db.all("SELECT month, town, flat_type, block, street, sqm, lease_start, price FROM hdb_resale WHERE month IN ("
+    rows = db.all("SELECT month, town, flat_type, block, street, storey, sqm, lease_start, price FROM hdb_resale WHERE month IN ("
                   + ",".join("?" * 13) + ")", months_back(today, 13))
     by_block: dict[tuple, list] = {}
     for r in rows:
@@ -58,7 +58,7 @@ def match(db: DB, today: date, listings) -> list[dict]:
         tr = types[best]
         med = st.median(r["price"] for r in tr)
         lo, hi = min(r["price"] for r in tr), max(r["price"] for r in tr)
-        out.append(dict(x, town=sales[0]["town"], ftype=best, n=len(tr), med=med,
+        out.append(dict(x, town=sales[0]["town"], ftype=best, n=len(tr), med=med, sales=tr,
                         sqft=x["sqft"] or st.median(r["sqm"] for r in tr) * SQFT_PER_SQM,
                         rem=99 - (year - tr[0]["lease_start"]), inrange=lo * 0.9 <= x["price"] <= hi * 1.1))
     return out

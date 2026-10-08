@@ -9,16 +9,22 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 from datetime import date
 
 from .db import DB
 from .geo import POLL_DOWNLOAD, haversine_m
+from .ratelimit import BudgetExceeded
 
 log = logging.getLogger("propbot.fengshui")
 
 PARKS = "d_0542d48f0991541706b58059381a6eca"          # NParks Parks (points)
 AFTER_DEATH = "d_8057b4f4c7eca22c3c51c4ac05440f21"    # NEA cemeteries, crematoria, columbaria
 COLUMBARIA = "d_9b0752e9d3f1f9d957d5d8be2b58dfff"     # NEA dedicated columbaria
+# everyday places for the website card (propbot/insights.py), loaded with the rest
+HAWKERS = "d_4a086da0a5553be1d89383cd90d07ecd"       # NEA hawker centres
+POLYCLINICS = "d_0cdfbf7e277e8bfa1ef79fadf4b71b56"   # HPB screening centres: the polyclinics
+SCHOOLS = "d_688b934f82c1059ed0a6993d2a829089"       # MOE school directory (CSV, postal codes)
 HOSPITALS = ["Singapore General Hospital", "Tan Tock Seng Hospital", "National University Hospital", "Changi General Hospital",
              "Khoo Teck Puat Hospital", "Ng Teng Fong General Hospital", "Sengkang General Hospital",
              "KK Women's and Children's Hospital", "Alexandra Hospital", "Woodlands Hospital", "Mount Elizabeth Hospital",
@@ -39,9 +45,19 @@ def kind_of_park(name: str) -> str | None:
     return "water" if WATER.search(name) else "hill" if HILL.search(name) else "park" if PARK.search(name) else None
 
 
+def _download_url(geo, dataset: str) -> str | None:
+    """The file link for a dataset. data.gov.sg answers 429 when asked too fast, so wait and ask once more."""
+    for attempt in range(2):
+        geo.limiter.acquire("datagov")
+        url = (geo.http.get(POLL_DOWNLOAD.format(id=dataset), timeout=30).json().get("data") or {}).get("url")
+        if url:
+            return url
+        time.sleep(12)
+    return None
+
+
 def _points(geo, dataset: str) -> list[tuple[str, float, float]]:
-    geo.limiter.acquire("datagov")
-    url = (geo.http.get(POLL_DOWNLOAD.format(id=dataset), timeout=30).json().get("data") or {}).get("url")
+    url = _download_url(geo, dataset)
     geo.limiter.acquire("datagov")
     out = []
     for f in (geo.http.get(url, timeout=120).json().get("features") or []) if url else []:
@@ -50,6 +66,27 @@ def _points(geo, dataset: str) -> list[tuple[str, float, float]]:
             lon, lat = g["coordinates"][:2]
             out.append((p["NAME"], float(lat), float(lon)))
     return out
+
+
+def _primary_schools(geo) -> tuple[list[tuple[str, float, float]], bool]:
+    """MOE primary schools located from their postal code with the OneMap geocoder. Every answer is cached, so when
+    the daily OneMap budget runs out this returns what it has and False, and the next hour carries on."""
+    import csv, io
+    url = _download_url(geo, SCHOOLS)
+    if not url:
+        return [], False
+    geo.limiter.acquire("datagov")
+    out, complete = [], True
+    for r in csv.DictReader(io.StringIO(geo.http.get(url, timeout=120).text)):
+        if "PRIMARY" in r.get("mainlevel_code", "") or "P1" in r.get("mainlevel_code", ""):
+            try:
+                hit = geo.geocode(r["postal_code"])
+            except BudgetExceeded:
+                complete = False
+                continue                       # cached ones still come through; the rest wait for the next hour
+            if hit:
+                out.append((r["school_name"].title(), *hit))
+    return out, complete
 
 
 def ensure(db: DB, geo, today: date) -> int:
@@ -64,6 +101,10 @@ def ensure(db: DB, geo, today: date) -> int:
                     if n.lower() not in seen:
                         seen.add(n.lower())
                         rows.append(("yin", n, la, lo))
+            rows += [("hawker", n, la, lo) for n, la, lo in _points(geo, HAWKERS)]
+            rows += [("clinic", n, la, lo) for n, la, lo in _points(geo, POLYCLINICS) if "olyclinic" in n]
+            schools, complete = _primary_schools(geo)
+            rows += [("school", n, la, lo) for n, la, lo in schools]
             for name in HOSPITALS:
                 hit = geo.geocode(name)
                 if hit:
@@ -72,7 +113,8 @@ def ensure(db: DB, geo, today: date) -> int:
             if {"park", "yin"} <= kinds:          # a throttled download returns no file: keep last month, retry next hour
                 db.execute("DELETE FROM poi")
                 db.executemany("INSERT OR REPLACE INTO poi VALUES (?,?,?,?)", rows)
-                db.meta_set("poi_month", month)
+                if complete and {"hawker", "clinic"} <= kinds:
+                    db.meta_set("poi_month", month)
             else:
                 log.warning("feng shui places incomplete (%s), retrying next hour", sorted(kinds))
         except Exception as exc:
@@ -80,14 +122,17 @@ def ensure(db: DB, geo, today: date) -> int:
     return db.scalar("SELECT COUNT(*) FROM poi", default=0)
 
 
-def nearest_by_kind(db: DB, lat: float, lon: float) -> dict[str, tuple[str, int]]:
-    # ponytail: scans ~400 places per listing; fine for a few hundred listings an hour
-    best: dict[str, tuple[str, int]] = {}
+def around(db: DB, lat: float, lon: float) -> dict[str, list[tuple[str, int]]]:
+    """Every place by kind, nearest first: [(name, metres)]."""
+    # ponytail: scans ~800 places per listing; fine for a few hundred listings an hour, add a grid index if it grows
+    out: dict[str, list[tuple[str, int]]] = {}
     for r in db.all("SELECT kind, name, lat, lon FROM poi"):
-        d = int(haversine_m(lat, lon, r["lat"], r["lon"]))
-        if r["kind"] not in best or d < best[r["kind"]][1]:
-            best[r["kind"]] = (r["name"], d)
-    return best
+        out.setdefault(r["kind"], []).append((r["name"], int(haversine_m(lat, lon, r["lat"], r["lon"]))))
+    return {k: sorted(v, key=lambda x: x[1]) for k, v in out.items()}
+
+
+def nearest_by_kind(db: DB, lat: float, lon: float, places: dict | None = None) -> dict[str, tuple[str, int]]:
+    return {k: v[0] for k, v in (places or around(db, lat, lon)).items() if v}
 
 
 def _nice(name: str) -> str:

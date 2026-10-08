@@ -19,7 +19,7 @@ ICONS = HERE / "icons"
 OUT_SVG = HERE.parent / "architecture.svg"
 OUT_DRAWIO = HERE.parent / "architecture.drawio"
 
-W, H = 1600, 1000
+W, H = 1600, 1180
 FONT = "-apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif"
 
 # brand logos: (file, colour)
@@ -95,6 +95,19 @@ CARDS = [
      ["Alerts: cooldowns, fallbacks,", "rule changes"], "#DC2626"),
     ("private", 1320, 640, 250, 110, "user-round", "#4338CA", "Your private chat",
      ["/analyse, /set, forward a", "post to keep a favourite"], "#4338CA"),
+    # website lane: how the family website is fed and served
+    ("pages", 60, 990, 215, 110, "globe", "#0F766E", "Listing pages",
+     ["PropNex hourly, EdgeProp", "photos, OneMap maps"], "#0F766E"),
+    ("builder", 300, 990, 215, 110, "calculator", "#4F46E5", "Site builder",
+     ["Hourly: verdict, outlook,", "money, nearby, feng shui"], "#4F46E5"),
+    ("datafile", 540, 990, 215, 110, "file-text", "#B45309", "One data file",
+     ["Rewritten in one step so", "readers never see half"], "#B45309"),
+    ("web", 780, 990, 215, 110, "docker", BRAND["docker"], "Web container",
+     ["nginx serves the page", "and the data file"], BRAND["docker"]),
+    ("tunnel", 1020, 990, 215, 110, "shield-check", "#0369A1", "Public tunnel",
+     ["Own network node, HTTPS,", "no router ports opened"], "#0369A1"),
+    ("family", 1320, 990, 250, 110, "user-round", "#4338CA", "Family and friends",
+     ["Open the link in any", "browser, no login"], "#4338CA"),
 ]
 
 ENGINE = (610, 190, 340, 570)
@@ -106,7 +119,7 @@ STEPS = [
     ("Verdict", "Score 0 to 5, fixed by rules"),
 ]
 STEP_Y0, STEP_H, STEP_GAP = 282, 72, 18
-NAS = (30, 100, 1250, 840)
+NAS = (30, 100, 1250, 1040)
 SCHED = (350, 118, 590, 44)
 
 # edges: points, colour, label, label position (index of segment), dashed
@@ -124,6 +137,12 @@ EDGES = [
     ([(700, 760), (700, 800)], BRAND["sqlite"], "", False),
     ([(1200, 580), (1200, 800)], BRAND["obsidian"], "notes and log", False, (1200, 690)),
     ([(548, 162), (548, 330)], "#64748B", "", True),
+    ([(660, 904), (660, 950), (407, 950), (407, 990)], "#4F46E5", "tracked listings", False, (530, 950)),
+    ([(275, 1045), (300, 1045)], "#0F766E", "", False),
+    ([(515, 1045), (540, 1045)], "#4F46E5", "", False),
+    ([(755, 1045), (780, 1045)], "#B45309", "", False),
+    ([(995, 1045), (1020, 1045)], BRAND["docker"], "", False),
+    ([(1235, 1045), (1320, 1045)], "#0369A1", "public link", False, (1278, 1045)),
 ]
 
 
