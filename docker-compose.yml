@@ -8,6 +8,7 @@ services:
     # The NAS user (the owner, uid 1000) so data/ and the vault stay editable from the host.
     user: "1000:10"
     environment:
+      PLAYWRIGHT_WS_URL: ws://playwright:3000/
       TZ: Asia/Singapore
     restart: unless-stopped
     init: true
