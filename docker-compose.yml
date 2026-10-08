@@ -1,5 +1,6 @@
 services:
   propbot:
+    networks: [default, scrape-net]   # shared Playwright server ws://playwright:3000/
     build: .
     # Dockge Update/Start rebuilds from the code on disk instead of reusing the old image.
     pull_policy: build
@@ -25,3 +26,7 @@ services:
       options:
         max-size: "5m"
         max-file: "3"
+
+networks:
+  scrape-net:
+    external: true
