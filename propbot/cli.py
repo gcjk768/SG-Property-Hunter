@@ -378,11 +378,35 @@ def cmd_condo_report(args) -> int:
         print("posted" if bot.condo_report((bot.chat, bot.thread), manual=True) else "nothing posted")
         return 0
     today = _today(args, settings)
-    data = {seg: condo_report.run(bot.claude, settings, seg, n, today)[0]
-            for seg, n in (("resale", settings.condo_report.resale_count), ("new_launch", settings.condo_report.new_launch_count))}
     out = settings.base_dir / "data" / f"condo-report-{today}.pdf"
-    condo_report.build_pdf(out, data, today)
-    print(plain(condo_report.summary(data, today)), f"\nPDF: {out}")
+    text, found = condo_report.weekly(bot.claude, settings, bot.db, today, out, lambda what, d: print(f"[{what}] {d}"))
+    print(plain(text), f"\nPDF: {out}" if found else "\nnothing found")
+    return 0
+
+
+def cmd_hdb_report(args) -> int:
+    from . import hdb_report
+    bot, settings = _bot(args)
+    if args.post:
+        print("posted" if bot.hdb_report((bot.chat, bot.thread), manual=True) else "nothing posted")
+        return 0
+    today = _today(args, settings)
+    out = settings.base_dir / "data" / f"hdb-report-{today}.pdf"
+    text, found = hdb_report.weekly(bot.claude if args.recheck else None, settings, bot.db, today, out,
+                                    lambda what, d: print(f"[{what}] {d}"))
+    print(plain(text), f"\nPDF: {out}" if found else "\nno listings to rank yet")
+    return 0
+
+
+def cmd_backfill_listings(args) -> int:
+    """One-off: record the HDB listings in the vault's Activity notes so the weekly HDB report has its history."""
+    from . import hdb_report
+    bot, settings = _bot(args)
+    base = getattr(bot.vault, "base", None)
+    if not base:
+        print("The Obsidian vault is off or unreadable", file=sys.stderr)
+        return 2
+    print(f"recorded {hdb_report.backfill_from_vault(bot.db, base / 'Activity')} HDB listing sightings")
     return 0
 
 
@@ -501,6 +525,12 @@ def build_parser() -> argparse.ArgumentParser:
     co = sub.add_parser("condo-report", help="weekly condo PDF now (two Claude calls); --post sends it to the topic")
     co.add_argument("--post", action="store_true")
     co.set_defaults(func=cmd_condo_report)
+    hr = sub.add_parser("hdb-report", help="weekly HDB PDF now; --post sends it to the topic, --recheck adds one Claude pass over old listings")
+    hr.add_argument("--post", action="store_true")
+    hr.add_argument("--recheck", action="store_true")
+    hr.set_defaults(func=cmd_hdb_report)
+    bl = sub.add_parser("backfill-listings", help="record the HDB listings found in the vault's Activity notes")
+    bl.set_defaults(func=cmd_backfill_listings)
 
     bf = sub.add_parser("backfill", help="download the full HDB resale history")
     bf.add_argument("--date")

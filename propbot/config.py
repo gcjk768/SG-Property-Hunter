@@ -264,6 +264,7 @@ class CondoReportCfg(_Strict):
     hour: int = 9                   # Asia/Singapore
     resale_count: int = 20
     new_launch_count: int = 10
+    hdb: bool = True                # also post the weekly HDB report with it
 
 
 class ObsidianCfg(_Strict):

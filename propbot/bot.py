@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-from . import condo_report, hunt, pulse
+from . import condo_report, hdb_report, hunt, pulse, tracker
 from .claude import ClaudeUnavailable
 from .config import ConfigError, Profile, Settings, apply_profile_overrides, parse_override_value
 from .db import DB, clear_user_profile, set_user_profile, user_profile
@@ -29,7 +29,7 @@ from .telegram import TelegramClient, esc
 
 log = logging.getLogger("propbot.bot")
 
-COMMANDS = ("proppulse", "propcondoreport", "prophunt", "propanalyse", "propask", "propprofile", "propstatus", "prophelp")
+COMMANDS = ("proppulse", "propcondoreport", "prophdbreport", "propgone", "prophunt", "propanalyse", "propask", "propprofile", "propstatus", "prophelp")
 # a friend in a private chat gets the free commands only; hunt and ask spend the owner's Claude plan
 FRIEND_COMMANDS = {"proppulse", "propanalyse", "propprofile", "propstatus", "prophelp"}
 PROFILE_KEYS = ("citizenship", "age", "first_timer", "marital_status", "buying_with", "gross_monthly_income",
@@ -209,6 +209,7 @@ class Bot:
         msgs = hunt.messages(listings, note, len(dropped), self.s)
         self.send(where, msgs, buttons=[("🏠 HDB pulse", "proppulse"), ("📊 Status", "propstatus")])
         hunt.mark_posted(self.db, listings)
+        tracker.record(self.db, "hdb_resale", [x for x in listings if x.category == "hdb_resale"], now.date())
         for x in listings:
             self.vault.activity("hunt", f"posted {x.name}, S${x.price:,.0f}, {x.url}")
         self.vault.report("Listing hunt", "\n\n".join(plain(m) for m in msgs) + "\n")
@@ -217,9 +218,29 @@ class Bot:
     def cmd_hunt(self, arg, where) -> None:
         self.hunt(where, manual=True)
 
-    # ------------------------------------------------------------ weekly condo report
+    # ------------------------------------------------------------ weekly reports (condo and HDB PDFs)
+    def _post_pdf(self, where, key: str, name: str, pdf, text: str, caption: str, now: datetime, found: int) -> None:
+        self.send(where, text)
+        self.tg.send_document(where[0], pdf, caption, thread_id=where[1])
+        link = self.vault.report(name, plain(text) + "\n")
+        base = getattr(self.vault, "base", None)
+        try:     # keep the PDF next to the note in the vault; best effort
+            if base:
+                dest = base / f"Reports/{now:%Y/%m}" / pdf.name
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_bytes(pdf.read_bytes())
+        except OSError as exc:
+            log.warning("pdf not copied to the vault: %s", exc)
+        self.vault.activity(key, f"posted report: {found} listings", link or "")
+
+    def _note(self, key: str):
+        def notify(what, detail):
+            kind = "error" if isinstance(detail, Exception) else key
+            self.vault.activity(kind, f"{what}: {detail if not isinstance(detail, Exception) else type(detail).__name__ + ': ' + str(detail)[:200]}")
+        return notify
+
     def condo_report(self, where, *, manual: bool, now: datetime | None = None) -> bool:
-        """One Claude search per segment (resale, new launch), then a PDF and a short summary. True when posted."""
+        """Two Claude searches (resale, new launch), then a PDF and a short summary. True when posted."""
         if self.claude is None:
             if manual:
                 self.send(where, header(REPORT_TITLES["condo_report"], "Claude is not set up"))
@@ -228,41 +249,54 @@ class Bot:
         self.limiter.set_run(f"condo-{now:%Y%m%d%H%M}")
         if manual:
             self.tg.typing(where[0], where[1])
-        cfg = self.s.condo_report
-        data = {}
-        for seg, n in (("resale", cfg.resale_count), ("new_launch", cfg.new_launch_count)):
-            try:
-                data[seg], dropped, _ = condo_report.run(self.claude, self.s, seg, n, now.date())
-            except ClaudeUnavailable as exc:
-                data[seg] = []
-                self.vault.activity("error", f"condo report {seg}: Claude unavailable: {exc.reason}")
-                continue
-            self.vault.activity("condo_report", f"{seg}: {len(data[seg])} listings, {len(dropped)} dropped"
-                                + (f" ({'; '.join(dropped)[:300]})" if dropped else ""))
-        if not any(data.values()):
+        pdf = self.s.base_dir / "data" / f"condo-report-{now:%Y-%m-%d}.pdf"
+        text, found = condo_report.weekly(self.claude, self.s, self.db, now.date(), pdf, self._note("condo_report"))
+        if not found:
             if manual:
                 self.send(where, header(REPORT_TITLES["condo_report"], "nothing found or Claude unavailable"))
             return False
-        pdf = self.s.base_dir / "data" / f"condo-report-{now:%Y-%m-%d}.pdf"
-        condo_report.build_pdf(pdf, data, now.date())
-        text = condo_report.summary(data, now.date())
-        self.send(where, text)
-        self.tg.send_document(where[0], pdf, "📄 <b>Condo weekly report</b> · resale and new launch, ranked", thread_id=where[1])
-        link = self.vault.report("Condo report", plain(text) + "\n")
-        base = getattr(self.vault, "base", None)
-        try:     # keep the PDF next to the note in the vault; best effort
-            if base:
-                dest = base / f"Reports/{now:%Y/%m}" / pdf.name
-                dest.parent.mkdir(parents=True, exist_ok=True)
-                dest.write_bytes(pdf.read_bytes())
-        except OSError as exc:
-            log.warning("condo pdf not copied to the vault: %s", exc)
-        self.vault.activity("condo_report", f"posted report: {len(data['resale'])} resale, {len(data['new_launch'])} new launch",
-                            link or "")
+        self._post_pdf(where, "condo_report", "Condo report", pdf, text,
+                       "📄 <b>Condo weekly report</b> · resale and new launch, ranked", now, found)
+        return True
+
+    def hdb_report(self, where, *, manual: bool, now: datetime | None = None) -> bool:
+        """The HDB listings the hunt has seen, ranked against their block's sales, as a PDF with a short summary."""
+        now = now or datetime.now(self.tz)
+        self.limiter.set_run(f"hdbreport-{now:%Y%m%d%H%M}")
+        if manual:
+            self.tg.typing(where[0], where[1])
+        pdf = self.s.base_dir / "data" / f"hdb-report-{now:%Y-%m-%d}.pdf"
+        text, found = hdb_report.weekly(self.claude, self.s, self.db, now.date(), pdf, self._note("hdb_report"))
+        if not found:
+            if manual:
+                self.send(where, header(REPORT_TITLES["hdb_report"], "no listings to rank yet"))
+            return False
+        self._post_pdf(where, "hdb_report", "HDB report", pdf, text,
+                       "📄 <b>HDB weekly report</b> · listings ranked against their block's sales", now, found)
         return True
 
     def cmd_condoreport(self, arg, where) -> None:
         self.condo_report(where, manual=True)
+
+    def cmd_hdbreport(self, arg, where) -> None:
+        self.hdb_report(where, manual=True)
+
+    def cmd_gone(self, arg, where) -> None:
+        """/propgone <name or part of the link>: you found it sold or withdrawn, so the reports drop it."""
+        t = SECTION_TITLES["listing"]
+        if not arg.strip():
+            self.send(where, f"{t} <b>GONE</b> · tell me what you found sold\n\n<code>/propgone narra residences</code>\n"
+                      "<i>a name or part of the listing link; it stays out of every report.</i>")
+            return
+        hits = tracker.find(self.db, arg.strip())
+        if len(hits) != 1:
+            lines = [f"{t} <b>GONE</b> · " + ("nothing matches" if not hits else f"{len(hits)} match, be more specific")]
+            lines += [f"• {esc(h['name'])} · S${h['price']:,.0f} · <code>{esc(h['url'].split('/')[-1][:50])}</code>" for h in hits[:6]]
+            self.send(where, "\n".join(lines))
+            return
+        tracker.mark_gone(self.db, hits[0]["key"], datetime.now(self.tz).date(), "user")
+        self.vault.activity("gone", f"you marked {hits[0]['name']} as gone", "")
+        self.send(where, f"{t} <b>GONE</b> · {esc(hits[0]['name'])} removed\n\n<i>It stays out of the next reports.</i>")
 
     # ------------------------------------------------------------ analyse
     def cmd_analyse(self, arg, where) -> None:
@@ -395,13 +429,15 @@ class Bot:
             f"{SECTION_TITLES['help']} <b>HELP</b> · SG Property Hunter", "",
             "🏠 <b>/proppulse</b> · notable HDB resale deals now",
             "📄 <b>/propcondoreport</b> · condo PDF now (resale and new launch, ranked; owner only)",
+            "📄 <b>/prophdbreport</b> · HDB PDF now (listings ranked against their block; owner only)",
+            "❌ <b>/propgone</b> · <code>/propgone narra</code> removes a listing you found sold\n",
             "🏘 <b>/prophunt</b> · real listings for sale now (Claude web search, owner only)",
             "👤 <b>/propprofile</b> · set your own income, cash and CPF for /propanalyse",
             "🧮 <b>/propanalyse</b> · full card for one property",
             "<code>/propanalyse hdb_resale, Tampines, 600000, 1001, 99 year, 68, 3200</code>",
             "💬 <b>/propask</b> · ask anything about SG property",
             "📊 <b>/propstatus</b> · data, schedule and budgets", "",
-            f"<i>Condo PDF every Sunday 09:00. Posts by itself every hour at :{self.s.pulse.check_minute:02d} only when new notable deals appear; hunts new listings at :{self.s.hunt.check_minute:02d}.</i>",
+            f"<i>Condo and HDB PDFs every Sunday 09:00. Posts by itself every hour at :{self.s.pulse.check_minute:02d} only when new notable deals appear; hunts new listings at :{self.s.hunt.check_minute:02d}.</i>",
         ]))
 
     # ------------------------------------------------------------ loops
@@ -414,6 +450,8 @@ class Bot:
         if c.enabled and now.weekday() == c.weekday and now.hour >= c.hour and self.db.meta_get("condo_day") != str(now.date()):
             self.db.meta_set("condo_day", str(now.date()))     # once a day even if it fails: Claude calls are capped
             self.condo_report((self.chat, self.thread), manual=False, now=now)
+            if c.hdb:
+                self.hdb_report((self.chat, self.thread), manual=False, now=now)
         if self.s.pulse.enabled and now.minute >= self.s.pulse.check_minute and self.db.meta_get("pulse_slot") != slot:
             self.db.meta_set("pulse_slot", slot)
             self.pulse((self.chat, self.thread), manual=False, now=now)

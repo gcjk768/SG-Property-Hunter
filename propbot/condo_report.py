@@ -1,7 +1,8 @@
 """Weekly condo report (resale and new launch): the HDB report layout, built for private condos.
 
-One Claude web-search call per segment returns listings plus each project's recent psf (the benchmark).
-Code checks the answers like the hunt does (allowed site, budget, lease, unit listing page), ranks asking psf
+One Claude web-search call per segment returns listings plus each project's recent psf (the benchmark) and a
+status check on last week's listings. Code checks the answers like the hunt does (allowed site, budget, lease,
+unit listing page), remembers every listing in the tracker (first seen, price moves, gone), ranks asking psf
 against the benchmark and writes the PDF. The benchmark is Claude's web-search estimate, not URA data.
 """
 from __future__ import annotations
@@ -10,12 +11,16 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import date
+from types import SimpleNamespace
 from urllib.parse import urlsplit
 
+from . import tracker
 from .config import Settings
+from .db import DB
 from .hunt import LISTING_PATH, budget_max, listing_key
 from .pulse import SQFT_PER_SQM
 from .render import dot
+from .reportlib import Checker, Row, build_pdf, by_prem, lease_text
 from .telegram import esc, esc_attr
 from .web import is_allowed_domain, is_never_fetch
 
@@ -23,13 +28,14 @@ log = logging.getLogger("propbot.condo")
 
 SEGMENTS = {"resale": ("condo_resale", "Resale condo"), "new_launch": ("condo_new_launch", "New launch condo")}
 TOOLS = ["WebSearch", "WebFetch"]
-MIN_SALES = 3         # benchmark must rest on this many transactions to count as reliable
+MIN_SALES = 5         # benchmark must rest on this many transactions, from a named source, to count as reliable
 MAX_GAP = 0.25        # and the ask must be within 25% of it, else it is a different unit type or a typo
 
 
 @dataclass
 class Condo:
     segment: str
+    key: str
     name: str
     area: str
     bedrooms: int | None
@@ -50,31 +56,34 @@ class Condo:
 
     @property
     def prem(self) -> float | None:
-        """Ask psf over benchmark psf minus 1 (negative = cheaper than the project); None when not comparable."""
         return self.ask_psf / self.bench_psf - 1 if self.ask_psf and self.bench_psf else None
 
     @property
     def reliable(self) -> bool:
-        return self.prem is not None and self.bench_n >= MIN_SALES and abs(self.prem) <= MAX_GAP
+        return (self.prem is not None and self.bench_n >= MIN_SALES and bool(self.bench_note.strip())
+                and abs(self.prem) <= MAX_GAP)
 
 
 def brief(segment: str, n: int, today: str) -> str:
     return (f"Run date: {today} (Asia/Singapore). Segment: {segment}. Find {n} real condo "
             f"{'listings for sale, each with its own listing page' if segment == 'resale' else 'new launch projects'} "
-            f"priced inside the budget range in stdin, with the benchmark psf for each. Return the object the schema describes.")
+            f"priced inside the budget range in stdin, with the benchmark psf for each, and report the status of every "
+            f"listing in recheck_previous_listings. Return the object the schema describes.")
 
 
-def stdin_text(settings: Settings, segment: str) -> str:
+def stdin_text(settings: Settings, segment: str, previous: list[dict]) -> str:
     cat = SEGMENTS[segment][0]
     return json.dumps({
         "segment": segment, "budget_min_sgd": settings.search.budget_min_sgd,
         "budget_max_sgd": budget_max(settings, cat),
         "min_remaining_lease_years": settings.search.min_remaining_lease_years,
         "allowed_domains": settings.sources.listing_domains_allowed,
-        "never_fetch_domains": settings.sources.never_fetch_domains}, indent=1)
+        "never_fetch_domains": settings.sources.never_fetch_domains,
+        "recheck_previous_listings": previous}, indent=1)
 
 
-def validate(cands: list[dict], settings: Settings, segment: str) -> tuple[list[Condo], list[str]]:
+def validate(cands: list[dict], settings: Settings, segment: str,
+             gone: frozenset[str] = frozenset()) -> tuple[list[Condo], list[str]]:
     s, src = settings.search, settings.sources
     hi = budget_max(settings, SEGMENTS[segment][0])
     out, dropped, seen = [], [], set()
@@ -92,7 +101,9 @@ def validate(cands: list[dict], settings: Settings, segment: str) -> tuple[list[
         elif (c.get("remaining_lease_years") or 999) < s.min_remaining_lease_years:
             why = "lease too short"
         key = listing_key(url) if not why else ""
-        if not why and key in seen:
+        if not why and key in gone:
+            why = "marked gone"
+        elif not why and key in seen:
             why = "duplicate"
         if why:
             dropped.append(f"{c.get('name', '?')}: {why}")
@@ -101,7 +112,7 @@ def validate(cands: list[dict], settings: Settings, segment: str) -> tuple[list[
         area = c.get("floor_area")
         sqft = float(area) * (SQFT_PER_SQM if c.get("floor_area_unit") == "sqm" else 1) if area else None
         bench = c.get("benchmark_psf")
-        out.append(Condo(segment, c.get("name") or "Unnamed", c.get("area") or c.get("district") or "",
+        out.append(Condo(segment, key, c.get("name") or "Unnamed", c.get("area") or c.get("district") or "",
                          c.get("bedrooms"), c.get("tenure") or "unknown", c.get("remaining_lease_years"),
                          float(price), sqft, url, c.get("site") or urlsplit(url).netloc,
                          bool(c.get("from_snippet")), float(bench) if bench and 300 <= bench <= 10000 else None,
@@ -109,102 +120,122 @@ def validate(cands: list[dict], settings: Settings, segment: str) -> tuple[list[
     return out, dropped
 
 
-def by_prem(items: list[Condo]) -> list[Condo]:
-    """Cheapest against its project first; listings with no comparison go last."""
-    return sorted(items, key=lambda x: (x.prem is None, x.prem if x.prem is not None else 0))
-
-
 def split(items: list[Condo]) -> tuple[list[Condo], list[Condo]]:
-    return by_prem([x for x in items if x.reliable]), by_prem([x for x in items if not x.reliable])
+    good = [x for x in items if x.reliable]
+    return by_prem(good), by_prem([x for x in items if not x.reliable])
 
 
-def run(claude, settings: Settings, segment: str, n: int, today: date) -> tuple[list[Condo], list[str], str]:
+def run(claude, settings: Settings, db: DB, segment: str, n: int, today: date) -> tuple[list[Condo], list[str], str]:
+    """One Claude call. Records what it found and applies its status checks on last week's listings."""
     cfg, base = settings.claude.discovery, settings.prompts_dir
+    kind = SEGMENTS[segment][0]
     res = claude.call(
-        label=f"condo-{segment}", brief=brief(segment, n, today.isoformat()), stdin_text=stdin_text(settings, segment),
+        label=f"condo-{segment}", brief=brief(segment, n, today.isoformat()),
+        stdin_text=stdin_text(settings, segment, tracker.to_recheck(db, kind, today)),
         system_file=base / "condo_report_system.md",
         schema=json.loads((base / "condo_report_schema.json").read_text(encoding="utf-8")),
         allowed_tools=TOOLS, disallowed_tools=[t for t in settings.claude.no_tools if t not in TOOLS],
         max_turns=cfg.max_turns, timeout=cfg.timeout_seconds)
     data = res.structured or {}
-    items, dropped = validate(data.get("candidates") or [], settings, segment)
+    tracker.apply_checks(db, data.get("previous_status") or [], today)
+    items, dropped = validate(data.get("candidates") or [], settings, segment, frozenset(tracker.gone_keys(db)))
+    tracker.record(db, kind, [SimpleNamespace(key=x.key, name=x.name, area=x.area, url=x.url, bedrooms=x.bedrooms,
+                                              tenure=x.tenure, lease_left=x.lease_left, sqft=x.sqft, price=x.price)
+                              for x in items], today)
     return items, dropped, data.get("run_note") or ""
 
 
-# ------------------------------------------------------------ Telegram summary
+# ------------------------------------------------------------ rows, summary, PDF
+def to_rows(db: DB, items: list[Condo], segment: str, chk: Checker, today: date) -> list[tuple[Condo, Row]]:
+    cat = SEGMENTS[segment][0]
+    out = []
+    for x in items:
+        t = db.one("SELECT * FROM report_listing WHERE key=?", [x.key])
+        drag = chk.drag(x.tenure, x.lease_left)
+        out.append((x, Row(x.name, x.area, f"{x.bedrooms} BR" if x.bedrooms else "?", x.price, x.sqft, x.bench_psf,
+                           x.bench_n, x.reliable, lease_text(x.tenure, x.lease_left, drag), drag,
+                           tracker.change_label(t, today) if t else "",
+                           chk.afford(cat, x.name, x.price, x.area, x.sqft, x.tenure, x.lease_left),
+                           (t["last_seen"] if t else today.isoformat())[5:], x.url)))
+    return out
+
+
 def money(v: float) -> str:
     return f"S${v / 1e6:.2f}M" if v >= 1e6 else f"S${v / 1e3:,.0f}k"
 
 
-def summary(data: dict[str, list[Condo]], today: date, top: int = 5) -> str:
+def summary(rows: dict[str, list[Row]], changes: dict[str, list[tuple[str, str, str]]], today: date, top: int = 5) -> str:
     lines = [f"🏙 <b>CONDO WEEKLY REPORT</b> · {today:%a %d %b %Y}"]
     for seg, (_, label) in SEGMENTS.items():
-        good, rest = split(data.get(seg, []))
-        lines += ["", f"🏘 <b>{esc(label)}</b> · {len(good) + len(rest)} found, {len(good)} ranked"]
-        for i, x in enumerate(good[:top] or rest[:top], 1):
-            mark = "" if x.prem is None else (" 🟢" if x.prem <= 0 else " 🔴") + f" <i>{x.prem:+.0%} vs project</i>"
-            bits = dot(f"{x.bedrooms}BR" if x.bedrooms else None, money(x.price),
-                       f"{x.ask_psf:,.0f} psf" if x.ask_psf else None, x.area.title() or None)
-            lines.append(f'{i}. <a href="{esc_attr(x.url)}">{esc(x.name)}</a> · {bits}{mark}')
+        rs = rows.get(seg, [])
+        good = by_prem([r for r in rs if r.reliable])
+        ch = changes.get(seg, [])
+        lines += ["", f"🏘 <b>{esc(label)}</b> · {len(rs)} found, {len(good)} ranked"]
+        marks = [f"🆕 {sum(r.change == '🆕' for r in rs)}", f"🟢 {sum(m == '🟢' for m, *_ in ch)} drops",
+                 f"🔴 {sum(m == '🔴' for m, *_ in ch)} rises", f"❌ {sum(m == '❌' for m, *_ in ch)} gone"]
+        lines.append("<i>" + " · ".join(marks) + "</i>")
+        for i, r in enumerate((good or by_prem(rs))[:top], 1):
+            mark = "" if r.prem is None else (" 🟢" if r.prem <= 0 else " 🔴") + f" <i>{r.prem:+.0%} vs project</i>"
+            bits = dot(r.type_label if r.type_label != "?" else None, money(r.price),
+                       f"{r.ask_psf:,.0f} psf" if r.ask_psf else None, r.area.title() or None, r.afford.split(" ")[0] if r.afford[:1] in "✅⚠❌◐" else None)
+            lines.append(f'{i}. <a href="{esc_attr(r.url)}">{esc(r.name)}</a> · {bits}{mark}')
     lines += ["", "<blockquote expandable>" + esc(
         "Found by Claude web search; the project psf is its estimate from recent transactions, not URA data. "
-        "Availability is not verified (PropertyGuru blocks automated checks). Full ranking in the PDF. "
-        "Not financial advice.") + "</blockquote>"]
+        "Availability is only as good as the last page check (PropertyGuru blocks automated checks); tell me with "
+        "/propgone <name> what you find sold. ✅ you can afford it, ⚠ cash short, ❌ not eligible. "
+        "Full ranking in the PDF. Not financial advice.") + "</blockquote>"]
     return "\n".join(lines)
 
 
-# ------------------------------------------------------------ PDF
-def build_pdf(path, data: dict[str, list[Condo]], today: date) -> None:
-    from reportlab.lib import colors
-    from reportlab.lib.pagesizes import A4, landscape
-    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-    from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
-
-    ss = getSampleStyleSheet()
-    sm = ParagraphStyle("sm", parent=ss["BodyText"], fontSize=7.5, leading=9)
-    H = lambda t: Paragraph(t, ss["Heading2"])
-    hdr = ["#", "Project / area", "BR", "Ask S$", "Size sqft", "Ask psf", "Project psf (sales)", "Ask vs project", "Tenure", "Link"]
-
-    def row(i, x: Condo):
-        p = "n/a" if x.prem is None else f"{x.prem:+.0%}"
-        col = "#6b7280" if x.prem is None else ("#1a7f37" if x.prem <= 0 else "#b42318")
-        tenure = x.tenure + (f", {x.lease_left:.0f}y left" if x.lease_left else "")
-        return [i, Paragraph(f"<b>{esc(x.name)}</b><br/>{esc(x.area.title())}", sm), x.bedrooms or "?", f"{x.price:,.0f}",
-                f"{x.sqft:,.0f}" if x.sqft else "?", f"{x.ask_psf:,.0f}" if x.ask_psf else "?",
-                f"{x.bench_psf:,.0f} ({x.bench_n})" if x.bench_psf else "none",
-                Paragraph(f"<font color='{col}'><b>{p}</b></font>", sm), Paragraph(esc(tenure), sm),
-                Paragraph(f"<link href='{esc_attr(x.url)}' color='blue'>open</link>", sm)]
-
-    def tbl(items):
-        t = Table([hdr] + [row(i + 1, x) for i, x in enumerate(items)], repeatRows=1,
-                  colWidths=[22, 170, 28, 62, 50, 48, 85, 62, 80, 36])
-        t.setStyle(TableStyle([("FONTSIZE", (0, 0), (-1, -1), 7.5), ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e8eef7")),
-                               ("GRID", (0, 0), (-1, -1), .25, colors.grey), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                               ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7f7f7")])]))
-        return t
-
-    total = sum(len(v) for v in data.values())
-    S = [Paragraph("Condo listings seen this week, ranked", ss["Title"]),
-         Paragraph(f"Week of {today:%d %b %Y}. {total} listings found by Claude web search: resale condos and new launches.", ss["BodyText"]),
-         Paragraph("<b>Availability is NOT verified.</b> PropertyGuru blocks automated checks (Cloudflare 403), so listings were not re-checked. "
-                   "Open the link, or ask the agent, before relying on any row.", ss["BodyText"]),
-         Paragraph("<b>How ranked:</b> asking psf vs the project's recent transacted psf (Claude's web-search estimate from EdgeProp, URA and "
-                   "similar pages, not a URA download), lowest first (green = below the project). Ranked shortlist = the estimate rests on "
-                   f"{MIN_SALES}+ transactions and the ask is within {MAX_GAP:.0%} of it. New launches with no resale yet are compared with the "
-                   "closest comparable projects, so treat them as a shortlist filter, not a valuation. BR = bedrooms (4 = 4 or more).", sm)]
+def build(path, rows: dict[str, list[tuple[Condo, Row]]], changes: dict, today: date) -> None:
+    total = sum(len(v) for v in rows.values())
+    intro = [f"Week of {today:%d %b %Y}. {total} listings found by Claude web search: resale condos and new launches.",
+             "<b>Availability is only as good as the last page check.</b> PropertyGuru blocks automated checks (Cloudflare 403), so "
+             "most listings could not be re-opened. 'Seen' is the last day a search or page check confirmed the listing; listings not "
+             "seen for 21 days drop out, and /propgone removes one you found sold. Open the link before relying on any row."]
+    note = ("<b>How ranked:</b> asking psf vs the project's recent transacted psf (Claude's web-search estimate from a named source, "
+            f"not a URA download), lowest first (green = below the project). Ranked shortlist = {MIN_SALES}+ transactions, a named source, and the "
+            f"ask within {MAX_GAP:.0%} of the benchmark. <b>Lease, 5y drag</b> = tenure, lease left and the value the lease decay table "
+            "removes over 5 years. <b>Change</b> = new or price move since the last report. <b>Can I?</b> = your Profile.md run through the "
+            "eligibility and financing engine: ✅ eligible and cash covers it, ⚠ cash short (in S$), ❌ not eligible. BR = bedrooms (4 = 4 or more).")
+    parts, allchanges = [], []
     for seg, (_, label) in SEGMENTS.items():
-        items = data.get(seg, [])
-        good, rest = split(items)
-        S += [PageBreak(), Paragraph(label, ss["Title"]), H(f"Ranked shortlist ({len(good)})"), tbl(good),
-              PageBreak(), H(f"Not reliably comparable ({len(rest)})"),
-              Paragraph("Fewer than 3 transactions behind the project psf, no size or benchmark found, or the ask is more than 25% away from it. "
-                        "Sorted by premium, for reference only.", sm), Spacer(1, 4), tbl(rest)]
+        pairs = rows.get(seg, [])
+        rs = [r for _, r in pairs]
+        good = by_prem([r for r in rs if r.reliable])
+        rest = by_prem([r for r in rs if not r.reliable])
+        secs = [(f"Ranked shortlist ({len(good)})", "", good),
+                (f"Not reliably comparable ({len(rest)})",
+                 f"Fewer than {MIN_SALES} transactions or no named source behind the project psf, no size or benchmark found, "
+                 f"or the ask is more than {MAX_GAP:.0%} away from it. Sorted by premium, for reference only.", rest)]
         for br, name in ((3, "3 BR"), (2, "2 BR"), (1, "1 BR"), (4, "4 BR+")):
-            g = by_prem([x for x in items if (min(x.bedrooms, 4) if x.bedrooms else None) == br])
-            S += [PageBreak(), H(f"Overall {name} ({len(g)})"),
-                  Paragraph("Shortlist and not-reliably-comparable listings combined, ranked by ask vs project (lowest first).", sm),
-                  Spacer(1, 4), tbl(g)]
-        g = by_prem([x for x in items if not x.bedrooms])
+            g = by_prem([r for (x, r) in pairs if (min(x.bedrooms, 4) if x.bedrooms else None) == br])
+            secs.append((f"Overall {name} ({len(g)})",
+                         "Shortlist and not-reliably-comparable combined, ranked by ask vs project (lowest first).", g))
+        g = by_prem([r for (x, r) in pairs if not x.bedrooms])
         if g:
-            S += [PageBreak(), H(f"Overall bedrooms not stated ({len(g)})"), tbl(g)]
-    SimpleDocTemplate(str(path), pagesize=landscape(A4), leftMargin=24, rightMargin=24, topMargin=24, bottomMargin=24).build(S)
+            secs.append((f"Overall bedrooms not stated ({len(g)})", "", g))
+        parts.append((label, secs))
+        allchanges += [(m, f"{label}: {n}", d) for m, n, d in changes.get(seg, [])]
+    build_pdf(path, "Condo listings seen this week, ranked", intro, note, allchanges, parts)
+
+
+def weekly(claude, settings: Settings, db: DB, today: date, pdf_path, notify=lambda *a: None) -> tuple[str, int]:
+    """Run both segments, write the PDF, return (Telegram summary, listings found). Progress and errors go to notify."""
+    chk = Checker(settings, db, today)
+    cfg = settings.condo_report
+    rows, changes, found = {}, {}, 0
+    for seg, n in (("resale", cfg.resale_count), ("new_launch", cfg.new_launch_count)):
+        try:
+            items, dropped, _ = run(claude, settings, db, seg, n, today)
+            notify(seg, f"{len(items)} listings, {len(dropped)} dropped" + (f" ({'; '.join(dropped)[:300]})" if dropped else ""))
+        except Exception as exc:         # a Claude limit or a bad answer for one segment must not lose the other
+            notify(seg, exc)
+            items = []
+        rows[seg] = to_rows(db, items, seg, chk, today)
+        changes[seg] = tracker.changes(db, SEGMENTS[seg][0], today)
+        found += len(items)
+    if not found:
+        return "", 0
+    build(pdf_path, rows, changes, today)
+    return summary({s: [r for _, r in v] for s, v in rows.items()}, changes, today), found

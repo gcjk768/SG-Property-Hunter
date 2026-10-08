@@ -137,6 +137,13 @@ CREATE TABLE IF NOT EXISTS ura_resi (
 CREATE INDEX IF NOT EXISTS ura_resi_month ON ura_resi(month);
 CREATE INDEX IF NOT EXISTS ura_resi_project ON ura_resi(project);
 
+-- listings the weekly reports have seen (propbot/tracker.py): first and last seen, price changes, gone
+CREATE TABLE IF NOT EXISTS report_listing (
+  key TEXT PRIMARY KEY, kind TEXT, name TEXT, area TEXT, url TEXT, bedrooms INTEGER, tenure TEXT,
+  lease_left REAL, sqft REAL, price REAL, prev_price REAL, price_changed_on TEXT,
+  first_seen TEXT, last_seen TEXT, status TEXT DEFAULT 'listed', gone_on TEXT, gone_by TEXT);
+CREATE INDEX IF NOT EXISTS report_listing_kind ON report_listing(kind, status);
+
 -- location signals (propbot/geo.py)
 CREATE TABLE IF NOT EXISTS mrt_exits (station TEXT, exit_code TEXT, lat REAL, lon REAL, PRIMARY KEY (station, exit_code));
 

@@ -1,31 +1,151 @@
 {
   "type": "object",
   "properties": {
-    "run_note": {"type": "string"},
+    "run_note": {
+      "type": "string"
+    },
     "candidates": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
-          "name": {"type": "string"},
-          "area": {"type": ["string", "null"]},
-          "district": {"type": ["string", "null"]},
-          "bedrooms": {"type": ["integer", "null"]},
-          "tenure": {"type": "string", "enum": ["freehold", "999 year", "99 year", "unknown"]},
-          "remaining_lease_years": {"type": ["number", "null"]},
-          "price_sgd": {"type": ["number", "null"]},
-          "floor_area": {"type": ["number", "null"]},
-          "floor_area_unit": {"type": ["string", "null"], "enum": ["sqft", "sqm", null]},
-          "url": {"type": "string"},
-          "site": {"type": "string"},
-          "from_snippet": {"type": "boolean"},
-          "benchmark_psf": {"type": ["number", "null"]},
-          "benchmark_sales_count": {"type": ["integer", "null"]},
-          "benchmark_note": {"type": "string"}
+          "name": {
+            "type": "string"
+          },
+          "area": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "district": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bedrooms": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "tenure": {
+            "type": "string",
+            "enum": [
+              "freehold",
+              "999 year",
+              "99 year",
+              "unknown"
+            ]
+          },
+          "remaining_lease_years": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "price_sgd": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "floor_area": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "floor_area_unit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "sqft",
+              "sqm",
+              null
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "site": {
+            "type": "string"
+          },
+          "from_snippet": {
+            "type": "boolean"
+          },
+          "benchmark_psf": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "benchmark_sales_count": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "benchmark_note": {
+            "type": "string"
+          }
         },
-        "required": ["name", "area", "district", "bedrooms", "tenure", "remaining_lease_years", "price_sgd", "floor_area", "floor_area_unit", "url", "site", "from_snippet", "benchmark_psf", "benchmark_sales_count", "benchmark_note"]
+        "required": [
+          "name",
+          "area",
+          "district",
+          "bedrooms",
+          "tenure",
+          "remaining_lease_years",
+          "price_sgd",
+          "floor_area",
+          "floor_area_unit",
+          "url",
+          "site",
+          "from_snippet",
+          "benchmark_psf",
+          "benchmark_sales_count",
+          "benchmark_note"
+        ]
+      }
+    },
+    "previous_status": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "listed",
+              "gone",
+              "unknown"
+            ]
+          },
+          "price_now": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "url",
+          "status",
+          "price_now"
+        ]
       }
     }
   },
-  "required": ["run_note", "candidates"]
+  "required": [
+    "run_note",
+    "candidates",
+    "previous_status"
+  ]
 }

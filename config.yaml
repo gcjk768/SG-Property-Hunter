@@ -53,6 +53,7 @@ condo_report:                  # weekly condo PDF (resale and new launch), poste
   hour: 9                        # Asia/Singapore
   resale_count: 20
   new_launch_count: 10
+  hdb: true                      # the weekly HDB report goes out with it
 
 telegram:
   chat_id: "<TELEGRAM_CHAT_ID>"      # the owner Channel (forum group shared by the fleet)
