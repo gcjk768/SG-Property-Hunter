@@ -141,6 +141,9 @@ h1 em{font-style:italic;color:var(--brass);font-weight:300}
 /* ---------- footer ---------- */
 footer{border-top:2px solid var(--ink);margin-top:40px;padding:30px 0 60px;color:var(--ink-2);font-size:15px}
 footer .cols{display:grid;grid-template-columns:repeat(2,1fr);gap:28px}
+.check-box{background:var(--brass-2);color:var(--ink);border-radius:18px;padding:18px 22px;margin-bottom:28px}
+.check-box h4{margin:0 0 8px}
+.check-box ul{margin:0;padding-left:20px;display:grid;gap:6px;font-size:16px}
 footer h4{font:500 20px var(--display);margin:0 0 6px;color:var(--ink)}
 footer p{margin:0}
 
@@ -355,6 +358,13 @@ footer p{margin:0}
 </main>
 
 <footer class="wrap">
+  <div class="check-box">
+    <h4>⚠ Worth checking yourself</h4>
+    <ul>
+      <li><b>The flat type is our guess.</b> Listings rarely state it, so we pick the type whose block price is closest to the asking price. A recommendation can be wrong if the guess is; check the room count on the listing.</li>
+      <li><b>"Rough guide" cards rest on only a few sales</b> in that block. Compare with nearby blocks before you trust the deal.</li>
+    </ul>
+  </div>
   <div class="cols">
     <div><h4>How the ranking works</h4><p>For HDB flats we compare the asking price with the middle price of the same flat type sold in the same block over the last 12 months (HDB data from data.gov.sg). The flat type is our best guess from the price.</p></div>
     <div><h4>Before you call an agent</h4><p>Listings are found by our bot every hour, but a flat can sell any day. Open the listing to check it is still there. "Rough guide" means only a few sales to compare with.</p></div>

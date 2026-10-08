@@ -163,6 +163,12 @@ A positive error means the model predicted more than the flat fetched, so the ta
 
 The table in `config.yaml` is unchanged. Moving it is your call. The raw output is in [docs/backtest_2026-10-06.txt](docs/backtest_2026-10-06.txt).
 
+## Worth checking yourself
+
+- **Flat type is inferred.** Listings rarely state it, so `hdb_report.match` picks the type whose block median is closest to the asking price. A wrong guess makes the deal %, the verdict and the "Why" wrong; the website says so in a "Worth checking yourself" box.
+- **"Rough guide" cards** rest on fewer than 3 sales of that type in the block, or an ask more than 10% outside every sale; they never become a Top pick.
+- **Vault notes are NAS-only.** `docs/vault/` is never synced to the public GitHub repo (`PERSONAL_DIRS` in the nas-sync script), so the NAS copy is the current one; the repo copy may lag.
+
 ## What is still open
 
 - **Live SORA rates.** The bank rate is assumed in `config.yaml`. Loading MAS SORA would make the stress test start from today's rate.
