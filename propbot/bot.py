@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-from . import condo_report, hdb_report, hunt, pulse, tracker
+from . import bto, condo_report, hdb_report, hunt, propnex, pulse, site, tracker
 from .claude import ClaudeUnavailable
 from .config import ConfigError, Profile, Settings, apply_profile_overrides, parse_override_value
 from .db import DB, clear_user_profile, set_user_profile, user_profile
@@ -26,6 +26,7 @@ from .geo import Geo, onemap_state
 from .ratelimit import BudgetExceeded, RateLimiter
 from .render import DIVIDER, REPORT_TITLES, SECTION_TITLES, header
 from .telegram import TelegramClient, esc
+from .web import PoliteFetcher
 
 log = logging.getLogger("propbot.bot")
 
@@ -209,7 +210,8 @@ class Bot:
         msgs = hunt.messages(listings, note, len(dropped), self.s)
         self.send(where, msgs, buttons=[("🏠 HDB pulse", "proppulse"), ("📊 Status", "propstatus")])
         hunt.mark_posted(self.db, listings)
-        tracker.record(self.db, "hdb_resale", [x for x in listings if x.category == "hdb_resale"], now.date())
+        for cat in {x.category for x in listings}:     # every category feeds the reports and the website
+            tracker.record(self.db, cat, [x for x in listings if x.category == cat], now.date())
         for x in listings:
             self.vault.activity("hunt", f"posted {x.name}, S${x.price:,.0f}, {x.url}")
         self.vault.report("Listing hunt", "\n\n".join(plain(m) for m in msgs) + "\n")
@@ -452,12 +454,41 @@ class Bot:
             self.condo_report((self.chat, self.thread), manual=False, now=now)
             if c.hdb:
                 self.hdb_report((self.chat, self.thread), manual=False, now=now)
+            if self.claude is not None and bto.due(self.db, now.date()):
+                self.refresh_bto(now)        # the BTO list for the website, with the other weekly Claude calls
         if self.s.pulse.enabled and now.minute >= self.s.pulse.check_minute and self.db.meta_get("pulse_slot") != slot:
             self.db.meta_set("pulse_slot", slot)
             self.pulse((self.chat, self.thread), manual=False, now=now)
         if self.s.hunt.enabled and now.minute >= self.s.hunt.check_minute and self.db.meta_get("hunt_slot") != slot:
             self.db.meta_set("hunt_slot", slot)
             self.hunt((self.chat, self.thread), manual=False, now=now)
+        if now.minute >= self.s.hunt.check_minute and self.db.meta_get("site_slot") != slot:
+            self.db.meta_set("site_slot", slot)
+            self.refresh_site(now)
+
+    def refresh_bto(self, now: datetime) -> None:
+        """Weekly: open and upcoming BTO projects for the website (one Claude call)."""
+        try:
+            n = bto.refresh(self.claude, self.s, self.db, now.date())
+            self.vault.activity("bto", f"BTO list updated · {n} projects")
+        except Exception as exc:          # last week's list stays up
+            log.exception("BTO refresh failed")
+            self.vault.activity("error", f"BTO refresh failed: {type(exc).__name__}: {str(exc)[:200]}")
+
+    def refresh_site(self, now: datetime) -> None:
+        """Hourly, after the hunt: a few listing photos, then data.json for the family website."""
+        try:
+            if propnex.due(self.db, time.time()):
+                try:
+                    self.vault.activity("site", f"PropNex · {propnex.run(self.s, self.db, self.http, self.limiter, now.date(), self.vault.journal)} listings")
+                except Exception as exc:      # one source down must not stop the website update
+                    self.vault.activity("error", f"PropNex read failed: {type(exc).__name__}: {str(exc)[:200]}")
+            site.fetch_photos(self.db, PoliteFetcher(self.s, self.db, self.limiter, journal=self.vault.journal), now.date())
+            n = site.export(self.db, self.s.data_dir / "site", now.date(), now, self.geo)
+            self.vault.activity("site", f"website updated · {n} listings")
+        except Exception as exc:          # the website must never break the bot
+            log.exception("website refresh failed")
+            self.vault.activity("error", f"website refresh failed: {type(exc).__name__}: {str(exc)[:200]}")
 
     def _scheduler(self) -> None:
         while True:

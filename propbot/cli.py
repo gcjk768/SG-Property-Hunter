@@ -398,6 +398,15 @@ def cmd_hdb_report(args) -> int:
     return 0
 
 
+def cmd_site(args) -> int:
+    bot, _ = _bot(args)
+    if args.bto and bot.claude is not None:
+        bot.refresh_bto(datetime.now(bot.tz))
+    bot.refresh_site(datetime.now(bot.tz))
+    print(f"website data: {bot.s.data_dir / 'site' / 'data.json'}")
+    return 0
+
+
 def cmd_backfill_listings(args) -> int:
     """One-off: record the HDB listings in the vault's Activity notes so the weekly HDB report has its history."""
     from . import hdb_report
@@ -529,6 +538,9 @@ def build_parser() -> argparse.ArgumentParser:
     hr.add_argument("--post", action="store_true")
     hr.add_argument("--recheck", action="store_true")
     hr.set_defaults(func=cmd_hdb_report)
+    si = sub.add_parser("site", help="rebuild the family website data now (a few photos, then data.json)")
+    si.add_argument("--bto", action="store_true", help="also refresh the BTO list now (one Claude call)")
+    si.set_defaults(func=cmd_site)
     bl = sub.add_parser("backfill-listings", help="record the HDB listings found in the vault's Activity notes")
     bl.set_defaults(func=cmd_backfill_listings)
 

@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Block Ledger · Singapore homes priced under their neighbours</title>
+<meta name="description" content="Singapore homes for sale, ranked by how far the asking price sits under recent sales in the same block. Updated every hour.">
+<meta name="theme-color" content="#14281f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f3eee2; --paper-2:#ebe4d3; --card:#fffdf7; --ink:#14281f; --ink-2:#3d5247; --muted:#6f7d74;
+  --brass:#b0802a; --brass-2:#e2bf72; --good:#1d7a4a; --good-bg:#dff1e4; --bad:#a9442f; --bad-bg:#f7e3dc;
+  --line:rgba(20,40,31,.14); --shadow:0 1px 0 rgba(20,40,31,.06),0 18px 40px -22px rgba(20,40,31,.45);
+  --display:"Fraunces",Georgia,serif; --body:"Hanken Grotesk",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 18px/1.55 var(--body);
+  background-image:radial-gradient(1200px 600px at 85% -10%,rgba(176,128,42,.16),transparent 60%),
+  radial-gradient(900px 500px at -10% 10%,rgba(29,122,74,.10),transparent 60%)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:100;opacity:.35;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.16 0 0 0 0 0.12 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--brass);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 22px}
+
+/* ---------- masthead ---------- */
+.mast{border-bottom:2px solid var(--ink);padding:26px 0 18px;position:relative}
+.mast-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  font:600 13px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)}
+.live{display:inline-flex;align-items:center;gap:8px}
+.live i{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 0 0 rgba(29,122,74,.6);animation:pulse 2.4s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 10px rgba(29,122,74,0)}100%{box-shadow:0 0 0 0 rgba(29,122,74,0)}}
+h1{font:400 clamp(52px,10vw,132px)/.86 var(--display);font-variation-settings:"opsz" 144,"SOFT" 50;
+  letter-spacing:-.035em;margin:22px 0 6px}
+h1 em{font-style:italic;color:var(--brass);font-weight:300}
+.dek{display:grid;grid-template-columns:1.4fr 1fr;gap:28px;align-items:end;margin-top:14px}
+.dek p{font:400 clamp(19px,2.1vw,24px)/1.4 var(--display);font-variation-settings:"opsz" 30;margin:0;color:var(--ink-2);max-width:40ch}
+.stats{display:flex;gap:26px;justify-content:flex-end;flex-wrap:wrap}
+.stat b{display:block;font:500 46px/1 var(--display);font-variation-settings:"opsz" 144;letter-spacing:-.02em}
+.stat span{font-size:14px;color:var(--muted);letter-spacing:.04em}
+.rule{height:6px;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);margin-top:4px}
+
+/* ---------- top picks ---------- */
+.section-h{display:flex;align-items:baseline;gap:14px;margin:46px 0 18px}
+.section-h h2{font:500 clamp(28px,3.4vw,40px)/1 var(--display);letter-spacing:-.02em;margin:0}
+.section-h small{font-size:15px;color:var(--muted)}
+.picks{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.pick{position:relative;background:var(--ink);color:#f5efe0;border-radius:22px;overflow:hidden;min-height:330px;
+  display:flex;flex-direction:column;justify-content:flex-end;text-decoration:none;box-shadow:var(--shadow);
+  transform:translateY(0);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.pick:hover{transform:translateY(-6px)}
+.pick .plate{position:absolute;inset:0;height:auto;border-radius:0}
+.pick .plate::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,16,0) 25%,rgba(10,22,16,.92) 78%)}
+.pick .plate.map::after,.pick .plate.photo::after{background:linear-gradient(180deg,rgba(10,22,16,.1) 0%,rgba(10,22,16,.55) 30%,rgba(10,22,16,.96) 62%)}
+.pick .pin{top:24%}.pick .plate.map img{filter:saturate(.6) sepia(.25) brightness(.9)}
+.pick-body{position:relative;padding:22px 24px 24px}
+.rank{position:absolute;top:12px;right:22px;z-index:2;font:italic 300 64px/1 var(--display);color:var(--brass-2);
+  text-shadow:0 2px 16px rgba(0,0,0,.35)}
+.pick h3{font:500 28px/1.08 var(--display);margin:6px 0 4px;letter-spacing:-.01em}
+.pick .where{font-size:15px;opacity:.82}
+.pick .price{font:600 34px/1 var(--display);margin-top:12px}
+.pick .save{display:inline-block;margin-top:10px;background:var(--brass-2);color:var(--ink);font-weight:700;font-size:15px;
+  padding:6px 12px;border-radius:999px}
+
+/* ---------- controls ---------- */
+.controls{position:sticky;top:0;z-index:20;margin:48px -22px 0;padding:14px 22px;
+  background:rgba(243,238,226,.88);backdrop-filter:blur(10px) saturate(1.2);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:1.5px solid var(--ink);background:transparent;color:var(--ink);font:600 16px/1 var(--body);
+  padding:11px 16px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s}
+.tab span{opacity:.6;margin-left:6px;font-weight:500}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.row2{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center}
+.field{display:flex;align-items:center;gap:8px;background:var(--card);border:1.5px solid var(--line);border-radius:14px;
+  padding:0 12px;min-height:50px}
+.field label{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.field select,.field input{border:0;background:transparent;font:500 17px var(--body);color:var(--ink);padding:12px 4px;min-width:0}
+.field select:focus,.field input:focus{outline:none}
+.field:focus-within{border-color:var(--brass)}
+.search{flex:1 1 220px}
+.search input{width:100%}
+.toggle{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px;cursor:pointer;user-select:none;
+  padding:0 14px;min-height:50px;border-radius:14px;border:1.5px solid var(--line);background:var(--card)}
+.toggle input{width:22px;height:22px;accent-color:var(--good)}
+.count{margin:22px 0 6px;color:var(--muted);font-size:16px}
+
+/* ---------- cards ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:24px;padding-bottom:30px}
+.card{background:var(--card);border-radius:22px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;
+  border:1px solid var(--line);opacity:0;transform:translateY(18px);animation:rise .6s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.plate{position:relative;height:200px;overflow:hidden;background:var(--h1);display:block}
+.plate img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.card:hover .plate img,.pick:hover .plate img{transform:scale(1.05)}
+.plate svg{position:absolute;inset:0;width:100%;height:100%}
+.plate .num{position:absolute;right:18px;bottom:6px;font:400 92px/1 var(--display);font-variation-settings:"opsz" 144,"SOFT" 100;
+  color:rgba(255,253,247,.92);letter-spacing:-.04em;text-shadow:0 6px 30px rgba(0,0,0,.25)}
+.plate .town{position:absolute;left:18px;top:16px;font:700 12px/1 var(--body);letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,253,247,.9)}
+.chips{position:absolute;left:14px;bottom:14px;display:flex;gap:6px;flex-wrap:wrap;z-index:2}
+.chip{font:700 13px/1 var(--body);padding:7px 10px;border-radius:999px;background:rgba(255,253,247,.94);color:var(--ink)}
+.chip.new{background:var(--brass-2)}
+.chip.drop{background:var(--good);color:#fff}
+.chip.up{background:var(--bad);color:#fff}
+.body{padding:18px 20px 20px;display:flex;flex-direction:column;gap:12px;flex:1}
+.kind{font:700 12px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--brass)}
+.card h3{font:500 25px/1.12 var(--display);letter-spacing:-.01em;margin:4px 0 2px}
+.card .where{color:var(--ink-2);font-size:16px}
+.price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.price b{font:600 34px/1 var(--display);letter-spacing:-.02em}
+.price s{color:var(--muted);font-size:16px}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.facts div{padding:10px 0;text-align:center}
+.facts div+div{border-left:1px solid var(--line)}
+.facts b{display:block;font:600 18px/1.1 var(--body)}
+.facts span{font-size:13px;color:var(--muted)}
+.deal{border-radius:14px;padding:12px 14px;font-size:16px;line-height:1.4}
+.deal.good{background:var(--good-bg);color:#11402a}
+.deal.bad{background:var(--bad-bg);color:#5b2214}
+.deal.none{background:var(--paper-2);color:var(--ink-2)}
+.deal strong{font-size:18px}
+.meter{position:relative;height:8px;border-radius:99px;background:rgba(20,40,31,.12);margin:10px 0 4px}
+.meter i{position:absolute;top:-5px;width:3px;height:18px;border-radius:2px;background:var(--ink)}
+.meter u{position:absolute;top:-4px;width:16px;height:16px;border-radius:50%;margin-left:-8px;border:3px solid var(--card);text-decoration:none}
+.meter-l{display:flex;justify-content:space-between;font-size:12px;opacity:.75}
+.rough{font-size:13px;opacity:.8;font-style:italic}
+.open{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px;text-decoration:none;
+  background:var(--ink);color:var(--paper);border-radius:14px;padding:16px 18px;font:700 17px/1 var(--body);
+  transition:background .2s,transform .2s}
+.open:hover{background:#21402f;transform:translateY(-1px)}
+.open em{font-style:normal;font-weight:500;opacity:.7;font-size:14px}
+.seen{font-size:13px;color:var(--muted);text-align:center}
+.empty{text-align:center;padding:80px 20px;font:400 26px var(--display);color:var(--muted)}
+
+/* ---------- footer ---------- */
+footer{border-top:2px solid var(--ink);margin-top:40px;padding:30px 0 60px;color:var(--ink-2);font-size:15px}
+footer .cols{display:grid;grid-template-columns:repeat(2,1fr);gap:28px}
+footer h4{font:500 20px var(--display);margin:0 0 6px;color:var(--ink)}
+footer p{margin:0}
+
+/* ---------- map plates, verdicts, reasons ---------- */
+.plate.map img{filter:saturate(.8) sepia(.1)}
+.pin{position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-30px 0 0 -14px;background:var(--bad);
+  border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 6px 14px rgba(0,0,0,.35);z-index:1}
+.plate.map .town,.plate.photo .town{background:rgba(20,40,31,.85);padding:7px 10px;border-radius:999px;top:12px;left:12px;z-index:2}
+.verdict{display:inline-flex;align-items:center;gap:6px;font:700 14px/1 var(--body);padding:8px 12px;border-radius:999px;width:max-content}
+.v-top{background:var(--ink);color:var(--brass-2)}.v-look{background:var(--good-bg);color:#11402a}
+.v-fair,.v-none{background:var(--paper-2);color:var(--ink-2)}.v-short,.v-above{background:var(--bad-bg);color:#5b2214}
+.why-h{font:700 12px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.why{margin:-4px 0 0;padding:0;list-style:none;display:grid;gap:7px;font-size:15.5px;line-height:1.4;color:var(--ink-2)}
+.why li{padding-left:20px;position:relative}
+.why li::before{content:"";position:absolute;left:3px;top:.5em;width:8px;height:8px;border-radius:50%;background:var(--brass)}
+.bto .plate{height:170px}
+.bto .facts b{font-size:15px}
+.pick .reason{font-size:15px;opacity:.85;margin-top:8px;max-width:34ch}
+
+/* ---------- feng shui ---------- */
+.fs{border:1px solid rgba(176,128,42,.45);border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.4;
+  background:linear-gradient(135deg,rgba(226,191,114,.18),rgba(169,68,47,.05))}
+.fs-h{display:flex;align-items:center;gap:8px;font-weight:700}
+.fs-h .stars{color:var(--brass);letter-spacing:2px;font-size:16px}
+.fs ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:5px}
+.fs li{padding-left:24px;position:relative;color:var(--ink-2)}
+.fs li::before{position:absolute;left:0;top:0;font-weight:700}
+.fs li.g::before{content:"✓";color:var(--good)}
+.fs li.b::before{content:"✗";color:var(--bad)}
+.fs .check{display:block;margin-top:8px;font-size:14px;color:var(--brass);font-weight:700;text-decoration:none}
+.also{font-size:14px;text-align:center;color:var(--muted)}
+.also a{color:var(--ink);font-weight:600}
+
+/* the viewing guide */
+.guide{margin:70px 0 10px;background:var(--ink);color:#efe8d6;border-radius:28px;padding:44px clamp(20px,4vw,52px);position:relative;overflow:hidden}
+.guide::before{content:"☯";position:absolute;right:-30px;top:-60px;font-size:320px;line-height:1;opacity:.06}
+.guide h2{font:400 clamp(34px,4.6vw,58px)/1 var(--display);letter-spacing:-.02em;margin:0 0 8px;color:#fffaf0}
+.guide h2 em{color:var(--brass-2)}
+.guide .lede{max-width:62ch;opacity:.85;margin:0 0 30px;font-size:18px}
+.g-sec{border-top:1px solid rgba(239,232,214,.18);padding:22px 0}
+.g-sec h3{font:500 24px/1.2 var(--display);margin:0 0 12px;color:var(--brass-2)}
+.g-sec h3 small{font:600 13px var(--body);letter-spacing:.12em;text-transform:uppercase;color:#efe8d6;opacity:.6;margin-left:10px}
+.g-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g-col{background:rgba(255,255,255,.04);border-radius:16px;padding:16px 18px}
+.g-col h4{margin:0 0 8px;font:700 13px var(--body);letter-spacing:.14em;text-transform:uppercase}
+.g-col.good h4{color:#8fd6a9}.g-col.bad h4{color:#f0a48f}
+.g-col ul{margin:0;padding:0;list-style:none;display:grid;gap:9px;font-size:16px;line-height:1.45}
+.g-col li{padding-left:24px;position:relative}
+.g-col.good li::before{content:"✓";position:absolute;left:0;color:#8fd6a9;font-weight:700}
+.g-col.bad li::before{content:"✗";position:absolute;left:0;color:#f0a48f;font-weight:700}
+.g-col li b{color:#fffaf0}
+.g-src{border-top:1px solid rgba(239,232,214,.18);padding-top:18px;font-size:14px;opacity:.8}
+.g-src a{color:var(--brass-2)}
+.g-src ul{margin:6px 0 0;padding-left:18px;columns:2;column-gap:28px}
+@media (max-width:760px){.g-src ul{columns:1}}
+.g-auto{display:inline-block;font:700 11px var(--body);letter-spacing:.1em;text-transform:uppercase;background:var(--brass-2);color:var(--ink);padding:3px 7px;border-radius:6px;margin-left:6px;vertical-align:2px}
+@media (max-width:760px){.g-cols{grid-template-columns:1fr}}
+
+@media (max-width:900px){
+  .picks{grid-template-columns:1fr}
+  .dek{grid-template-columns:1fr}.stats{justify-content:flex-start}
+  footer .cols{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  body{font-size:17px}.wrap{padding:0 16px}.controls{position:static;margin:36px -16px 0;padding:12px 16px}
+  .grid{grid-template-columns:1fr}.field,.toggle{flex:1 1 100%}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.card{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<header class="wrap mast">
+  <div class="mast-top">
+    <span>Singapore · Homes for sale</span>
+    <span style="display:flex;gap:22px;align-items:center"><a href="#fengshui" style="text-decoration:none">☯ Feng shui guide</a><span class="live"><i></i><span id="updated">Loading…</span></span></span>
+  </div>
+  <h1>The Block <em>Ledger</em></h1>
+  <div class="rule"></div>
+  <div class="dek">
+    <p>Homes for sale across Singapore, checked against what the same block actually sold for this past year. Cheapest against its neighbours first.</p>
+    <div class="stats">
+      <div class="stat"><b id="s-total">–</b><span>homes listed</span></div>
+      <div class="stat"><b id="s-under">–</b><span>recommended</span></div>
+      <div class="stat"><b id="s-new">–</b><span>new this week</span></div>
+      <div class="stat"><b id="s-bto">–</b><span>BTO projects</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="picks-wrap" hidden>
+    <div class="section-h"><h2>Best buys this week</h2><small>Our top recommendations, and why</small></div>
+    <div class="picks" id="picks"></div>
+  </section>
+
+  <div class="controls" role="search">
+    <div class="tabs" id="tabs" aria-label="Property type"></div>
+    <div class="row2">
+      <div class="field"><label for="sort">Sort</label>
+        <select id="sort">
+          <option value="rec">Recommended first</option>
+          <option value="deal">Most under block price</option>
+          <option value="low">Lowest price</option>
+          <option value="high">Highest price</option>
+          <option value="new">Newest listings</option>
+          <option value="psf">Lowest $ per sq ft</option>
+          <option value="size">Biggest home</option>
+          <option value="lease">Most lease left</option>
+          <option value="mrt">Nearest MRT</option>
+          <option value="estate">Estate A to Z</option>
+          <option value="luck">☯ Best feng shui</option>
+        </select></div>
+      <div class="field"><label for="area">Area</label><select id="area"><option value="">All areas</option></select></div>
+      <div class="field"><label for="max">Up to</label>
+        <select id="max">
+          <option value="">Any price</option><option>500000</option><option>700000</option><option>900000</option>
+          <option>1200000</option><option>1500000</option><option>2000000</option><option>3000000</option>
+        </select></div>
+      <div class="field search"><label for="q">Find</label><input id="q" type="search" placeholder="Street, block or estate" autocomplete="off"></div>
+      <label class="toggle"><input type="checkbox" id="under"> Only under block price</label>
+    </div>
+  </div>
+
+  <p class="count" id="count" aria-live="polite"></p>
+  <div class="grid" id="grid"></div>
+
+  <section class="guide" id="fengshui">
+    <h2>Feng shui: <em>what to look out for</em></h2>
+    <p class="lede">Every card already reads the surroundings from map data (marked <span class="g-auto">on the card</span>). The rest can only be judged in person, so take this list to the viewing.</p>
+
+    <div class="g-sec"><h3>1. Outside the home <small>surroundings</small></h3><div class="g-cols">
+      <div class="g-col good"><h4>Good signs</h4><ul>
+        <li><b>Water nearby</b>: a reservoir, river, waterway or the sea gathers wealth (水为财). <span class="g-auto">on the card</span></li>
+        <li><b>Higher ground or a hill behind</b> gives support, the "black tortoise" (靠山); open, slightly lower land in front. <span class="g-auto">on the card</span></li>
+        <li><b>Parks and greenery</b> close by bring fresh, living qi (生气). <span class="g-auto">on the card</span></li>
+        <li><b>Gentle, curving roads</b> and an MRT within easy walk, so qi and people flow in slowly. <span class="g-auto">on the card</span></li>
+        <li><b>An open view</b> with good airflow: a unit boxed in by other blocks feels heavy and stagnant.</li>
+      </ul></div>
+      <div class="g-col bad"><h4>Watch out for</h4><ul>
+        <li><b>T-junctions and straight roads</b> pointing at the main door: fast "sha" (killing) qi rushes in.</li>
+        <li><b>Sharp building corners</b>, high-voltage substations, cell towers or chimneys aimed at the unit.</li>
+        <li><b>Cemeteries, columbaria and hospitals</b> next door carry heavy yin energy of loss and illness. <span class="g-auto">on the card</span></li>
+        <li><b>Homes below street level</b>: poor ventilation and damp.</li>
+        <li><b>Facing an expressway, MRT track, hawker centre or busy junction</b> close up: rushing sha qi, and real noise.</li>
+        <li><b>Police stations and places of worship</b> right next door are said to carry strong sha qi.</li>
+        <li><b>The number 4</b> in the block or unit number sounds like death (死). <span class="g-auto">on the card</span></li>
+      </ul></div></div></div>
+
+    <div class="g-sec"><h3>2. The main door <small>the mouth of qi</small></h3><div class="g-cols">
+      <div class="g-col good"><h4>Good signs</h4><ul>
+        <li>A <b>clean, bright, open path</b> to the front door, free of clutter, shoes and bins.</li>
+        <li>A <b>small foyer or wall</b> inside the door, so qi gathers before it moves through the home.</li>
+      </ul></div>
+      <div class="g-col bad"><h4>Watch out for</h4><ul>
+        <li>The front door <b>in one line with the back door, a big window or the balcony</b>: qi enters and leaves at once.</li>
+        <li>The door opening <b>straight onto a staircase</b> or straight at a <b>toilet door</b> inside: fresh qi drains away.</li>
+        <li>A <b>lamp post, big tree trunk or sharp corner</b> right outside the door.</li>
+      </ul></div></div></div>
+
+    <div class="g-sec"><h3>3. Flats and condos in Singapore <small>block, corridor, floor</small></h3><div class="g-cols">
+      <div class="g-col good"><h4>Good signs</h4><ul>
+        <li>A <b>bright, roomy lift lobby and corridor</b> with daylight; the unit <b>near the lift but not beside it</b>, so qi has room to settle.</li>
+        <li><b>North or south facing</b> windows: spared the harsh afternoon sun (cooler and cheaper to run, too).</li>
+        <li>A <b>mid floor</b>: high enough for light and privacy, not so high that strong wind brings restlessness.</li>
+        <li>An <b>end unit</b> is fine when the corridor end opens to a window, staircase or exit.</li>
+      </ul></div>
+      <div class="g-col bad"><h4>Watch out for</h4><ul>
+        <li>The door <b>facing the lift, the rubbish chute or a neighbour's door</b> head-on (quarrels, bad smells, no privacy).</li>
+        <li>A door at the end of a <b>long straight corridor</b>: qi rushes at it.</li>
+        <li>A <b>dead-end corridor</b> with no window or exit, or a dark, cramped, stuffy one.</li>
+        <li>The <b>sharp corner of the next block</b> aimed at the door or windows (matters only if the unit is below that block's roof line).</li>
+        <li><b>West facing</b> living areas: hot, harsh afternoon sun (curtains and plants help).</li>
+        <li><b>Two main doors</b> in one flat, which is said to confuse where qi comes in.</li>
+      </ul></div></div></div>
+
+    <div class="g-sec"><h3>4. Inside the home <small>layout red flags</small></h3><div class="g-cols">
+      <div class="g-col good"><h4>Good signs</h4><ul>
+        <li>A <b>square or rectangular</b> layout with all corners present.</li>
+        <li>A <b>calm centre</b> (the "central palace") that is open living space.</li>
+        <li>The <b>stove against a solid wall</b>, well apart from the sink and fridge.</li>
+        <li>Room for the <b>bed headboard against a solid wall</b>, with a view of the door but not in line with it.</li>
+      </ul></div>
+      <div class="g-col bad"><h4>Watch out for</h4><ul>
+        <li>A <b>toilet, kitchen or staircase dead-centre</b>: unsettles health and wealth.</li>
+        <li>The <b>stove facing or beside the sink or fridge</b> (fire against water: family tension), or on an island with no wall behind.</li>
+        <li>Only space for the bed <b>under a window, facing the door, or in line with the bathroom door</b>; mirrors facing the bed.</li>
+        <li><b>L-shaped or triangular units</b>, or a big missing corner (a quarter to a third of a side), said to weaken the part of life that corner stands for.</li>
+      </ul></div></div></div>
+
+    <div class="g-sec"><h3>5. Light, air and upkeep</h3><div class="g-cols">
+      <div class="g-col good"><h4>Good signs</h4><ul>
+        <li><b>Plenty of daylight</b> in the living room and a through breeze (without the door-to-window line above).</li>
+        <li>A home that <b>feels dry and fresh</b>, with healthy plants.</li>
+      </ul></div>
+      <div class="g-col bad"><h4>Watch out for</h4><ul>
+        <li><b>Dark, damp or stuffy</b> rooms: stagnant energy (and often mould).</li>
+        <li><b>Leaking taps</b> (wealth draining away), broken appliances, cracked mirrors, dead plants: fixable, but a sign of how the home was kept.</li>
+      </ul></div></div></div>
+
+    <div class="g-src">Masters do not always agree: some say a small chute or the 13th floor does not matter, and buyers in Singapore rarely turn down a well-priced home over feng shui alone. Many red flags (noise, smell, sun, privacy) are also plain practical reasons. Sources read on 9 Oct 2026:
+      <ul>
+        <li><a href="https://singaporefengshuimaster.sg/which-hdb-unit-has-good-feng-shui-a-buyers-guide-before-you-commit/" target="_blank" rel="noopener noreferrer">Singapore Feng Shui Master: which HDB unit has good feng shui</a></li>
+        <li><a href="https://uchify.com/choose-best-hdb-feng-shui/" target="_blank" rel="noopener noreferrer">Uchify: choosing an HDB BTO unit, per feng shui masters</a></li>
+        <li><a href="https://styledegree.sg/hdb-bto-flat-selection-things-you-must-consider-feng-shui-tips/" target="_blank" rel="noopener noreferrer">Style Degree: BTO flat selection and feng shui</a></li>
+        <li><a href="https://www.homeanddecor.com.sg/how-to/feng-shui-4-things-you-must-know" target="_blank" rel="noopener noreferrer">Home &amp; Decor: feng shui house selection</a></li>
+        <li><a href="https://stackedhomes.com/8-common-feng-shui-property-problems-even-for-people-who-dont-believe-in-it-yes-it-may-affect-the-next-buyer/" target="_blank" rel="noopener noreferrer">Stacked Homes: 8 feng shui property problems</a></li>
+        <li><a href="https://www.edgeprop.my/content/joey-yap-high-rise-feng-shui" target="_blank" rel="noopener noreferrer">EdgeProp: Joey Yap on high-rise feng shui</a></li>
+        <li><a href="https://www.fengshuibalanz.com/feng-shui/home/house-buying/" target="_blank" rel="noopener noreferrer">Feng Shui Balanz: house buying rules</a></li>
+        <li><a href="https://fengshuisource.com/blogs/about-feng-shui/bad-feng-shui-house-location" target="_blank" rel="noopener noreferrer">Feng Shui Source: bad house locations</a></li>
+      </ul></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <div class="cols">
+    <div><h4>How the ranking works</h4><p>For HDB flats we compare the asking price with the middle price of the same flat type sold in the same block over the last 12 months (HDB data from data.gov.sg). The flat type is our best guess from the price.</p></div>
+    <div><h4>Before you call an agent</h4><p>Listings are found by our bot every hour, but a flat can sell any day. Open the listing to check it is still there. "Rough guide" means only a few sales to compare with.</p></div>
+    <div><h4>What the verdicts mean</h4><p><b>Top pick</b>: at least 5% under reliable block sales with a healthy lease. <b>Worth a look</b>: a good mix of price, lease, MRT or a price cut. <b>Short lease</b>: under 60 years left, so CPF and loans are limited. <b>Above market</b>: 5% or more over the block. Every reason is listed on the card.</p></div>
+    <div><h4>Not advice</h4><p>The ☯ feng shui reading follows traditional beliefs; the stars come from the surroundings in map data and the numbers, not from a visit. A guide to spot good value, not a valuation. Prices are asking prices set by the seller. Always check with HDB, a bank and a valuer before you commit.</p></div>
+  </div>
+</footer>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = v => v >= 1e6 ? "S$" + (v/1e6).toFixed(v >= 1e7 ? 1 : 2) + "M" : "S$" + Math.round(v/1e3) + "k";
+const full = v => "S$" + Math.round(v).toLocaleString("en-SG");
+const day = s => new Date(s + "T00:00:00").toLocaleDateString("en-SG", {day:"numeric", month:"short"});
+const SITE = {"propertyguru.com.sg":"PropertyGuru","edgeprop.sg":"EdgeProp","commercialguru.com.sg":"CommercialGuru","propnex.com":"PropNex"};
+const KIND_ORDER = ["hdb_resale","condo_resale","condo_new_launch","ec","bto","shophouse","hdb_shop","coffeeshop","strata_commercial"];
+const state = {kind:"all", sort:"rec", area:"", max:"", q:"", under:false};
+const TIERS = {"Top pick":["v-top","★ Top pick"], "Worth a look":["v-look","👍 Worth a look"], "Fair price":["v-fair","Fair price"],
+  "Short lease":["v-short","⏳ Short lease"], "Above market":["v-above","▲ Above market"], "Not enough data":["v-none","Not enough data"]};
+const TIER_ORDER = Object.keys(TIERS), RECOMMENDED = new Set(["Top pick", "Worth a look"]);
+let ITEMS = [], BTO = [];
+
+function hash(s){let h=2166136261;for(const c of s)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0}
+
+/* A drawn plate for listings without a photo: a skyline of slab blocks in the estate's own colour. */
+function plate(it){
+  const h = hash(it.area || it.name), hue = h % 360, rnd = n => (hash(it.key + n) % 1000) / 1000;
+  const c1 = `hsl(${hue} 20% 27%)`, c2 = `hsl(${(hue+24)%360} 24% 41%)`, sky = `hsl(${(hue+190)%360} 22% 88%)`;
+  let blocks = "", x = -10;
+  for (let i = 0; x < 420; i++){
+    const w = 34 + rnd(i) * 46, ht = 70 + rnd(i + 50) * 105, y = 200 - ht;
+    let win = "";
+    for (let wy = y + 12; wy < 192; wy += 13) for (let wx = x + 7; wx < x + w - 8; wx += 10)
+      if (rnd(i * 7 + wy * 3 + wx) > .35) win += `<rect x="${wx.toFixed(1)}" y="${wy}" width="5" height="6" fill="rgba(255,240,200,${(.15 + rnd(wx+wy)*.5).toFixed(2)})"/>`;
+    blocks += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${ht.toFixed(1)}" fill="${i%2?c1:c2}" opacity="${(.82 + rnd(i+9)*.18).toFixed(2)}"/>${win}`;
+    x += w + 4 + rnd(i + 99) * 12;
+  }
+  const num = (it.name.match(/^(\d+[A-Z]?)\s/) || [])[1] || (it.name.match(/\b[A-Z]/g)||["·"]).slice(0,2).join("");
+  return `<svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <defs><linearGradient id="g${h}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky}"/><stop offset="1" stop-color="hsl(${(hue+40)%360} 30% 74%)"/></linearGradient></defs>
+    <rect width="400" height="200" fill="url(#g${h})"/><circle cx="${300 + rnd(1)*60}" cy="${48 + rnd(2)*20}" r="26" fill="rgba(255,236,190,.75)"/>${blocks}</svg>
+    <span class="town">${esc(it.area || it.label)}</span><span class="num">${esc(num)}</span>`;
+}
+/* Picture order: the listing's own photo, then a OneMap street map with a pin on the block, then the drawn plate. */
+const plateKind = it => it.photo ? " photo" : it.map ? " map" : "";
+const plateHtml = it => it.photo
+  ? `<img src="${esc(it.photo)}" alt="Photo of ${esc(it.name)}" loading="lazy" referrerpolicy="no-referrer"><span class="town">${esc(it.area || it.label)}</span>`
+  : it.map ? `<img src="${esc(it.map)}" alt="Map around ${esc(it.name)}" loading="lazy"><i class="pin"></i><span class="town">${esc(it.area || it.label)}</span>`
+  : plate(it);
+const verdict = it => `<span class="verdict ${TIERS[it.tier][0]}">${TIERS[it.tier][1]}</span>`;
+const whyList = it => it.why && it.why.length ? `<div class="why-h">Why</div><ul class="why">${it.why.map(w => `<li>${esc(w)}</li>`).join("")}</ul>` : "";
+
+function dealBox(it){
+  if (it.deal_pct == null) return it.kind === "hdb_resale"
+    ? `<div class="deal none">No sales of this block in the last year to compare with.</div>` : "";
+  const below = it.deal_pct > 0, diff = Math.abs(it.price - it.median);
+  const span = Math.max(Math.abs(it.deal_pct), 10) * 1.6, pos = Math.min(96, Math.max(4, 50 - it.deal_pct / span * 50));
+  return `<div class="deal ${below ? "good" : "bad"}">
+    <strong>${below ? "▼" : "▲"} ${money(diff)} ${below ? "under" : "over"}</strong> what ${esc(it.type || "similar")} flats in this block sold for
+    <div class="meter" aria-hidden="true"><i style="left:50%"></i><u style="left:${pos}%;background:${below ? "var(--good)" : "var(--bad)"}"></u></div>
+    <div class="meter-l"><span>cheaper</span><span>block price ${money(it.median)}</span><span>dearer</span></div>
+    ${it.reliable ? "" : `<div class="rough">Rough guide · only ${it.sales} sale${it.sales == 1 ? "" : "s"} or an unusual price</div>`}
+  </div>`;
+}
+
+function chips(it){
+  const c = [];
+  if (it.change === "new") c.push(`<span class="chip new">New</span>`);
+  if (it.change === "drop") c.push(`<span class="chip drop">Price cut</span>`);
+  if (it.change === "up") c.push(`<span class="chip up">Price up</span>`);
+  if (it.reliable && it.deal_pct >= 5) c.push(`<span class="chip">${Math.round(it.deal_pct)}% under block</span>`);
+  return c.length ? `<div class="chips">${c.join("")}</div>` : "";
+}
+
+function card(it, i){
+  const lease = /freehold|999/i.test(it.tenure || "") ? "Freehold" : it.lease_left ? `${Math.round(it.lease_left)} yrs` : "–";
+  return `<article class="card" style="animation-delay:${Math.min(i, 12) * 45}ms">
+    <a class="plate${plateKind(it)}" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer" tabindex="-1" aria-hidden="true">${plateHtml(it)}${chips(it)}</a>
+    <div class="body">
+      ${verdict(it)}
+      <div><div class="kind">${esc(it.label)}${it.type ? " · " + esc(it.type) : ""}</div>
+        <h3>${esc(it.name)}</h3><div class="where">${esc(it.area)}</div></div>
+      <div class="price"><b>${full(it.price)}</b>${it.prev_price && it.prev_price !== it.price ? `<s>${full(it.prev_price)}</s>` : ""}</div>
+      <div class="facts">
+        <div><b>${it.sqft ? it.sqft.toLocaleString("en-SG") : "–"}</b><span>sq ft</span></div>
+        <div><b>${it.psf ? "$" + it.psf.toLocaleString("en-SG") : "–"}</b><span>per sq ft</span></div>
+        <div><b>${lease}</b><span>lease left</span></div>
+      </div>
+      ${dealBox(it)}
+      ${whyList(it)}
+      ${fsBox(it)}
+      <a class="open" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer">Open listing <em>${esc(SITE[it.site] || it.site)} ↗</em></a>
+      ${alsoOn(it)}
+      <div class="seen">Found ${day(it.first_seen)}${it.last_seen !== it.first_seen ? " · last checked " + day(it.last_seen) : ""}</div>
+    </div></article>`;
+}
+
+function pick(it, i){
+  return `<a class="pick" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer">
+    <div class="plate${plateKind(it)}">${plateHtml(it)}</div><span class="rank">${i + 1}</span>
+    <div class="pick-body"><div class="where">${esc(it.area)} · ${esc(it.type || it.label)}</div>
+      <h3>${esc(it.name)}</h3><div class="price">${full(it.price)}</div>
+      <span class="save">${it.deal_pct > 0 ? money(it.median - it.price) + " under block price" : esc(TIERS[it.tier][1])}</span>
+      <div class="reason">${esc((it.why || []).slice(1).join(" · "))}</div></div></a>`;
+}
+
+const dealKey = it => it.deal_pct == null ? [2, 0] : [it.reliable ? 0 : 1, -it.deal_pct];
+const stars = n => "★".repeat(n) + "☆".repeat(5 - n);
+const fsBox = it => {
+  const f = it.fs; if (!f) return "";
+  const li = (cls, xs) => xs.map(x => `<li class="${cls}">${esc(x)}</li>`).join("");
+  const none = !f.good.length && !f.bad.length ? `<li>Neutral surroundings and numbers: judge the unit itself at the viewing.</li>` : "";
+  return `<div class="fs"><div class="fs-h">☯ Feng shui <span class="stars" aria-label="${f.stars} of 5">${stars(f.stars)}</span></div>
+    <ul>${li("g", f.good)}${li("b", f.bad)}${none}</ul>
+    <a class="check" href="#fengshui">Check at the viewing: door line, T-junction, kitchen, bed, shape →</a></div>`;
+};
+const alsoOn = it => it.also && it.also.length ? `<div class="also">Also listed on ${it.also.map(a => `<a href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">${esc(SITE[a.site] || a.site)}</a>`).join(", ")}</div>` : "";
+const freehold = it => /freehold|999/i.test(it.tenure || "");
+const SORTS = {
+  rec: (a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier) || b.score - a.score,
+  lease: (a, b) => (freehold(b) ? 999 : b.lease_left ?? -1) - (freehold(a) ? 999 : a.lease_left ?? -1),
+  mrt: (a, b) => (a.mrt_m ?? 1e9) - (b.mrt_m ?? 1e9),
+  luck: (a, b) => (b.fs?.score ?? 0) - (a.fs?.score ?? 0) || a.price - b.price,
+  estate: (a, b) => (a.area || "~").localeCompare(b.area || "~") || a.price - b.price,
+  deal: (a, b) => { const x = dealKey(a), y = dealKey(b); return x[0] - y[0] || x[1] - y[1] || b.first_seen.localeCompare(a.first_seen); },
+  low: (a, b) => a.price - b.price, high: (a, b) => b.price - a.price,
+  new: (a, b) => b.first_seen.localeCompare(a.first_seen) || a.price - b.price,
+  psf: (a, b) => (a.psf ?? 1e9) - (b.psf ?? 1e9), size: (a, b) => (b.sqft ?? 0) - (a.sqft ?? 0),
+};
+
+const STATUS = {open:"Applications open", upcoming:"Launching", expected:"Expected"};
+const ym = s => s ? new Date(s + "-01T00:00:00").toLocaleDateString("en-SG", {month:"short", year:"numeric"}) : "";
+function btoCard(b, i){
+  const it = {key:b.project, name:b.project, area:b.town, label:"BTO"};
+  const price = b.price_from ? `From ${money(b.price_from)}${b.price_to ? " to " + money(b.price_to) : ""}` : "Prices not out yet";
+  const link = b.url ? `<a class="open" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">Read more <em>${esc(b.url.split("/")[2].replace("www.", ""))} ↗</em></a>` : "";
+  return `<article class="card bto" style="animation-delay:${Math.min(i, 12) * 45}ms">
+    <div class="plate">${plate(it)}<div class="chips"><span class="chip ${b.status === "open" ? "drop" : "new"}">${esc(STATUS[b.status] || "")}${b.status === "open" ? "" : " " + esc(ym(b.launch))}</span></div></div>
+    <div class="body">
+      <div><div class="kind">BTO${b.classification ? " · " + esc(b.classification) : ""}</div><h3>${esc(b.project)}</h3><div class="where">${esc(b.town)}</div></div>
+      <div class="price"><b style="font-size:28px">${price}</b></div>
+      <div class="facts">
+        <div><b>${esc(b.flat_types || "–")}</b><span>flat types</span></div>
+        <div><b>${esc(b.completion || "–")}</b><span>ready by</span></div>
+        <div><b>${esc(ym(b.launch) || "–")}</b><span>sales launch</span></div>
+      </div>
+      ${b.note ? `<div class="deal none">${esc(b.note)}</div>` : ""}
+      ${link}
+      <div class="seen">BTO prices are before grants. Apply on the HDB Flat Portal during the sales launch.</div>
+    </div></article>`;
+}
+
+function render(){
+  if (state.kind === "bto_up"){
+    const extra = ITEMS.filter(it => it.kind === "bto");
+    $("#count").textContent = `${BTO.length} BTO project${BTO.length === 1 ? "" : "s"} open or coming up`;
+    $("#grid").innerHTML = BTO.map(btoCard).join("") + extra.map((it, i) => card(it, i + BTO.length)).join("")
+      || `<div class="empty">No BTO projects announced right now.</div>`;
+    return;
+  }
+  const q = state.q.trim().toLowerCase();
+  const list = ITEMS.filter(it => (state.kind === "all" || it.kind === state.kind || (state.kind === "rec" && RECOMMENDED.has(it.tier)))
+    && (!state.area || it.area === state.area) && (!state.max || it.price <= +state.max)
+    && (!state.under || it.deal_pct > 0) && (!q || (it.name + " " + it.area).toLowerCase().includes(q)))
+    .sort(SORTS[state.sort]);
+  $("#count").textContent = `${list.length} home${list.length === 1 ? "" : "s"} shown`;
+  $("#grid").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">Nothing matches. Try another area or price.</div>`;
+  const qs = new URLSearchParams(Object.entries(state).filter(([k, v]) => v && !(k === "kind" && v === "all") && !(k === "sort" && v === "rec")));
+  history.replaceState(null, "", qs.toString() ? "?" + qs : location.pathname);
+}
+
+function setup(data){
+  ITEMS = data.items; BTO = data.bto || [];
+  const upd = new Date(data.updated);
+  $("#updated").textContent = "Updated " + upd.toLocaleString("en-SG", {weekday:"short", day:"numeric", month:"short", hour:"numeric", minute:"2-digit"});
+  const weekAgo = new Date(upd - 7 * 864e5).toISOString().slice(0, 10);
+  $("#s-total").textContent = ITEMS.length;
+  $("#s-under").textContent = ITEMS.filter(it => RECOMMENDED.has(it.tier)).length;
+  $("#s-bto").textContent = BTO.length;
+  $("#s-new").textContent = ITEMS.filter(it => it.first_seen >= weekAgo).length;
+
+  const top = ITEMS.filter(it => RECOMMENDED.has(it.tier)).sort(SORTS.rec).slice(0, 3);
+  if (top.length){ $("#picks").innerHTML = top.map(pick).join(""); $("#picks-wrap").hidden = false; }
+
+  const counts = {}; ITEMS.forEach(it => counts[it.kind] = (counts[it.kind] || 0) + 1);
+  const labels = Object.fromEntries(ITEMS.map(it => [it.kind, it.label]));
+  const tabs = [["all", "Everything", ITEMS.length], ["rec", "★ Recommended", ITEMS.filter(it => RECOMMENDED.has(it.tier)).length],
+    ...KIND_ORDER.filter(k => counts[k] && k !== "bto").map(k => [k, labels[k], counts[k]]),
+    ...(BTO.length || counts.bto ? [["bto_up", "Upcoming BTO", BTO.length + (counts.bto || 0)]] : [])];
+  $("#tabs").innerHTML = tabs.map(([k, l, n]) => `<button class="tab" data-k="${k}" aria-pressed="false">${esc(l)}<span>${n}</span></button>`).join("");
+  [...new Set(ITEMS.map(it => it.area).filter(Boolean))].sort().forEach(a => $("#area").add(new Option(a, a)));
+  [...$("#max").options].slice(1).forEach(o => o.textContent = money(+o.value));
+
+  const qs = new URLSearchParams(location.search);
+  for (const k of Object.keys(state)) if (qs.has(k)) state[k] = k === "under" ? qs.get(k) === "true" : qs.get(k);
+  const sync = () => {
+    document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === state.kind));
+    $("#sort").value = state.sort; $("#area").value = state.area; $("#max").value = state.max; $("#q").value = state.q; $("#under").checked = state.under;
+  };
+  $("#tabs").addEventListener("click", e => { const b = e.target.closest(".tab"); if (b){ state.kind = b.dataset.k; sync(); render(); } });
+  for (const id of ["sort", "area", "max"]) $("#" + id).addEventListener("change", e => { state[id] = e.target.value; render(); });
+  $("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
+  $("#under").addEventListener("change", e => { state.under = e.target.checked; render(); });
+  sync(); render();
+}
+
+fetch("live/data.json", {cache: "no-cache"}).then(r => { if (!r.ok) throw r.status; return r.json(); }).then(setup)
+  .catch(() => { $("#updated").textContent = "Could not load listings"; $("#grid").innerHTML = `<div class="empty">The listings could not be loaded. Please try again in a minute.</div>`; });
+</script>
+</body>
+</html>

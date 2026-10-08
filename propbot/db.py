@@ -111,10 +111,10 @@ CREATE TABLE IF NOT EXISTS favorites (
   id INTEGER PRIMARY KEY AUTOINCREMENT, message_id INTEGER, card_id INTEGER, saved_at TEXT,
   last_reanalysed_at TEXT);
 CREATE TABLE IF NOT EXISTS profile_overrides (key TEXT PRIMARY KEY, value TEXT);
-CREATE TABLE IF NOT EXISTS bto_launches (
-  id INTEGER PRIMARY KEY AUTOINCREMENT, project TEXT, town TEXT, classification TEXT,
-  flat_types_json TEXT, price_ranges_json TEXT, application_open TEXT, application_close TEXT,
-  completion_est TEXT, url TEXT, fetched_at TEXT);
+-- open and upcoming BTO projects, replaced by the weekly check (propbot/bto.py)
+CREATE TABLE IF NOT EXISTS bto_upcoming (
+  project TEXT PRIMARY KEY, town TEXT, launch TEXT, status TEXT, classification TEXT, flat_types TEXT,
+  price_from REAL, price_to REAL, completion TEXT, url TEXT, note TEXT, fetched_on TEXT);
 CREATE TABLE IF NOT EXISTS alerts_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, run_id TEXT, kind TEXT, key TEXT, text TEXT,
   sent INTEGER);
@@ -143,6 +143,11 @@ CREATE TABLE IF NOT EXISTS report_listing (
   lease_left REAL, sqft REAL, price REAL, prev_price REAL, price_changed_on TEXT,
   first_seen TEXT, last_seen TEXT, status TEXT DEFAULT 'listed', gone_on TEXT, gone_by TEXT);
 CREATE INDEX IF NOT EXISTS report_listing_kind ON report_listing(kind, status);
+
+-- listing photos for the family website (propbot/site.py); image '' = none found on checked_on
+CREATE TABLE IF NOT EXISTS listing_image (key TEXT PRIMARY KEY, image TEXT, checked_on TEXT);
+-- places near a home for the feng shui reading (propbot/fengshui.py), reloaded monthly
+CREATE TABLE IF NOT EXISTS poi (kind TEXT, name TEXT, lat REAL, lon REAL, PRIMARY KEY (kind, name));
 
 -- location signals (propbot/geo.py)
 CREATE TABLE IF NOT EXISTS mrt_exits (station TEXT, exit_code TEXT, lat REAL, lon REAL, PRIMARY KEY (station, exit_code));

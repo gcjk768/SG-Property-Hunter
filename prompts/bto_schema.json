@@ -1,0 +1,10 @@
+{"type": "object", "required": ["projects", "run_note"], "properties": {
+  "run_note": {"type": "string"},
+  "projects": {"type": "array", "items": {"type": "object",
+    "required": ["project", "town", "launch", "status", "classification", "flat_types", "price_from", "price_to", "completion", "url", "note"],
+    "properties": {
+      "project": {"type": "string"}, "town": {"type": "string"}, "launch": {"type": ["string", "null"]},
+      "status": {"type": "string", "enum": ["open", "upcoming", "expected"]},
+      "classification": {"type": ["string", "null"]}, "flat_types": {"type": ["string", "null"]},
+      "price_from": {"type": ["number", "null"]}, "price_to": {"type": ["number", "null"]},
+      "completion": {"type": ["string", "null"]}, "url": {"type": ["string", "null"]}, "note": {"type": ["string", "null"]}}}}}}
