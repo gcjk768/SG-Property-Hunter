@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-from . import condo_report, hunt, pulse, ura
+from . import condo_report, hunt, pulse
 from .claude import ClaudeUnavailable
 from .config import ConfigError, Profile, Settings, apply_profile_overrides, parse_override_value
 from .db import DB, clear_user_profile, set_user_profile, user_profile
@@ -29,9 +29,9 @@ from .telegram import TelegramClient, esc
 
 log = logging.getLogger("propbot.bot")
 
-COMMANDS = ("proppulse", "propcondo", "propcondoreport", "prophunt", "propanalyse", "propask", "propprofile", "propstatus", "prophelp")
+COMMANDS = ("proppulse", "propcondoreport", "prophunt", "propanalyse", "propask", "propprofile", "propstatus", "prophelp")
 # a friend in a private chat gets the free commands only; hunt and ask spend the owner's Claude plan
-FRIEND_COMMANDS = {"proppulse", "propcondo", "propanalyse", "propprofile", "propstatus", "prophelp"}
+FRIEND_COMMANDS = {"proppulse", "propanalyse", "propprofile", "propstatus", "prophelp"}
 PROFILE_KEYS = ("citizenship", "age", "first_timer", "marital_status", "buying_with", "gross_monthly_income",
                 "variable_monthly_income", "monthly_debt_repayments", "cpf_oa_balance", "cash_available",
                 "properties_owned", "intent", "hold_years", "benchmark_return_pct", "max_monthly_commitment_pct")
@@ -114,7 +114,7 @@ class Bot:
             self._who(msg, where)
             if self._private_friend and parsed[0] not in FRIEND_COMMANDS:
                 self.send(where, f"{SECTION_TITLES['error']} <b>NOT AVAILABLE</b> · /{esc(parsed[0])}\n\n"
-                          "<i>That one uses the owner's Claude plan. Try /propanalyse, /propcondo or /proppulse.</i>")
+                          "<i>That one uses the owner's Claude plan. Try /propanalyse or /proppulse.</i>")
                 return
             self.run_command(*parsed, where)
 
@@ -181,41 +181,6 @@ class Bot:
 
     def cmd_pulse(self, arg, where) -> None:
         self.pulse(where, manual=True)
-
-    # ------------------------------------------------------------ condo pulse (URA private resale)
-    def condo_pulse(self, where, *, manual: bool, now: datetime | None = None) -> list[str] | None:
-        """Notable private resales from the URA Data Service; needs URA_ACCESS_KEY."""
-        if not self.s.secrets.ura_access_key:
-            if manual:
-                self.send(where, header(REPORT_TITLES["condo"], "not set up") + "\n\n<i>Needs URA_ACCESS_KEY in .env. URA gives that key only to registered companies, so this stays off for individuals.</i>")
-            return None
-        with self._pulse_lock:
-            now = now or datetime.now(self.tz)
-            today = now.date()
-            if self.db.meta_get("ura_day") != today.isoformat() or not self.db.scalar("SELECT COUNT(*) FROM ura_resi", default=0):
-                ura.refresh(self.db, self.s, self.limiter, self.http, today)
-                self.db.meta_set("ura_day", today.isoformat())
-            deals, ctx = ura.picks(self.db, self.s, today)
-            if not manual:
-                deals = [d for d in deals if d.new]
-                if not deals:
-                    self.vault.activity("condo", "checked, nothing notable")
-                    return None
-            ura.data_outlook(deals, self.s, self.db, today)
-            for d in deals:
-                d.mrt = self.geo.describe(f"{d.project} {d.street}", "", today)
-            msgs = ura.render(deals, ctx, self.s)
-            if where is None:
-                return msgs
-            self.send(where, msgs, buttons=[("🏠 HDB pulse", "proppulse"), ("📊 Status", "propstatus")])
-            ura.mark_alerted(self.db, deals)
-            link = self.vault.report("Condo pulse", "\n\n".join(plain(m) for m in msgs) + "\n")
-            self.vault.activity("condo", f"{'manual' if manual else 'hourly'}: {ctx['new']} new notable, posted {len(deals)}: "
-                                + "; ".join(f"{d.project.title()} S${d.price:,.0f}" for d in deals)[:800], link or "")
-            return msgs
-
-    def cmd_condo(self, arg, where) -> None:
-        self.condo_pulse(where, manual=True)
 
     # ------------------------------------------------------------ listing hunt
     def hunt(self, where, *, manual: bool, now: datetime | None = None, limit: int | None = None) -> int:
@@ -419,8 +384,6 @@ class Bot:
             f"📦 {q('SELECT COUNT(*) FROM hdb_resale', default=0):,} sales stored · newest "
             f"{esc(q('SELECT MAX(month) FROM hdb_resale', default='none'))} · rents {esc(q('SELECT MAX(quarter) FROM hdb_rent', default='none'))}",
             f"🔔 {q('SELECT COUNT(*) FROM pulse_alerted', default=0):,} deals already posted",
-            f"🏙 {q('SELECT COUNT(*) FROM ura_resi', default=0):,} private sales stored"
-            + ("" if self.s.secrets.ura_access_key else " · <i>URA_ACCESS_KEY not set</i>"),
             f"🚇 {q('SELECT COUNT(DISTINCT station) FROM mrt_exits', default=0)} MRT stations"
             + f" · <i>OneMap {esc(onemap_state(self.s))}</i>", "",
             f"🤖 <b>Claude</b> · {claude.get('today', 0)} / {claude.get('day_limit')} calls today · {esc(self.s.claude.model)}",
@@ -431,7 +394,6 @@ class Bot:
         self.send(where, "\n".join([
             f"{SECTION_TITLES['help']} <b>HELP</b> · SG Property Hunter", "",
             "🏠 <b>/proppulse</b> · notable HDB resale deals now",
-            "🏙 <b>/propcondo</b> · private condo resales (needs a URA company key, off by default)",
             "📄 <b>/propcondoreport</b> · condo PDF now (resale and new launch, ranked; owner only)",
             "🏘 <b>/prophunt</b> · real listings for sale now (Claude web search, owner only)",
             "👤 <b>/propprofile</b> · set your own income, cash and CPF for /propanalyse",
@@ -455,10 +417,6 @@ class Bot:
         if self.s.pulse.enabled and now.minute >= self.s.pulse.check_minute and self.db.meta_get("pulse_slot") != slot:
             self.db.meta_set("pulse_slot", slot)
             self.pulse((self.chat, self.thread), manual=False, now=now)
-        if (self.s.pulse.enabled and self.s.secrets.ura_access_key and now.minute >= self.s.pulse.check_minute + 5
-                and self.db.meta_get("condo_slot") != slot):
-            self.db.meta_set("condo_slot", slot)
-            self.condo_pulse((self.chat, self.thread), manual=False, now=now)
         if self.s.hunt.enabled and now.minute >= self.s.hunt.check_minute and self.db.meta_get("hunt_slot") != slot:
             self.db.meta_set("hunt_slot", slot)
             self.hunt((self.chat, self.thread), manual=False, now=now)

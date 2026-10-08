@@ -37,10 +37,9 @@ still runs the HDB and condo deal alerts and `/propanalyse`, but not the hunt or
 
 | Key | What it adds | Where to get it |
 | --- | --- | --- |
-| `URA_ACCESS_KEY` | Private condo deals (`/propcondo`) and condo price trends | URA issues it only to registered companies at https://eservice.ura.gov.sg/maps/api/, so most individuals cannot get one. Skip it |
 | `ONEMAP_EMAIL` and `ONEMAP_PASSWORD`, or `ONEMAP_ACCESS_TOKEN` | Distance to the nearest MRT station on every card | Register at https://www.onemap.gov.sg/apidocs/. With the email and password the bot renews its own token. A pasted `ONEMAP_ACCESS_TOKEN` works for about 3 days, then the distance line drops out until you paste a new one. `propbot status` shows the expiry |
 
-Without these keys the bot works and simply leaves those lines out. Without the URA key, condo cards show the model's `est` outlook instead of a `data` one, and there is no `/propcondo`. HDB deals, the MRT station list
+Without these keys the bot works and simply leaves those lines out. Condo cards show the model's `est` outlook, because private condo transactions have no free source for individuals. HDB deals, the MRT station list
 and planned stations need no key.
 
 ## 5. Fill in `.env`
@@ -50,7 +49,6 @@ Copy `.env.example` to `.env` in the project folder and fill it in. Never commit
 ```
 TELEGRAM_BOT_TOKEN=123456:ABC...
 CLAUDE_CODE_OAUTH_TOKEN=...        # or ANTHROPIC_API_KEY=...
-URA_ACCESS_KEY=                    # optional
 ONEMAP_EMAIL=                      # optional, with the password the bot renews its own token
 ONEMAP_PASSWORD=                   # optional
 ONEMAP_ACCESS_TOKEN=               # optional alternative: a pasted token, lasts about 3 days
@@ -113,8 +111,7 @@ It stays inside data.gov.sg's daily limit. The bot keeps itself current after th
 propbot serve
 ```
 
-This listens for commands and posts an HDB pulse at minute 7 of every hour, a condo pulse about 5 minutes
-later if you set the URA key, and a listing hunt at minute 37 if Claude is set up. It only posts a pulse
+This listens for commands and posts an HDB pulse at minute 7 of every hour, a listing hunt at minute 37 if Claude is set up, and the condo PDF on Sundays at 09:00. It only posts a pulse
 when something new appears. Leave it running, or use Docker as below.
 
 In your chat with the bot, send `/prophelp` for the command list.
@@ -144,7 +141,7 @@ A friend does not need their own copy. Add their Telegram user id (they get it f
 3. Sends `/propanalyse hdb_resale, Tampines, 600000, 1001, 99 year, 68, 3200`.
 
 Their figures are stored separately and used only for their own `/propanalyse`. They never see yours.
-Friends can use `/proppulse`, `/propcondo`, `/propanalyse`, `/propprofile`, `/propstatus` and `/prophelp`.
+Friends can use `/proppulse`, `/propanalyse`, `/propprofile`, `/propstatus` and `/prophelp`.
 `/prophunt` and `/propask` stay owner only, because they use your Claude plan.
 
 ## Checking the lease decay assumptions
@@ -160,6 +157,5 @@ for the second time, by lease band. The current result is in the README.
 | No messages arrive | You did not press Start on the bot, or `chat_id` is wrong |
 | `profile.gross_monthly_income is 0` | Fill in the profile, step 6 |
 | No 🚇 line on cards | OneMap login not set or the pasted token expired (`propbot status` shows which). Planned stations still show by name |
-| `/propcondo` says URA key missing | Expected for individuals. URA gives the key only to companies |
 | Hunt and `/propask` do nothing | Claude token not set, step 3 |
 | Emoji crash on a Windows console | Update to the latest code. The command line now forces UTF-8 |

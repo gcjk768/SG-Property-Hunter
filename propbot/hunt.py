@@ -17,7 +17,6 @@ from urllib.parse import quote_plus, urlsplit
 
 from .config import Settings
 from .db import DB
-from . import ura
 from .engine.projection import value_outlook
 from .pulse import SQFT_PER_SQM, months_back, town_cagr
 from .render import MSG_BUDGET, REPORT_TITLES, card, dot, header, note, outlook_line, outlook_years
@@ -164,14 +163,12 @@ def hdb_context(listings: list[Listing], db: DB, today) -> None:
 
 def data_outlook(listings: list[Listing], settings: Settings, db: DB, today) -> None:
     """Replace Claude's guess with a transaction trend where one exists: the HDB town's resale trend
-    or the condo project's own URA resale trend, each continued with the lease decay table."""
+    continued with the lease decay table (condos keep Claude's estimate: no free source of private sales)."""
     a = settings.assumptions
     for x in listings:
         tc, what = None, ""
         if x.category == "hdb_resale" and x.area:
             tc, what = town_cagr(db, x.area, None, today), f"{x.area.title()} HDB resales"
-        elif x.category in ("condo_resale", "ec") and x.name:
-            tc, what = ura.project_cagr(db, x.name, today), f"{x.name.title()} resales"
         if not tc:
             continue
         cagr, n = tc

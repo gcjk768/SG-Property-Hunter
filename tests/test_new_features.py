@@ -1,4 +1,4 @@
-"""Data-backed outlook, URA condo pulse, location signals, lease decay backtest, rate stress, friend profiles."""
+"""Data-backed outlook, location signals, lease decay backtest, rate stress, friend profiles."""
 import json
 from datetime import date
 from types import SimpleNamespace
@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from propbot import backtest, geo, pulse, ura
+from propbot import backtest, geo, pulse
 from propbot.config import apply_profile_overrides
 from propbot.engine.card import build_card
 from propbot.engine.projection import decay_pct, value_outlook
@@ -61,60 +61,6 @@ def test_data_outlook_card_says_data(settings):
     d = pulse.Deal("k", "2026-09", "BISHAN", "4 ROOM", "1", "ST", "07 TO 09", 90, 70.0, 600_000, 7000, 5, None, None,
                    outlook_pct=8.0, outlook_reason="Bishan 4 room sales +3.7%/yr")
     assert "🔮 🟢 5y data ▲8%" in pulse.deal_card(1, d, settings.pulse)
-
-
-# ------------------------------------------------------------ 5. URA private resale
-def ura_payload():
-    def tx(area, price, date_, tenure="99 yrs lease commencing from 2010", sale="3", floor="06-10"):
-        return {"area": str(area), "floorRange": floor, "noOfUnits": "1", "contractDate": date_, "typeOfSale": sale,
-                "price": str(price), "propertyType": "Condominium", "district": "19", "tenure": tenure}
-    cheap = [tx(100, 1_300_000, "0926")]
-    normal = [tx(100, 1_800_000, f"0{m}26", floor=f"0{m}-0{m}") for m in range(1, 9)]
-    normal += [tx(100, 1_800_000, "0926", floor="09-12"), tx(100, 1_800_000, "1026", floor="09-12")]
-    old = [tx(100, 1_500_000, m) for m in ("0822", "0922", "1022")]            # S$15,000 per sqm four years ago
-    new_sale = [tx(100, 2_500_000, "0926", sale="1")]
-    return {"Status": "Success", "Result": [
-        {"project": "TEST RESIDENCES", "street": "TEST ROAD", "marketSegment": "OCR", "transaction": cheap + normal + old + new_sale}]}
-
-
-def ura_client(calls):
-    def handler(req):
-        calls.append(str(req.url))
-        if "insertNewToken" in str(req.url):
-            return httpx.Response(200, json={"Status": "Success", "Result": "TOKEN"})
-        batch = req.url.params["batch"]
-        return httpx.Response(200, json=ura_payload() if batch == "1" else {"Status": "Success", "Result": []})
-    return httpx.Client(transport=httpx.MockTransport(handler))
-
-
-def test_ura_parsing():
-    assert ura.contract_month("0925") == "2025-09" and ura.contract_month("") == ""
-    assert ura.tenure_parts("99 yrs lease commencing from 2010") == (False, 99, 2010)
-    assert ura.tenure_parts("Freehold")[0] is True and ura.tenure_parts("999 yrs lease commencing from 1885")[0] is True
-    assert ura.lease_left("99 yrs lease commencing from 2010", date(2026, 10, 3)) == (False, 83.0)
-
-
-def test_ura_refresh_picks_cheap_resale_and_ignores_new_sales(settings, db, limiter):
-    s = apply_profile_overrides(settings, {})
-    s.secrets.ura_access_key = "KEY"
-    calls = []
-    http = ura_client(calls)
-    added = ura.refresh(db, s, limiter, http, TODAY)
-    assert added == 15 and sum("insertNewToken" in c for c in calls) == 1        # one token, four data batches
-    assert len([c for c in calls if "invokeUraDS" in c]) == 4
-    deals, ctx = ura.picks(db, s, TODAY)
-    assert [d.project for d in deals] == ["TEST RESIDENCES"] and deals[0].price == 1_300_000   # the new sale is not a resale
-    assert round(deals[0].discount_pct) == 28 and deals[0].lease_left == 83 and ctx["new"] == 1
-    ura.mark_alerted(db, deals)
-    assert ura.picks(db, s, TODAY)[1]["new"] == 0
-    ura.data_outlook(deals, s, db, TODAY)
-    assert deals[0].outlook_pct is not None and "Test Residences resales" in deals[0].outlook_reason
-    msgs = ura.render(deals, ctx, s)
-    assert all(len(m) < 4096 for m in msgs) and "CONDO RESALE DEALS" in msgs[0] and "5y data" in "".join(msgs)
-
-
-def test_ura_without_key_does_nothing(settings, db, limiter):
-    assert ura.refresh(db, settings, limiter, ura_client([]), TODAY) == 0
 
 
 # ------------------------------------------------------------ 4. location signals
@@ -305,12 +251,6 @@ def test_owner_profile_command_points_at_the_vault(settings, db, limiter, tmp_pa
     assert "Profile.md" in bot.tg.sent[-1][2]
     from propbot.db import user_profile
     assert user_profile(db, 42) == {}
-
-
-def test_condo_command_without_key_explains(settings, db, limiter):
-    bot = make_bot(settings, db, limiter, HISTORY)
-    bot.cmd_condo("", (CHAT, TOPIC))
-    assert "URA_ACCESS_KEY" in bot.tg.sent[-1][2]
 
 
 def test_db_reads_are_safe_across_threads(db):

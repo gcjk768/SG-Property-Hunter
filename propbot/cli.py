@@ -308,11 +308,9 @@ def cmd_status(args) -> int:
         print(f"Obsidian vault: {v.base} ({'writable' if v.available() else 'NOT available'})")
     else:
         print("Obsidian vault: off (obsidian.enabled is false)")
-    print(f"HDB resale stored: {db.scalar('SELECT COUNT(*) FROM hdb_resale', default=0):,}; private sales stored: "
-          f"{db.scalar('SELECT COUNT(*) FROM ura_resi', default=0):,}; MRT stations: "
+    print(f"HDB resale stored: {db.scalar('SELECT COUNT(*) FROM hdb_resale', default=0):,}; MRT stations: "
           f"{db.scalar('SELECT COUNT(DISTINCT station) FROM mrt_exits', default=0)}")
-    print("Keys: URA " + ("set" if settings.secrets.ura_access_key else "NOT set") + ", OneMap "
-          + onemap_state(settings) + ", Claude "
+    print("Keys: OneMap " + onemap_state(settings) + ", Claude "
           + ("set" if settings.secrets.claude_code_oauth_token or settings.secrets.anthropic_api_key else "NOT set"))
     rows = db.all("SELECT name, downloaded_at, rows FROM datasets")
     print("Datasets: " + (", ".join(f"{r['name']} ({r['downloaded_at']}, {r['rows']} rows)" for r in rows) or "none yet"))
@@ -389,9 +387,9 @@ def cmd_condo_report(args) -> int:
 
 
 def cmd_backfill(args) -> int:
-    """Download the full HDB resale history (2017 on) and, with a URA key, every private sale of the last five years."""
+    """Download the full HDB resale history (2017 on)."""
     import httpx
-    from . import pulse, ura
+    from . import pulse
     from .ratelimit import RateLimiter
     settings, db = _settings(args, require_income=False)
     limiter = RateLimiter(db, settings, run_id=f"backfill-{datetime.now():%Y%m%d%H%M}")
@@ -404,11 +402,6 @@ def cmd_backfill(args) -> int:
             added += pulse.fetch_months(db, settings, limiter, http, months[i:i + 12])
             print(f"HDB resale {months[min(i + 11, len(months) - 1)]} to {months[i]}: {added:,} new sales so far")
         print(f"HDB resale stored: {db.scalar('SELECT COUNT(*) FROM hdb_resale', default=0):,}")
-        if settings.secrets.ura_access_key:
-            n = ura.refresh(db, settings, limiter, http, today)
-            print(f"URA private sales: {n:,} new, {db.scalar('SELECT COUNT(*) FROM ura_resi', default=0):,} stored")
-        else:
-            print("URA_ACCESS_KEY is not set in .env, so private condo data was skipped")
     return 0
 
 
@@ -509,7 +502,7 @@ def build_parser() -> argparse.ArgumentParser:
     co.add_argument("--post", action="store_true")
     co.set_defaults(func=cmd_condo_report)
 
-    bf = sub.add_parser("backfill", help="download the full HDB resale history (and URA private sales with a key)")
+    bf = sub.add_parser("backfill", help="download the full HDB resale history")
     bf.add_argument("--date")
     bf.set_defaults(func=cmd_backfill)
 

@@ -162,7 +162,6 @@ class ToggleCfg(_Strict):
 
 class SourcesCfg(_Strict):
     datagov: DatagovCfg = Field(default_factory=DatagovCfg)
-    ura: ToggleCfg = Field(default_factory=ToggleCfg)
     onemap: ToggleCfg = Field(default_factory=ToggleCfg)
     listing_domains_allowed: list[str] = Field(default_factory=list)
     never_fetch_domains: list[str] = Field(default_factory=list)
@@ -279,7 +278,6 @@ class Secrets(BaseModel):
     telegram_bot_token: str = ""
     claude_code_oauth_token: str = ""
     anthropic_api_key: str = ""
-    ura_access_key: str = ""
     onemap_email: str = ""
     onemap_password: str = ""
     onemap_access_token: str = ""      # a token pasted from OneMap; expires after about 3 days
@@ -386,7 +384,7 @@ def _read_env(base_dir: Path) -> Secrets:
     if env_file.exists():
         values.update({k: v or "" for k, v in dotenv_values(env_file).items()})
     for key in ("TELEGRAM_BOT_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY",
-                "URA_ACCESS_KEY", "ONEMAP_EMAIL", "ONEMAP_PASSWORD", "ONEMAP_ACCESS_TOKEN", "TZ"):
+                "ONEMAP_EMAIL", "ONEMAP_PASSWORD", "ONEMAP_ACCESS_TOKEN", "TZ"):
         if os.environ.get(key):
             values[key] = os.environ[key]
     return Secrets(**{k.lower(): v for k, v in values.items() if k.lower() in Secrets.model_fields})

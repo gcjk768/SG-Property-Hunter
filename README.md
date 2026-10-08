@@ -26,7 +26,7 @@ Logos: Telegram, Docker, Claude, Obsidian, SQLite and Python are the official br
 | 1 | Config and safety floors, SQLite, rate limiter, polite fetcher, run lock, Telegram client, Claude wrapper, alerts | Done, tested |
 | 2 | Rules file, loader, weekly checker, MRT pipeline | Done, tested |
 | 3 | Eligibility, costs, financing, projection, verdict, `propbot analyse` | Done, tested |
-| 4 | data.gov.sg HDB sales and rents, URA private sales, MRT exits, OneMap geocoding, `propbot backfill` | Done and tested. URA needs a company key, so it is dormant. Live SORA rates not built |
+| 4 | data.gov.sg HDB sales and rents, MRT exits, OneMap geocoding, `propbot backfill` | Done and tested. Live SORA rates not built |
 | 5 | Hourly HDB pulse, condo pulse, listing hunt with data outlook and MRT line | Done, tested. The full daily discover, curate and `propbot run` pipeline is not built |
 | 6 | Telegram bot, per user profiles, scheduler, status, Docker, compose, setup guide | Done. Favourites and `propbot purge` are not built |
 
@@ -38,7 +38,7 @@ New here? Start with [docs/SETUP.md](docs/SETUP.md).
 | Command | What | Needs |
 | --- | --- | --- |
 | `/proppulse` | HDB resale sales that are cheap for their town, flat type and lease band, or high yield | nothing |
-| `/propcondo` | Private condo resales cheap for their own project | URA key, company registration only, so off for most people |
+| `/propcondoreport` | Condo PDF now (resale and new launch, ranked); also posted by itself every Sunday 09:00 | Owner only, two Claude calls |
 | `/prophunt` | Real listings found by Claude web search, grouped by estate | Claude token, owner only |
 | `/propanalyse` | Full card for one property: upfront cost, loan, stress tests, 10 year outlook, verdict | your profile |
 | `/propprofile` | Set your own income, cash and CPF (friends) | nothing |
@@ -156,7 +156,7 @@ The table in `config.yaml` is unchanged. Moving it is your call. The raw output 
 
 - **Live SORA rates.** The bank rate is assumed in `config.yaml`. Loading MAS SORA would make the stress test start from today's rate.
 - **Master Plan zoning and distance to planned stations.** LTA has not published coordinates for most planned stations, so they are matched by name only.
-- **Private condo data.** URA issues its key only to registered companies, so `/propcondo` and condo trends are built and tested but dormant. Condos fall back to the model's `est` outlook. A free source of private transactions would switch them on.
+- **Private condo data.** There is no free source of private condo transactions for individuals (URA issues its key only to companies), so condo project prices in the weekly report are Claude's web-search estimates and condo outlooks are Claude's `est`.
 - **OneMap token.** The distance line works with `ONEMAP_ACCESS_TOKEN` in `.env`, but a pasted token lasts about 3 days, then the line drops out until you paste a new one. `propbot status` shows the expiry date. Setting `ONEMAP_EMAIL` and `ONEMAP_PASSWORD` instead lets the bot renew its own token.
 - **The daily pipeline.** `propbot run`, `discover` and `purge`, plus favourites, from the original plan are not built. The hourly hunt covers discovery for now.
 - **Friend accounts live in the bot's database.** They are not in the vault, so they do not show up in Obsidian.
