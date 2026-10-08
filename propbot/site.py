@@ -25,7 +25,7 @@ log = logging.getLogger("propbot.site")
 
 KINDS = {"hdb_resale": "HDB resale", "condo_resale": "Resale condo", "condo_new_launch": "New launch",
          "ec": "Executive condo", "bto": "BTO", "shophouse": "Shophouse", "hdb_shop": "HDB shop",
-         "coffeeshop": "Coffee shop", "strata_commercial": "Office / retail"}
+         "coffeeshop": "Coffee shop & F&B", "strata_commercial": "Office / retail"}
 NO_PHOTO_HOSTS = ("propertyguru.com.sg", "commercialguru.com.sg")   # Cloudflare challenge, checked 2026-10-09
 PHOTO_RETRY_DAYS = 7
 MAP = ("https://www.onemap.gov.sg/api/staticmap/getStaticImage?layerchosen=original"

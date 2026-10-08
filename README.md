@@ -47,13 +47,13 @@ New here? Start with [docs/SETUP.md](docs/SETUP.md).
 
 ### Family website: The Block Ledger
 
-A web page for family and friends at port 8782 on the home NAS (container `property-site`, nginx). It lists every live listing the bot tracks, rebuilt every hour after the hunt (`propbot/site.py` writes `data/site/data.json`; `propbot site` rebuilds it now, `propbot site --bto` also refreshes BTO).
+A web page for family and friends, public at `https://blockledger.<tailnet>.ts.net` (its own Tailscale node `blockledger` with Funnel; the NAS itself is not exposed) and on port 8782 on the home NAS (container `property-site`, nginx). It lists every live listing the bot tracks, rebuilt every hour after the hunt (`propbot/site.py` writes `data/site/data.json`; `propbot site` rebuilds it now, `propbot site --bto` also refreshes BTO).
 
 - **Verdict and why.** Top pick, Worth a look, Fair price, Short lease, Above market or Not enough data, with the reasons in plain words: price against the same block's sales over 12 months, lease left and CPF use, price cuts and the nearest MRT. Worked out in code from the card's own facts, not by a model.
 - **Sorting.** Recommended, most under block price, price, newest, psf, size, lease left, nearest MRT, estate, plus tabs per property type, an area filter, a price cap and search.
 - **Pictures.** The listing's photo where the site allows it (EdgeProp `og:image` through the polite fetcher), else a OneMap street map with a pin on the block. PropertyGuru answers every automated request with a Cloudflare challenge, so it is never fetched.
 - **Upcoming BTO.** One Claude web-search call a week (`propbot/bto.py`) lists open and upcoming BTO projects; a failed week keeps the last list.
-- **Sources.** The hourly Claude hunt (PropertyGuru, EdgeProp and others) plus PropNex read directly: the newest 30 HDB, EC and condo listings every 3 hours through Jina Reader (`propbot/propnex.py`), with their photos. The same home found on several sites is shown once, with "also listed on" links. Checked and left out on 2026-10-09: Ohmyhome (human verification page, anti-bot service), 99.co and SRX (on `never_fetch_domains`).
+- **Sources.** The hourly Claude hunt (PropertyGuru, EdgeProp and others) plus PropNex read directly: the newest 30 HDB, EC, condo and retail (shophouse, HDB shop, coffee shop and F&B) listings every hour through Jina Reader (`propbot/propnex.py`), with their photos. The same home found on several sites is shown once, with "also listed on" links. Checked and left out on 2026-10-09: Ohmyhome (human verification page, anti-bot service), 99.co and SRX (on `never_fetch_domains`).
 - **☯ Feng shui.** Every card lists the good and the bad from open data (`propbot/fengshui.py`): water, hills and parks nearby (NParks), cemeteries, columbaria and crematoria (NEA), big hospitals, the MRT, and the block number and price digits. A "what to look out for" guide on the page covers what only a viewing can show (door line, T-junctions, kitchen, bed, shape, light).
 
 Every card carries three signals beyond the price.

@@ -227,7 +227,7 @@ footer p{margin:0}
     <div class="stats">
       <div class="stat"><b id="s-total">–</b><span>homes listed</span></div>
       <div class="stat"><b id="s-under">–</b><span>recommended</span></div>
-      <div class="stat"><b id="s-new">–</b><span>new this week</span></div>
+      <div class="stat"><b id="s-new">–</b><span>new today</span></div>
       <div class="stat"><b id="s-bto">–</b><span>BTO projects</span></div>
     </div>
   </div>
@@ -257,6 +257,11 @@ footer p{margin:0}
           <option value="luck">☯ Best feng shui</option>
         </select></div>
       <div class="field"><label for="area">Area</label><select id="area"><option value="">All areas</option></select></div>
+      <div class="field"><label for="found">Found</label>
+        <select id="found">
+          <option value="">Any time</option><option value="0">Today</option><option value="1">Since yesterday</option>
+          <option value="3">Last 3 days</option><option value="7">Last 7 days</option>
+        </select></div>
       <div class="field"><label for="max">Up to</label>
         <select id="max">
           <option value="">Any price</option><option>500000</option><option>700000</option><option>900000</option>
@@ -381,7 +386,9 @@ const full = v => "S$" + Math.round(v).toLocaleString("en-SG");
 const day = s => new Date(s + "T00:00:00").toLocaleDateString("en-SG", {day:"numeric", month:"short"});
 const SITE = {"propertyguru.com.sg":"PropertyGuru","edgeprop.sg":"EdgeProp","commercialguru.com.sg":"CommercialGuru","propnex.com":"PropNex"};
 const KIND_ORDER = ["hdb_resale","condo_resale","condo_new_launch","ec","bto","shophouse","hdb_shop","coffeeshop","strata_commercial"];
-const state = {kind:"all", sort:"rec", area:"", max:"", q:"", under:false};
+const state = {kind:"all", sort:"rec", area:"", max:"", found:"", q:"", under:false};
+let TODAY = "";
+const daysAgo = n => { const d = new Date(TODAY + "T00:00:00"); d.setDate(d.getDate() - n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
 const TIERS = {"Top pick":["v-top","★ Top pick"], "Worth a look":["v-look","👍 Worth a look"], "Fair price":["v-fair","Fair price"],
   "Short lease":["v-short","⏳ Short lease"], "Above market":["v-above","▲ Above market"], "Not enough data":["v-none","Not enough data"]};
 const TIER_ORDER = Object.keys(TIERS), RECOMMENDED = new Set(["Top pick", "Worth a look"]);
@@ -528,6 +535,7 @@ function render(){
   const q = state.q.trim().toLowerCase();
   const list = ITEMS.filter(it => (state.kind === "all" || it.kind === state.kind || (state.kind === "rec" && RECOMMENDED.has(it.tier)))
     && (!state.area || it.area === state.area) && (!state.max || it.price <= +state.max)
+    && (state.found === "" || it.first_seen >= daysAgo(+state.found))
     && (!state.under || it.deal_pct > 0) && (!q || (it.name + " " + it.area).toLowerCase().includes(q)))
     .sort(SORTS[state.sort]);
   $("#count").textContent = `${list.length} home${list.length === 1 ? "" : "s"} shown`;
@@ -540,11 +548,11 @@ function setup(data){
   ITEMS = data.items; BTO = data.bto || [];
   const upd = new Date(data.updated);
   $("#updated").textContent = "Updated " + upd.toLocaleString("en-SG", {weekday:"short", day:"numeric", month:"short", hour:"numeric", minute:"2-digit"});
-  const weekAgo = new Date(upd - 7 * 864e5).toISOString().slice(0, 10);
+  TODAY = data.updated.slice(0, 10);          // the bot's own date (Singapore), not the viewer's clock
   $("#s-total").textContent = ITEMS.length;
   $("#s-under").textContent = ITEMS.filter(it => RECOMMENDED.has(it.tier)).length;
   $("#s-bto").textContent = BTO.length;
-  $("#s-new").textContent = ITEMS.filter(it => it.first_seen >= weekAgo).length;
+  $("#s-new").textContent = ITEMS.filter(it => it.first_seen >= TODAY).length;
 
   const top = ITEMS.filter(it => RECOMMENDED.has(it.tier)).sort(SORTS.rec).slice(0, 3);
   if (top.length){ $("#picks").innerHTML = top.map(pick).join(""); $("#picks-wrap").hidden = false; }
@@ -562,10 +570,10 @@ function setup(data){
   for (const k of Object.keys(state)) if (qs.has(k)) state[k] = k === "under" ? qs.get(k) === "true" : qs.get(k);
   const sync = () => {
     document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === state.kind));
-    $("#sort").value = state.sort; $("#area").value = state.area; $("#max").value = state.max; $("#q").value = state.q; $("#under").checked = state.under;
+    $("#sort").value = state.sort; $("#area").value = state.area; $("#max").value = state.max; $("#found").value = state.found; $("#q").value = state.q; $("#under").checked = state.under;
   };
   $("#tabs").addEventListener("click", e => { const b = e.target.closest(".tab"); if (b){ state.kind = b.dataset.k; sync(); render(); } });
-  for (const id of ["sort", "area", "max"]) $("#" + id).addEventListener("change", e => { state[id] = e.target.value; render(); });
+  for (const id of ["sort", "area", "max", "found"]) $("#" + id).addEventListener("change", e => { state[id] = e.target.value; render(); });
   $("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
   $("#under").addEventListener("change", e => { state.under = e.target.checked; render(); });
   sync(); render();

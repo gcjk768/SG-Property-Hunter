@@ -445,9 +445,10 @@ class Bot:
     # ------------------------------------------------------------ loops
     def tick(self, now: datetime) -> None:
         """Hourly pulse and hunt; the slot is stored so a restart doesn't post twice."""
-        if self.s.run.avoid_us_session and us_session_open(now):
-            return      # trading desk hours: leave the NAS and the Claude plan to it, catch up afterwards
         slot = now.strftime("%Y-%m-%d %H")
+        if self.s.run.avoid_us_session and us_session_open(now):
+            self.site_tick(now, slot)    # listings keep coming in; only the Claude calls wait
+            return      # trading desk hours: leave the NAS and the Claude plan to it, catch up afterwards
         c = self.s.condo_report
         if c.enabled and now.weekday() == c.weekday and now.hour >= c.hour and self.db.meta_get("condo_day") != str(now.date()):
             self.db.meta_set("condo_day", str(now.date()))     # once a day even if it fails: Claude calls are capped
@@ -462,6 +463,10 @@ class Bot:
         if self.s.hunt.enabled and now.minute >= self.s.hunt.check_minute and self.db.meta_get("hunt_slot") != slot:
             self.db.meta_set("hunt_slot", slot)
             self.hunt((self.chat, self.thread), manual=False, now=now)
+        self.site_tick(now, slot)
+
+    def site_tick(self, now: datetime, slot: str) -> None:
+        """Hourly after the hunt minute: PropNex, photos and data.json for the website (no Claude call)."""
         if now.minute >= self.s.hunt.check_minute and self.db.meta_get("site_slot") != slot:
             self.db.meta_set("site_slot", slot)
             self.refresh_site(now)

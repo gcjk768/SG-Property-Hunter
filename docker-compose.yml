@@ -45,6 +45,30 @@ services:
         max-size: "5m"
         max-file: "2"
 
+  # Public address for the website: its own Tailscale node "blockledger" with Funnel on 443, so the link is
+  # https://blockledger.<tailnet>.ts.net and the NAS node (and Vaultwarden on it) is not exposed or renamed.
+  # TS_AUTHKEY_BLOCKLEDGER lives in .env; it is only needed for the first login (state is kept in data/tailscale).
+  blockledger:
+    image: tailscale/tailscale:stable
+    pull_policy: always            # newest stable Tailscale on every redeploy
+    container_name: blockledger
+    hostname: blockledger
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY_BLOCKLEDGER:-}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "true"
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - ./data/tailscale:/var/lib/tailscale
+      - ./tailscale-serve.json:/config/serve.json:ro
+    depends_on: [property-site]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
 networks:
   scrape-net:
     external: true

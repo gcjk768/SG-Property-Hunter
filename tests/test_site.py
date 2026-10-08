@@ -111,3 +111,13 @@ def test_propnex_page_is_parsed_and_budget_checked(settings, db):
     assert propnex.run(settings, db, Http(), Limiter(), TODAY) == 1          # the 8.28M flat is over budget; the challenge stops the rest
     assert [r["name"] for r in tracker.active(db, "hdb_resale", TODAY)] == ["125 Bedok North Road"]
     assert db.scalar("SELECT image FROM listing_image") .endswith("/a.jpg")
+
+
+def test_propnex_retail_maps_to_our_categories():
+    from propbot.propnex import retail_kind
+    assert retail_kind("Food & Beverage", "Kopitiam at Bedok") == "coffeeshop"
+    assert retail_kind("Shop / Shophouse", "Jalan Besar Road Adjoining Shophouses") == "shophouse"
+    assert retail_kind("Shop / Shophouse", "3 Everton Park") == "hdb_shop"
+    assert retail_kind("Other Retail", "846 Yishun Ring Road") == "hdb_shop"
+    assert retail_kind("Shop / Shophouse", "Jurong East Prime Corner Shop, YUHUA VILLAGE") == "hdb_shop"
+    assert retail_kind("Mall Shop", "Kembangan Plaza") == "strata_commercial"
