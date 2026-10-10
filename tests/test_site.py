@@ -35,6 +35,9 @@ def test_export_ranks_hdb_against_its_block_and_fills_photos(db, tmp_path):
     assert not any("propertyguru" in u for u in fetched)          # Cloudflare challenge: never fetched
     assert site.fetch_photos(db, Fetcher(), TODAY) == 0 and len(fetched) == 2   # failures remembered, no refetch
 
+    assert site.export(db, tmp_path, TODAY) == 2      # PropertyGuru card hidden until pgcheck has opened its page
+    db.insert("pg_check", {"key": listing_key("https://www.propertyguru.com.sg/listing/hdb-for-sale-9-test-street-2"),
+                           "checked_on": TODAY.isoformat(), "status": "listed", "price": 500_000, "name_ok": 1, "title": "9 Test Street"})
     assert site.export(db, tmp_path, TODAY) == 3
     items = {x["name"]: x for x in json.loads((tmp_path / "data.json").read_text(encoding="utf-8"))["items"]}
     a = items["1 Test Street"]

@@ -54,8 +54,9 @@ typical first-time Singapore citizen couple, never from `Profile.md`.
 **How the flow works**
 
 1. **Collect.** The hourly Claude hunt and a direct PropNex read (HDB, EC, condo and retail: shophouse, HDB shop, coffee
-   shop and F&B, mall shop) record every listing in the tracker. EdgeProp pages give a real photo. PropertyGuru,
-   Ohmyhome and other sites that answer automated requests with a challenge are never fetched.
+   shop and F&B, mall shop) record every listing in the tracker. EdgeProp pages give a real photo. PropertyGuru and
+   CommercialGuru are opened only through a real Chrome on the NAS (`tools/pg_verify_server.py`, `propbot/pgcheck.py`), and a card
+   shows once its page was opened that day and price and name match. Ohmyhome and other sites that answer automated requests with a challenge are never fetched.
 2. **Enrich.** Once an hour, `propbot/site.py` takes each live listing and adds facts from open data
    (`propbot/insights.py`, `propbot/fengshui.py`): the block's recent sales by floor band, a verdict, the price
    outlook, what a buyer would pay, rent and yield, schools, hawker centre, polyclinic, MRT, and a feng shui reading.

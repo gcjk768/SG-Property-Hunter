@@ -420,7 +420,7 @@ details.more[open] summary::after{content:"–"}
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money = v => v >= 1e6 ? "S$" + (v/1e6).toFixed(v >= 1e7 ? 1 : 2) + "M" : "S$" + Math.round(v/1e3) + "k";
-const full = v => "S$" + Math.round(v).toLocaleString("en-SG");
+const full = v => v == null ? "Price not published" : "S$" + Math.round(v).toLocaleString("en-SG");
 const day = s => new Date(s + "T00:00:00").toLocaleDateString("en-SG", {day:"numeric", month:"short"});
 const SITE = {"propertyguru.com.sg":"PropertyGuru","edgeprop.sg":"EdgeProp","commercialguru.com.sg":"CommercialGuru","propnex.com":"PropNex"};
 const KIND_ORDER = ["hdb_resale","condo_resale","condo_new_launch","ec","bto","shophouse","hdb_shop","coffeeshop","strata_commercial"];
@@ -572,7 +572,7 @@ function pick(it, i){
     <div class="plate${plateKind(it)}">${plateHtml(it)}</div><span class="rank">${i + 1}</span>
     <div class="pick-body"><div class="where">${esc(it.area)} · ${esc(it.type || it.label)}</div>
       <h3>${esc(it.name)}</h3><div class="price">${full(it.price)}</div>
-      <span class="save">${it.deal_pct > 0 ? money(it.median - it.price) + " under block price" : esc(TIERS[it.tier][1])}</span>
+      <span class="save">${it.price != null && it.deal_pct > 0 ? money(it.median - it.price) + " under block price" : esc(TIERS[it.tier][1])}</span>
       <div class="reason">${esc((it.why || []).slice(1).join(" · "))}</div></div></a>`;
 }
 
@@ -592,11 +592,11 @@ const SORTS = {
   rec: (a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier) || b.score - a.score,
   lease: (a, b) => (freehold(b) ? 999 : b.lease_left ?? -1) - (freehold(a) ? 999 : a.lease_left ?? -1),
   mrt: (a, b) => (a.mrt_m ?? 1e9) - (b.mrt_m ?? 1e9),
-  luck: (a, b) => (b.fs?.score ?? 0) - (a.fs?.score ?? 0) || a.price - b.price,
-  estate: (a, b) => (a.area || "~").localeCompare(b.area || "~") || a.price - b.price,
+  luck: (a, b) => (b.fs?.score ?? 0) - (a.fs?.score ?? 0) || (a.price ?? 1e12) - (b.price ?? 1e12),
+  estate: (a, b) => (a.area || "~").localeCompare(b.area || "~") || (a.price ?? 1e12) - (b.price ?? 1e12),
   deal: (a, b) => { const x = dealKey(a), y = dealKey(b); return x[0] - y[0] || x[1] - y[1] || b.first_seen.localeCompare(a.first_seen); },
-  low: (a, b) => a.price - b.price, high: (a, b) => b.price - a.price,
-  new: (a, b) => b.first_seen.localeCompare(a.first_seen) || a.price - b.price,
+  low: (a, b) => (a.price ?? 1e12) - (b.price ?? 1e12), high: (a, b) => (b.price ?? 0) - (a.price ?? 0),
+  new: (a, b) => b.first_seen.localeCompare(a.first_seen) || (a.price ?? 1e12) - (b.price ?? 1e12),
   psf: (a, b) => (a.psf ?? 1e9) - (b.psf ?? 1e9), size: (a, b) => (b.sqft ?? 0) - (a.sqft ?? 0),
 };
 

@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-from . import bto, condo_report, hdb_report, hunt, propnex, pulse, site, tracker
+from . import bto, condo_report, hdb_report, hunt, pgcheck, propnex, pulse, site, tracker
 from .claude import ClaudeUnavailable
 from .config import ConfigError, Profile, Settings, apply_profile_overrides, parse_override_value
 from .db import DB, clear_user_profile, set_user_profile, user_profile
@@ -488,6 +488,10 @@ class Bot:
                     self.vault.activity("site", f"PropNex · {propnex.run(self.s, self.db, self.http, self.limiter, now.date(), self.vault.journal)} listings")
                 except Exception as exc:      # one source down must not stop the website update
                     self.vault.activity("error", f"PropNex read failed: {type(exc).__name__}: {str(exc)[:200]}")
+            try:
+                self.vault.activity("site", f"PropertyGuru pages opened via NAS Chrome · {pgcheck.run(self.db, now.date())}")
+            except Exception as exc:          # verifier down: PropertyGuru cards stay hidden, the rest is unaffected
+                self.vault.activity("error", f"PropertyGuru check failed: {type(exc).__name__}: {str(exc)[:200]}")
             site.fetch_photos(self.db, PoliteFetcher(self.s, self.db, self.limiter, journal=self.vault.journal), now.date())
             n = site.export(self.db, self.s.data_dir / "site", now.date(), now, self.geo)
             self.vault.activity("site", f"website updated · {n} listings")

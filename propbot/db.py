@@ -146,6 +146,8 @@ CREATE INDEX IF NOT EXISTS report_listing_kind ON report_listing(kind, status);
 
 -- listing photos for the family website (propbot/site.py); image '' = none found on checked_on
 CREATE TABLE IF NOT EXISTS listing_image (key TEXT PRIMARY KEY, image TEXT, checked_on TEXT);
+-- PropertyGuru pages opened through the NAS Chrome (propbot/pgcheck.py); only name_ok listed rows reach the website
+CREATE TABLE IF NOT EXISTS pg_check (key TEXT PRIMARY KEY, checked_on TEXT, status TEXT, price REAL, name_ok INTEGER, title TEXT);
 -- places near a home for the feng shui reading (propbot/fengshui.py), reloaded monthly
 CREATE TABLE IF NOT EXISTS poi (kind TEXT, name TEXT, lat REAL, lon REAL, PRIMARY KEY (kind, name));
 

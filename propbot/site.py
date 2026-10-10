@@ -16,7 +16,7 @@ import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from . import bto, fengshui, insights, tracker
+from . import bto, fengshui, insights, pgcheck, tracker
 from .db import DB
 from .hdb_report import MIN_SALES, match, norm
 from .web import host_of
@@ -26,6 +26,7 @@ log = logging.getLogger("propbot.site")
 KINDS = {"hdb_resale": "HDB resale", "condo_resale": "Resale condo", "condo_new_launch": "New launch",
          "ec": "Executive condo", "bto": "BTO", "shophouse": "Shophouse", "hdb_shop": "HDB shop",
          "coffeeshop": "Coffee shop & F&B", "strata_commercial": "Office / retail"}
+UNVERIFIED_HOSTS = ("propertyguru.com.sg", "commercialguru.com.sg")   # price and link never opened, shown only once pgcheck opened the page in the last day and it matched (the owner, 2026-10-10)
 NO_PHOTO_HOSTS = ("propertyguru.com.sg", "commercialguru.com.sg")   # Cloudflare challenge, checked 2026-10-09
 PHOTO_RETRY_DAYS = 7
 MAP = ("https://www.onemap.gov.sg/api/staticmap/getStaticImage?layerchosen=original"
@@ -169,9 +170,9 @@ def items(db: DB, today: date, geo=None, settings=None) -> list[dict]:
             fengshui.ensure(db, geo, today)
         except Exception as exc:
             log.info("MRT exits or places not loaded: %s", exc)
-    out = []
+    out, seen_ok = [], pgcheck.verified_keys(db, today)
     for kind, label in KINDS.items():
-        rows = [dict(r) for r in tracker.active(db, kind, today)]
+        rows = [dict(r) for r in tracker.active(db, kind, today) if r["key"] in seen_ok or not host_of(r["url"]).endswith(UNVERIFIED_HOSTS)]
         comp = {m["key"]: m for m in match(db, today, rows)} if kind == "hdb_resale" else {}
         for r in rows:
             m = comp.get(r["key"])
@@ -209,8 +210,11 @@ def items(db: DB, today: date, geo=None, settings=None) -> list[dict]:
             it["upcoming_mrt"] = geo.upcoming(it["name"], it["area"]) if geo is not None else []
             if settings is not None or geo is not None:
                 it["outlook"] = insights.outlook(it, settings or geo.s)
+            if kind == "condo_new_launch":   # project pages show no asking price: stored prices were estimates, so show none (the owner, 2026-10-09)
+                it["why"] = [w for w in it["why"] if not w.startswith("Price cut")]
+                it.update(price=None, prev_price=None, psf=None, deal_pct=None, change="", money=None, rent=None)
             it["days_listed"] = (today - date.fromisoformat(r["first_seen"])).days
-            it["price_cut_on"] = r["price_changed_on"] if r["prev_price"] and r["prev_price"] > r["price"] else None
+            it["price_cut_on"] = r["price_changed_on"] if r["prev_price"] and r["prev_price"] > r["price"] and it["price"] is not None else None
     return dedupe(out)
 
 
