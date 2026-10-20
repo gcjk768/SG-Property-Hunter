@@ -159,7 +159,7 @@ discovery:
 
 claude:
   binary: claude
-  model: haiku                   # fleet policy 2026-10-03: non trading apps stay cheap
+  model: claude-haiku-5-5                   # fleet policy 2026-10-03: non trading apps stay cheap
   fallback_model: sonnet
   auth: oauth                    # oauth = CLAUDE_CODE_OAUTH_TOKEN, apikey = ANTHROPIC_API_KEY
   max_retries: 4
