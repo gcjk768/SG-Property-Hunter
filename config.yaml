@@ -161,7 +161,7 @@ claude:
   binary: claude
   model: claude-haiku-5-5                   # fleet policy 2026-10-03: non trading apps stay cheap
   fallback_model: sonnet
-  auth: oauth                    # oauth = CLAUDE_CODE_OAUTH_TOKEN, apikey = ANTHROPIC_API_KEY
+  auth: apikey                    # oauth = CLAUDE_CODE_OAUTH_TOKEN, apikey = ANTHROPIC_API_KEY
   max_retries: 4
   discovery: {max_turns: 30, timeout_seconds: 900, max_budget_usd: 1.00, calls_per_run: 1}  # the hourly listing hunt
   curation: {max_turns: 4, timeout_seconds: 600, max_budget_usd: 1.00}
