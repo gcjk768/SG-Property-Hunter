@@ -82,3 +82,11 @@ def test_delete_batches_and_tombstone_fallback(settings, limiter):
     assert out.tombstoned == [999]
     edit = [c for c in calls if c[0] == "editMessageText"][0]
     assert edit[1]["text"] == TOMBSTONE_TEXT
+
+
+def test_null_telegram_has_every_public_method_of_the_real_client():
+    from propbot.telegram import NullTelegram, TelegramClient
+    public = {n for n in dir(TelegramClient) if not n.startswith("_") and callable(getattr(TelegramClient, n))}
+    public -= {"call"}   # the raw HTTP call; only the real client talks to Telegram
+    assert public <= set(dir(NullTelegram))
+    assert NullTelegram().send_message("c", "hi") == 0

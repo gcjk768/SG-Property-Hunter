@@ -321,11 +321,14 @@ def _bot(args):
     from .bot import Bot
     from .claude import ClaudeRunner
     from .ratelimit import RateLimiter
-    from .telegram import TelegramClient
+    from .telegram import NullTelegram, TelegramClient
     settings, db = _settings(args, require_income=False)
     vault = args._vault
     limiter = RateLimiter(db, settings, run_id=f"serve-{datetime.now():%Y%m%d%H%M}")
-    tg = TelegramClient(settings.secrets.telegram_bot_token, settings, limiter, journal=vault.journal)
+    if settings.telegram.enabled:
+        tg = TelegramClient(settings.secrets.telegram_bot_token, settings, limiter, journal=vault.journal)
+    else:
+        tg = NullTelegram()
     has_claude = settings.secrets.claude_code_oauth_token or settings.secrets.anthropic_api_key
     claude = ClaudeRunner(settings, limiter, journal=vault.journal) if has_claude else None
     return Bot(settings, db, tg, vault, limiter, claude, config_path=args.config), settings
@@ -333,7 +336,7 @@ def _bot(args):
 
 def cmd_serve(args) -> int:
     bot, settings = _bot(args)
-    if not settings.secrets.telegram_bot_token:
+    if settings.telegram.enabled and not settings.secrets.telegram_bot_token:
         print("TELEGRAM_BOT_TOKEN is not set in .env", file=sys.stderr)
         return 2
     bot.serve(settings.data_dir / "heartbeat")

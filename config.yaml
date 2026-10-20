@@ -56,6 +56,7 @@ condo_report:                  # weekly condo PDF (resale and new launch), poste
   hdb: true                      # the weekly HDB report goes out with it
 
 telegram:
+  enabled: false                 # the owner no longer uses Telegram for this app (2026-10-20): NullTelegram, no token needed
   chat_id: "<TELEGRAM_CHAT_ID>"      # the owner Channel (forum group shared by the fleet)
   thread_id: <THREAD_ID>                # "PropBot" topic; the bot ignores every other topic
   owner_user_id: 388437106       # the owner; /prop commands also work in his private chat with the bot

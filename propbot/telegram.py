@@ -10,6 +10,7 @@ from __future__ import annotations
 import html
 import random
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -220,3 +221,36 @@ class TelegramClient:
             self.call("sendChatAction", payload, paced=False)
         except TelegramError:
             pass
+
+
+class NullTelegram:
+    """Stand-in for TelegramClient when telegram.enabled is false: sends nothing, receives nothing.
+
+    Same public methods as TelegramClient (tests/test_telegram.py checks they stay in step), so the
+    Bot, hunt, pulse and reports run unchanged. Message id 0 means "not sent".
+    """
+
+    def send_message(self, *args, **kwargs) -> int:
+        return 0
+
+    def send_document(self, *args, **kwargs) -> int:
+        return 0
+
+    def edit_message_text(self, *args, **kwargs) -> None:
+        pass
+
+    def delete_messages(self, *args, **kwargs) -> DeleteOutcome:
+        return DeleteOutcome([], [], [])
+
+    def get_me(self) -> dict:
+        return {}
+
+    def get_updates(self, offset: int | None, timeout: int = 30) -> list[dict]:
+        time.sleep(timeout)   # keeps serve()'s loop, and its heartbeat, ticking without polling anything
+        return []
+
+    def answer_callback(self, *args, **kwargs) -> None:
+        pass
+
+    def typing(self, *args, **kwargs) -> None:
+        pass

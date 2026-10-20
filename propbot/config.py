@@ -77,6 +77,7 @@ class Profile(_Strict):
 
 # ---------------------------------------------------------------- sections
 class TelegramCfg(_Strict):
+    enabled: bool = True          # false: nothing is sent or listened for (NullTelegram); hunt, tracker and site keep running
     chat_id: str = "@your_channel_or_numeric_id"
     thread_id: int = 0            # forum topic in a shared group; 0 = no topic
     owner_user_id: int = 0
