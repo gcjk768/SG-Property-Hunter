@@ -30,6 +30,7 @@ CATEGORIES: dict[str, CategoryInfo] = {
                                  "residential", None),
     "condo_new_launch": CategoryInfo("condo_new_launch", "residential", False, True, "bank",
                                      ("condo_new_launch", "condo"), "residential", None, under_construction=True),
+    "studio": CategoryInfo("studio", "residential", False, True, "bank", ("studio", "condo"), "residential", None),
     "landed": CategoryInfo("landed", "residential", False, True, "bank", ("landed",), "residential", None),
     "shophouse": CategoryInfo("shophouse", "mixed", False, False, "commercial", ("shophouse",), "commercial",
                               None, ssd_kind="residential"),

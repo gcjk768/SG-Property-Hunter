@@ -23,7 +23,7 @@ log = logging.getLogger("propbot.pgcheck")
 HOSTS = ("propertyguru.com.sg", "commercialguru.com.sg")
 VERIFY_URL = os.environ.get("PG_VERIFY_URL", "http://pg-browser:8080")
 MAX_AGE_DAYS = 1        # a card is shown only if its page was opened today or yesterday
-KINDS = ("hdb_resale", "condo_resale", "condo_new_launch", "ec", "bto", "shophouse", "hdb_shop", "coffeeshop", "strata_commercial")
+KINDS = ("hdb_resale", "condo_resale", "condo_new_launch", "studio", "ec", "bto", "shophouse", "hdb_shop", "coffeeshop", "strata_commercial")
 
 
 def name_matches(name: str, title: str) -> bool:

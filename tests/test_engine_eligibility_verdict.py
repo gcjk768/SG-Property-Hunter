@@ -193,3 +193,9 @@ def test_overrides(settings):
 def test_best_intent_names_flip_with_ssd_warning(settings):
     c = card(settings, W.condo_ocr_1500k(), cash_available=900_000, intent=["flip"])
     assert c.verdict.best_intent == "flip" and "SSD" in c.verdict.best_intent_words
+
+
+def test_single_under_35_can_buy_a_studio_not_hdb(settings):
+    studio = Candidate("studio", "x", 700_000, tenure="99 year", remaining_lease=90)
+    assert check(settings, studio, age=29).eligible is True
+    assert check(settings, resale(), age=29).eligible is False

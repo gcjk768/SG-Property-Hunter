@@ -24,6 +24,7 @@ from .web import host_of
 log = logging.getLogger("propbot.site")
 
 KINDS = {"hdb_resale": "HDB resale", "condo_resale": "Resale condo", "condo_new_launch": "New launch",
+         "studio": "Studio / 1-bed",
          "ec": "Executive condo", "bto": "BTO", "shophouse": "Shophouse", "hdb_shop": "HDB shop",
          "coffeeshop": "Coffee shop & F&B", "strata_commercial": "Office / retail"}
 UNVERIFIED_HOSTS = ("propertyguru.com.sg", "commercialguru.com.sg")   # price and link never opened, shown only once pgcheck opened the page in the last day and it matched (the owner, 2026-10-10)

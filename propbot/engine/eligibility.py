@@ -95,7 +95,7 @@ def check(profile: Profile, cand: Candidate, rules: Rules, trace: RuleTrace, tod
         hdb_loan_allowed = _resale(profile, cand, rules, trace, today, acc)
     elif key == "ec":
         _ec(profile, cand, rules, trace, today, acc)
-    elif key in ("condo_resale", "condo_new_launch"):
+    elif key in ("condo_resale", "condo_new_launch", "studio"):
         _private(profile, cand, rules, trace, today, acc, landed=False)
     elif key == "landed":
         _private(profile, cand, rules, trace, today, acc, landed=True)

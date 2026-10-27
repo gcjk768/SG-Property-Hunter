@@ -19,10 +19,10 @@ def test_defaults_match_spec():
     assert s.limits.telegram.min_gap_seconds == 3.5
     assert s.limits.telegram.max_per_minute == 17
     assert s.limits.claude.max_calls_per_day == 40
-    assert s.claude.model == "haiku" and s.hunt.enabled
+    assert s.claude.model == "claude-haiku-5-5" and s.hunt.enabled
     assert s.assumptions.base_cagr_cap_pct == 4.0
     assert s.profile.citizenship == "SC" and s.profile.age == 29
-    assert s.enabled_categories() == ["bto", "hdb_resale", "ec", "condo_resale", "condo_new_launch",
+    assert s.enabled_categories() == ["bto", "hdb_resale", "ec", "condo_resale", "condo_new_launch", "studio",
                                       "shophouse", "hdb_shop", "coffeeshop", "strata_commercial"]
     assert s.profile.intent == ["rent_out", "flip"]
     assert s.sources.datagov.datasets["hdb_resale_prices"].startswith("d_")

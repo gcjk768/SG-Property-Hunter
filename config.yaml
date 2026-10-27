@@ -69,10 +69,10 @@ run:
   daily_target_messages: 100     # total item messages per day, all kinds together
   outlooks_per_day: 10           # location outlooks within the 100
   # weighted toward what can be rented out from day one or sold for a gain; BTO and EC have long MOPs
-  category_weights: {bto: 4, hdb_resale: 12, ec: 6, condo_resale: 18, condo_new_launch: 10, shophouse: 10, hdb_shop: 9, coffeeshop: 7, strata_commercial: 14}
+  category_weights: {bto: 4, hdb_resale: 12, ec: 6, condo_resale: 18, condo_new_launch: 10, studio: 12, shophouse: 10, hdb_shop: 9, coffeeshop: 7, strata_commercial: 14}
   repeat_days: 7                 # avoid reposting the same listing within this many days unless its price changed
   candidates_per_category: 25
-  categories_refreshed_per_run: 9  # all enabled categories every day
+  categories_refreshed_per_run: 10 # all enabled categories every day
   cache_max_age_days: 7
   prepare_cron: "0 6 * * *"
   post_cron: "30 8 * * *"
@@ -89,6 +89,7 @@ categories:                      # key, label, hashtag, enabled
   ec:                {label: "Executive condo", tag: "#ec", enabled: true}
   condo_resale:      {label: "Resale condo", tag: "#condo", enabled: true}
   condo_new_launch:  {label: "New launch condo", tag: "#newlaunch", enabled: true}
+  studio:            {label: "Studio or 1 bedroom apartment", tag: "#studio", enabled: true}
   shophouse:         {label: "Shophouse", tag: "#shophouse", enabled: true, budget_max_sgd: 8000000}
   hdb_shop:          {label: "HDB shop", tag: "#hdbshop", enabled: true, budget_max_sgd: 5000000}
   coffeeshop:        {label: "Coffee shop", tag: "#coffeeshop", enabled: true, budget_max_sgd: 15000000}
@@ -148,6 +149,7 @@ discovery:
     hdb_resale: ["HDB resale {area} 4 room below {budget_max} {year}", "site:edgeprop.sg HDB resale {area} for sale", "HDB resale million dollar flats {month} {year}"]
     ec: ["executive condominium launch {year} price", "EC resale {area} psf {year}"]
     condo_resale: ["resale condo {area} for sale below {budget_max}", "site:edgeprop.sg condo for sale {area}", "condo resale {area} psf transactions {year}"]
+    studio: ["studio apartment for sale {area} below {budget_max}", "site:edgeprop.sg 1 bedroom condo for sale {area}", "shoebox condo for sale singapore {year}"]
     condo_new_launch: ["new launch condo {month} {year} prices psf", "site:edgeprop.sg new launch {year}", "new condo launch {area} {year} units sold"]
     shophouse: ["shophouse for sale Singapore {year}", "conservation shophouse transaction {month} {year}", "site:commercialguru.com.sg shophouse for sale"]
     hdb_shop: ["HDB shop for sale {year}", "HDB retail unit sale {month} {year} price"]

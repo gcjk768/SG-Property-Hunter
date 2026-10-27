@@ -88,6 +88,8 @@ def run(settings, db: DB, http, limiter, today: date, journal=lambda *a, **k: No
         rows = []
         for x in parse(text):
             x["kind"] = page_kind or retail_kind(x["ptype"], x["name"])
+            if x["kind"] == "condo_resale" and x["bedrooms"] in (0, 1):
+                x["kind"] = "studio"
             if settings.search.budget_min_sgd <= x["price"] <= budget_max(settings, x["kind"]):
                 rows.append(x)
         for kind in {x["kind"] for x in rows}:
